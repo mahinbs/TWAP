@@ -14,7 +14,7 @@ const ServicesPage: React.FC = () => {
     <div ref={revealRef} className="min-h-screen bg-white font-sans text-gray-900 overflow-x-hidden">
       <Header />
       <ServicesBentoGrid />
-      <TestimonialsSection />
+      <TestimonialsSection page="services" />
       <ServiceBenefits />
       <TailoredServicesGrid />
       <Footer />

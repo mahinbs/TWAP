@@ -1,176 +1,107 @@
-import React, { useRef, useEffect } from 'react';
+import { useRef } from 'react';
 import { Link } from 'react-router-dom';
-
-const agencies = [
-    {
-        name: 'DataArt',
-        verified: true,
-        logo: 'https://images.unsplash.com/photo-1549923746-c502d488b3ea?auto=format&fit=crop&q=80&w=200',
-        description: 'Since its inception in 1997, DataArt has delivered a range of innovative solutions to businesses of all sizes and industries.',
-        tag: 'Direct Marketing'
-    },
-    {
-        name: 'Moburst',
-        verified: true,
-        logo: 'https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?auto=format&fit=crop&q=80&w=200',
-        description: 'Moburst is a full-service mobile-first digital agency that propels companies into category leaders through AI-powered marketing.',
-        tag: 'Custom Software Development'
-    },
-    {
-        name: 'Appinventiv',
-        verified: true,
-        logo: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&q=80&w=200',
-        description: 'Appinventiv is an IT Consulting Service company that commenced operations in 2015 with a team of 10 core members.',
-        tag: 'Mobile App Development'
-    },
-    {
-        name: 'Codewave',
-        verified: true,
-        logo: 'https://images.unsplash.com/photo-1611162616475-46b635cb6868?auto=format&fit=crop&q=80&w=200',
-        description: 'Codewave is a design thinking led digital transformation company. Helping enterprises & entrepreneurs build manageable systems.',
-        tag: 'Mobile App Development'
-    },
-    {
-        name: 'BrainStorm',
-        verified: true,
-        logo: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&q=80&w=200',
-        description: 'BrainStorm is a creative agency focused on branding and identity for startups and established enterprises.',
-        tag: 'Branding'
-    }
-];
+import { useQuery } from '@tanstack/react-query';
+import { Star, ChevronLeft, ChevronRight, ShieldCheck } from 'lucide-react';
+import { agenciesApi, siteContentApi } from '../../lib/api';
+import type { Agency } from '../../lib/api';
 
 export default function AgenciesHallOfFame() {
-    const scrollRef = useRef<HTMLDivElement>(null);
-    const lastInteractionTime = useRef(0);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-    // Auto-scroll logic
-    useEffect(() => {
-        const scrollContainer = scrollRef.current;
-        if (!scrollContainer) return;
+  const { data: section } = useQuery({
+    queryKey: ['page-section', 'agencies', 'hall_of_fame'],
+    queryFn: () => siteContentApi.section('agencies', 'hall_of_fame'),
+  });
 
-        let animationFrameId: number;
+  const { data: agencies = [], isLoading } = useQuery({
+    queryKey: ['agencies', 'featured'],
+    queryFn: () => agenciesApi.list({ featured: true, limit: 12 }),
+  });
 
-        const scroll = () => {
-            const now = Date.now();
-            const timeSinceInteraction = now - lastInteractionTime.current;
-            const isInteracting = timeSinceInteraction < 1000;
+  const scroll = (dir: 'left' | 'right') => {
+    scrollRef.current?.scrollBy({ left: dir === 'left' ? -340 : 340, behavior: 'smooth' });
+  };
 
-            if (!isInteracting && scrollContainer) {
-                // Handle Infinite Loop Wrapping
-                const maxScroll = scrollContainer.scrollWidth;
-                const oneThird = maxScroll / 3;
+  if (isLoading) return (
+    <section className="py-16">
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="flex gap-5 overflow-hidden">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="min-w-[300px] h-64 bg-gray-100 rounded-3xl animate-pulse" />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
 
-                if (scrollContainer.scrollLeft >= oneThird * 2) {
-                    // Too far right? Snap back to middle set
-                    scrollContainer.scrollLeft = scrollContainer.scrollLeft - oneThird;
-                } else if (scrollContainer.scrollLeft <= 0) {
-                    // Too far left? Snap forward to middle set
-                    scrollContainer.scrollLeft = oneThird;
-                } else {
-                    // Normal scroll
-                    scrollContainer.scrollLeft += 1;
-                }
-            }
-            animationFrameId = requestAnimationFrame(scroll);
-        };
+  if (agencies.length === 0) return null;
 
-        animationFrameId = requestAnimationFrame(scroll);
+  return (
+    <section className="py-16 bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-end justify-between mb-8">
+          <div>
+            <h2 className="text-3xl md:text-4xl font-bold text-[#1F2853] font-['Manrope']">{section?.title ?? 'Top Agencies'}</h2>
+            <p className="text-gray-500 mt-2">{section?.description ?? 'Vetted digital agencies trusted by thousands of businesses'}</p>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={() => scroll('left')}
+              className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center hover:bg-[#1F2853] hover:text-white hover:border-[#1F2853] transition-colors">
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <button onClick={() => scroll('right')}
+              className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center hover:bg-[#1F2853] hover:text-white hover:border-[#1F2853] transition-colors">
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
 
-        return () => cancelAnimationFrame(animationFrameId);
-    }, []);
-
-
-    const scrollLeft = () => {
-        if (scrollRef.current) {
-            lastInteractionTime.current = Date.now();
-            scrollRef.current.scrollBy({ left: -350, behavior: 'smooth' });
-        }
-    };
-
-    const scrollRight = () => {
-        if (scrollRef.current) {
-            lastInteractionTime.current = Date.now();
-            scrollRef.current.scrollBy({ left: 350, behavior: 'smooth' });
-        }
-    };
-
-    return (
-        <section
-            className="bg-white py-24 overflow-hidden"
-        >
-            <div className="max-w-7xl mx-auto px-6 lg:px-8 mb-12 text-center">
-                <div className="flex items-center justify-center gap-6">
-                    <h2 className="text-4xl lg:text-5xl font-bold text-[#1A1B20]">Our Hall of Fame</h2>
+        <div ref={scrollRef} className="flex gap-5 overflow-x-auto pb-4 scroll-smooth" style={{ scrollbarWidth: 'none' }}>
+          {(agencies as Agency[]).map(agency => (
+            <Link key={agency.id} to={`/agencies/${agency.slug}`}
+              className="min-w-[300px] bg-gray-50 rounded-3xl p-6 hover:shadow-lg transition-all duration-300 border border-gray-100 group">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-14 h-14 rounded-2xl bg-white border border-gray-200 overflow-hidden flex items-center justify-center shadow-sm">
+                  {agency.avatar_url
+                    ? <img src={agency.avatar_url} alt={agency.name} className="w-full h-full object-cover" />
+                    : <span className="text-xl font-bold text-[#1F2853]">{agency.name[0]}</span>
+                  }
                 </div>
-                <p className="mt-4 text-gray-500 max-w-2xl mx-auto text-lg">
-                    These are the game-changers—the companies redefining excellence in their fields. Discover the innovators, disruptors, and visionaries.
-                </p>
-            </div>
-
-            <div className="relative w-full">
-                {/* Gradient Masks */}
-                <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none"></div>
-                <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none"></div>
-
-                {/* Slider Container - Using standard scrolling instead of CSS animation */}
-                <div
-                    ref={scrollRef}
-                    className="flex overflow-x-hidden no-scrollbar w-full"
-                >
-                    {/* Triple the list to allow for a significant seamless scroll area */}
-                    {[...agencies, ...agencies, ...agencies].map((agency, index) => (
-                        <div key={index} className="w-[350px] mx-4 flex-shrink-0">
-                            <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 h-full flex flex-col group">
-                                <div className="flex items-center gap-4 mb-4">
-                                    <div className="w-12 h-12 rounded-lg bg-gray-50 overflow-hidden flex-shrink-0">
-                                        <img src={agency.logo} alt={agency.name} className="w-full h-full object-cover" />
-                                    </div>
-                                    <div>
-                                        <div className="flex items-center gap-1">
-                                            <h3 className="font-bold text-lg text-[#1A1B20]">{agency.name}</h3>
-                                            {agency.verified && (
-                                                <i className="ri-checkbox-circle-fill text-[#f25a1a]"></i>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="mb-6 flex-grow">
-                                    <p className="text-sm text-gray-500 leading-relaxed line-clamp-3">
-                                        {agency.description}
-                                    </p>
-                                </div>
-
-                                <div className="mt-auto">
-                                    <span className="inline-block px-3 py-1 rounded-md border border-gray-200 text-xs text-gray-500 mb-4">
-                                        {agency.tag}
-                                    </span>
-                                    <Link to="/agencies/profile" className="w-full bg-brand-lime hover:bg-brand-orange text-black py-3 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2 group-hover:scale-[1.02] transform duration-300">
-                                        <i className="ri-global-line"></i>
-                                        Visit Profile
-                                    </Link>
-                                </div>
-                            </div>
-                        </div>
-                    ))}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <h3 className="font-bold text-[#1F2853] truncate group-hover:text-[#f25a1a] transition-colors">{agency.name}</h3>
+                    {agency.verified && <ShieldCheck className="w-4 h-4 text-green-500 shrink-0" />}
+                  </div>
+                  {agency.category && <p className="text-xs text-gray-400 truncate">{agency.category}</p>}
                 </div>
-            </div>
+              </div>
 
-            {/* Navigation Buttons */}
-            <div className="flex justify-center gap-4 mt-8">
-                <button
-                    onClick={scrollLeft}
-                    className="w-12 h-12 rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-[#f25a1a] hover:text-white hover:border-[#f25a1a] flex items-center justify-center transition-all duration-300 shadow-sm"
-                >
-                    <i className="ri-arrow-left-line text-xl"></i>
-                </button>
-                <button
-                    onClick={scrollRight}
-                    className="w-12 h-12 rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-[#f25a1a] hover:text-white hover:border-[#f25a1a] flex items-center justify-center transition-all duration-300 shadow-sm"
-                >
-                    <i className="ri-arrow-right-line text-xl"></i>
-                </button>
-            </div>
-        </section>
-    );
+              {agency.tagline && (
+                <p className="text-sm text-gray-600 line-clamp-2 mb-4">{agency.tagline}</p>
+              )}
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className={`w-3.5 h-3.5 ${i < Math.round(agency.rating ?? 0) ? 'fill-amber-400 text-amber-400' : 'text-gray-200'}`} />
+                  ))}
+                  <span className="text-xs text-gray-500 ml-1">{agency.rating?.toFixed(1)}</span>
+                </div>
+                {agency.years_experience ? (
+                  <span className="text-xs text-gray-400">{agency.years_experience}y exp</span>
+                ) : null}
+              </div>
+            </Link>
+          ))}
+        </div>
+
+        <div className="text-center mt-8">
+          <Link to={section?.cta_url ?? '/agencies'}
+            className="inline-flex items-center gap-2 border border-[#1F2853] text-[#1F2853] px-6 py-3 rounded-full font-semibold hover:bg-[#1F2853] hover:text-white transition-colors">
+            {section?.cta_text ?? 'Browse All Agencies'} <i className="ri-arrow-right-line" />
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
 }

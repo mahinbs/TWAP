@@ -1,281 +1,131 @@
-
 import { useState } from 'react';
-
-interface NewsArticle {
-  id: number;
-  title: string;
-  date: string;
-  author: string;
-  excerpt: string;
-  fullContent: string;
-  image: string;
-  category: string;
-  readTime: string;
-}
+import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { ChevronLeft, ChevronRight, Clock, ArrowRight } from 'lucide-react';
+import { blogsApi, siteContentApi } from '../../lib/api';
+import type { BlogPost } from '../../lib/api';
 
 export default function NewsSection() {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  
-  const [articles] = useState<NewsArticle[]>([
-    {
-      id: 1,
-      title: "UX Pilot AI Releases GPT-5: What This Means for Developers",
-      date: "January 15, 2025",
-      author: "Alex Thompson",
-      excerpt: "The latest breakthrough promises enhanced reasoning capabilities and better integration options for developers worldwide.",
-      fullContent: "OpenAI's latest release brings unprecedented capabilities to the development community. With improved reasoning, better code understanding, and enhanced API integration, GPT-5 is set to revolutionize how developers approach AI-powered applications. Early beta testers report 40% faster development cycles and significantly improved code quality suggestions.",
-      image: "https://readdy.ai/api/search-image?query=Modern%20AI%20technology%20interface%20with%20GPT-5%20branding%2C%20futuristic%20neural%20network%20visualization%2C%20clean%20tech%20background%2C%20professional%20software%20development%20environment%2C%20blue%20and%20orange%20color%20scheme%2C%20minimalist%20design&width=600&height=400&seq=news-gpt5&orientation=landscape",
-      category: "AI Technology",
-      readTime: "5 min read"
-    },
-    {
-      id: 2,
-      title: "Top 10 AI Automation Tools for Small Businesses",
-      date: "January 12, 2025",
-      author: "Lisa Rodriguez",
-      excerpt: "Discover cost-effective AI solutions that can streamline operations and boost productivity for growing businesses.",
-      fullContent: "Small businesses are increasingly turning to AI automation to compete with larger enterprises. From customer service chatbots to inventory management systems, these tools are leveling the playing field and driving unprecedented growth.",
-      image: "https://readdy.ai/api/search-image?query=Small%20business%20automation%20dashboard%20with%20AI%20tools%2C%20modern%20office%20workspace%2C%20productivity%20charts%20and%20graphs%2C%20professional%20business%20environment%2C%20clean%20interface%20design%2C%20blue%20and%20white%20color%20scheme&width=400&height=250&seq=news-automation&orientation=landscape",
-      category: "Business Tools",
-      readTime: "7 min read"
-    },
-    {
-      id: 3,
-      title: "The Future of AI in Mobile App Development",
-      date: "January 10, 2025",
-      author: "David Park",
-      excerpt: "Exploring how artificial intelligence is reshaping mobile development practices and user experiences.",
-      fullContent: "Mobile app development is undergoing a transformation with AI integration becoming standard practice. From predictive user interfaces to automated testing, AI is making apps smarter and development faster.",
-      image: "https://readdy.ai/api/search-image?query=Mobile%20app%20development%20with%20AI%20integration%2C%20smartphone%20interface%20design%2C%20modern%20coding%20environment%2C%20futuristic%20mobile%20technology%2C%20clean%20professional%20workspace%2C%20blue%20and%20orange%20accents&width=400&height=250&seq=news-mobile&orientation=landscape",
-      category: "Mobile Development",
-      readTime: "6 min read"
-    },
-    {
-      id: 4,
-      title: "Machine Learning Models: Performance Optimization Strategies",
-      date: "January 8, 2025",
-      author: "Dr. Rachel Kim",
-      excerpt: "Advanced techniques for improving ML model efficiency and reducing computational costs in production environments.",
-      fullContent: "As machine learning models become more complex, optimization becomes crucial for production deployment. This comprehensive guide covers the latest strategies for improving model performance while reducing costs.",
-      image: "https://readdy.ai/api/search-image?query=Machine%20learning%20optimization%20dashboard%20with%20performance%20metrics%2C%20neural%20network%20diagrams%2C%20computational%20graphs%2C%20professional%20data%20science%20environment%2C%20modern%20tech%20interface%2C%20blue%20and%20orange%20color%20scheme&width=400&height=250&seq=news-ml&orientation=landscape",
-      category: "Machine Learning",
-      readTime: "8 min read"
-    },
-    {
-      id: 5,
-      title: "Blockchain Integration in Modern Web Applications",
-      date: "January 5, 2025",
-      author: "Michael Chen",
-      excerpt: "How blockchain technology is being seamlessly integrated into everyday web applications for enhanced security and transparency.",
-      fullContent: "Blockchain technology is moving beyond cryptocurrency into mainstream web applications. From secure authentication to transparent data management, developers are finding innovative ways to leverage blockchain.",
-      image: "https://readdy.ai/api/search-image?query=Blockchain%20technology%20integration%20in%20web%20applications%2C%20modern%20cryptocurrency%20interface%2C%20secure%20digital%20transactions%2C%20professional%20fintech%20environment%2C%20clean%20blockchain%20visualization%2C%20blue%20and%20orange%20accents&width=400&height=250&seq=news-blockchain&orientation=landscape",
-      category: "Blockchain",
-      readTime: "9 min read"
-    },
-    {
-      id: 6,
-      title: "Cloud Computing Trends: Serverless Architecture Revolution",
-      date: "January 3, 2025",
-      author: "Jennifer Walsh",
-      excerpt: "The shift towards serverless computing is transforming how developers build and deploy scalable applications.",
-      fullContent: "Serverless architecture is revolutionizing cloud computing by eliminating server management overhead. Developers can now focus purely on code while cloud providers handle infrastructure scaling automatically.",
-      image: "https://readdy.ai/api/search-image?query=Serverless%20cloud%20computing%20architecture%20diagram%2C%20modern%20cloud%20infrastructure%20visualization%2C%20scalable%20application%20deployment%2C%20professional%20cloud%20technology%20environment%2C%20clean%20interface%20design%2C%20blue%20and%20white%20color%20scheme&width=400&height=250&seq=news-serverless&orientation=landscape",
-      category: "Cloud Computing",
-      readTime: "6 min read"
-    }
-  ]);
 
-  const featuredArticle = articles[currentIndex];
-  const sideArticles = articles.slice(currentIndex + 1, currentIndex + 3).concat(
-    articles.slice(0, Math.max(0, (currentIndex + 3) - articles.length))
+  const { data: section } = useQuery({
+    queryKey: ['page-section', 'home', 'news'],
+    queryFn: () => siteContentApi.section('home', 'news'),
+  });
+
+  const { data: articles = [], isLoading } = useQuery({
+    queryKey: ['blogs', 'news-section'],
+    queryFn: () => blogsApi.list({ limit: 6 }),
+  });
+
+  if (isLoading) return (
+    <section className="py-20 bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[...Array(3)].map((_, i) => <div key={i} className="h-64 bg-gray-200 rounded-3xl animate-pulse" />)}
+        </div>
+      </div>
+    </section>
   );
 
-  const handleTransition = (newIndex: number) => {
-    if (newIndex === currentIndex || isTransitioning) return;
-    
-    setIsTransitioning(true);
-    setTimeout(() => {
-      setCurrentIndex(newIndex);
-      setTimeout(() => {
-        setIsTransitioning(false);
-      }, 50);
-    }, 150);
-  };
+  if (articles.length === 0) return null;
 
-  const handlePrevious = () => {
-    const newIndex = currentIndex === 0 ? articles.length - 1 : currentIndex - 1;
-    handleTransition(newIndex);
-  };
+  const featured = (articles as BlogPost[])[currentIndex];
+  const rest = (articles as BlogPost[]).filter((_, i) => i !== currentIndex).slice(0, 2);
 
-  const handleNext = () => {
-    const newIndex = currentIndex === articles.length - 1 ? 0 : currentIndex + 1;
-    handleTransition(newIndex);
-  };
-
-  const handleSideArticleClick = (article: NewsArticle) => {
-    const newIndex = articles.findIndex(a => a.id === article.id);
-    if (newIndex !== -1) {
-      handleTransition(newIndex);
-    }
-  };
+  const prev = () => setCurrentIndex(i => (i - 1 + articles.length) % articles.length);
+  const next = () => setCurrentIndex(i => (i + 1) % articles.length);
 
   return (
-    <section className="py-12 bg-gradient-to-br from-[#f7f5ef] to-white">
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl md:text-4xl font-bold text-[#1F2853] mb-4" style={{ fontFamily: 'Manrope, sans-serif' }}>
-            Latest in AI & App Development
-          </h2>
+    <section className="py-20 bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        {/* Header */}
+        <div className="flex items-end justify-between mb-10">
+          <div>
+            <h2 className="text-3xl md:text-4xl font-bold text-[#1F2853] font-['Manrope']">
+              {section?.title ?? 'Latest News & Insights'}
+            </h2>
+            {section?.subtitle && <p className="text-gray-400 mt-2 text-sm">{section.subtitle}</p>}
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={prev}
+              className="w-9 h-9 rounded-full border border-gray-200 bg-white flex items-center justify-center hover:bg-[#1F2853] hover:text-white hover:border-[#1F2853] transition-colors">
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button onClick={next}
+              className="w-9 h-9 rounded-full border border-gray-200 bg-white flex items-center justify-center hover:bg-[#1F2853] hover:text-white hover:border-[#1F2853] transition-colors">
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
-        <div className="relative max-w-6xl mx-auto">
-          {/* Left Navigation Button */}
-          <button 
-            onClick={handlePrevious}
-            disabled={isTransitioning}
-            className="absolute left-[-80px] top-1/2 transform -translate-y-1/2 z-20 w-12 h-12 bg-[#1F2853] text-white rounded-full flex items-center justify-center hover:bg-[#f25a1a] transition-all duration-300 shadow-lg disabled:opacity-50"
-          >
-            <div className="w-5 h-5 flex items-center justify-center">
-              <i className="ri-arrow-left-line text-lg"></i>
-            </div>
-          </button>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-          {/* Right Navigation Button */}
-          <button 
-            onClick={handleNext}
-            disabled={isTransitioning}
-            className="absolute right-[-80px] top-1/2 transform -translate-y-1/2 z-20 w-12 h-12 bg-[#1F2853] text-white rounded-full flex items-center justify-center hover:bg-[#f25a1a] transition-all duration-300 shadow-lg disabled:opacity-50"
-          >
-            <div className="w-5 h-5 flex items-center justify-center">
-              <i className="ri-arrow-right-line text-lg"></i>
-            </div>
-          </button>
-
-          {/* Articles Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[380px]">
-            {/* Featured Article - Left Column (2/3 width) */}
-            <div className="lg:col-span-2">
-              <article className={`bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group cursor-pointer h-full ${isTransitioning ? 'opacity-50 scale-95' : 'opacity-100 scale-100'}`}>
-                <div className="relative overflow-hidden h-[200px]">
-                  <img 
-                    src={featuredArticle.image}
-                    alt={featuredArticle.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute top-4 left-4">
-                    <span className="bg-[#f25a1a] text-white px-3 py-1 rounded-full text-sm font-medium">
-                      Featured
-                    </span>
-                  </div>
-                  <div className="absolute top-4 right-4">
-                    <span className="bg-white/90 text-[#1F2853] px-3 py-1 rounded-full text-sm font-medium">
-                      {featuredArticle.category}
-                    </span>
-                  </div>
-                </div>
-                
-                <div className="p-6 h-[180px] flex flex-col justify-between">
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold text-[#1F2853] mb-2 group-hover:text-[#f25a1a] transition-colors leading-tight line-clamp-2" style={{ fontFamily: 'Manrope, sans-serif' }}>
-                      {featuredArticle.title}
-                    </h3>
-                    
-                    <div className="flex items-center text-sm text-gray-600 mb-2 space-x-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                      <span>{featuredArticle.date}</span>
-                      <span>•</span>
-                      <span>By {featuredArticle.author}</span>
-                      <span>•</span>
-                      <span>{featuredArticle.readTime}</span>
-                    </div>
-                    
-                    <p className="text-gray-700 text-sm leading-relaxed line-clamp-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                      {featuredArticle.excerpt}
-                    </p>
-                  </div>
-                  
-                  <div className="flex items-center text-[#ffcee0] font-medium text-sm hover:text-[#f25a1a] transition-colors cursor-pointer" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                    Read Full Article
-                    <div className="w-4 h-4 flex items-center justify-center ml-2">
-                      <i className="ri-arrow-right-line"></i>
-                    </div>
-                  </div>
-                </div>
-              </article>
-            </div>
-
-            {/* Side Articles - Right Column (1/3 width) */}
-            <div className="lg:col-span-1 flex flex-col gap-4 h-full">
-              {sideArticles.map((article) => (
-                <article 
-                  key={article.id} 
-                  onClick={() => handleSideArticleClick(article)}
-                  className={`bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group cursor-pointer h-[180px] ${isTransitioning ? 'opacity-50' : 'opacity-100'}`}
-                >
-                  <div className="h-full flex flex-col">
-                    <div className="relative overflow-hidden h-[90px]">
-                      <img 
-                        src={article.image}
-                        alt={article.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                      <div className="absolute top-2 left-2">
-                        <span className="bg-[#f25a1a] text-white px-2 py-1 rounded-full text-xs font-medium">
-                          {article.category}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <div className="p-4 h-[90px] flex flex-col justify-between">
-                      <div className="flex-1">
-                        <h4 className="text-sm font-bold text-[#1F2853] mb-1 group-hover:text-[#f25a1a] transition-colors leading-tight line-clamp-2" style={{ fontFamily: 'Manrope, sans-serif' }}>
-                          {article.title}
-                        </h4>
-                        
-                        <div className="flex items-center text-xs text-gray-600 mb-1 space-x-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                          <span>{article.date}</span>
-                          <span>•</span>
-                          <span>{article.readTime}</span>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center text-[#ffcee0] font-medium text-xs hover:text-[#f25a1a] transition-colors cursor-pointer" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                        Read More
-                        <div className="w-3 h-3 flex items-center justify-center ml-1">
-                          <i className="ri-arrow-right-line"></i>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </article>
-              ))}
-              
-              {/* View All Articles Button */}
-              <div className="mt-2">
-                <button className="w-full bg-gradient-to-r from-[#1F2853] to-[#2a3a6b] text-white py-2 px-4 rounded-lg font-semibold hover:shadow-lg hover:scale-105 transition-all duration-300 whitespace-nowrap text-sm" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                  View All Articles
-                  <div className="w-4 h-4 inline-flex items-center justify-center ml-2">
-                    <i className="ri-external-link-line"></i>
-                  </div>
-                </button>
+          {/* Featured article */}
+          <div className="lg:col-span-7">
+            <Link to={`/blog/${featured.slug}`} className="block group h-full">
+              <div className="relative rounded-3xl overflow-hidden aspect-[16/9] mb-5 bg-gray-200">
+                {featured.hero_image_url
+                  ? <img src={featured.hero_image_url} alt={featured.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  : <div className="w-full h-full bg-gradient-to-br from-[#1F2853] to-[#f25a1a]" />
+                }
+                {featured.category && (
+                  <span className="absolute top-4 left-4 bg-[#f25a1a] text-white text-xs font-bold px-3 py-1 rounded-full">
+                    {featured.category}
+                  </span>
+                )}
               </div>
-            </div>
+              <h3 className="text-xl font-bold text-[#1F2853] group-hover:text-[#f25a1a] transition-colors mb-2 leading-snug font-['Manrope']">
+                {featured.title}
+              </h3>
+              {featured.excerpt && (
+                <p className="text-gray-500 text-sm leading-relaxed line-clamp-2">{featured.excerpt}</p>
+              )}
+              <div className="flex items-center gap-3 mt-3 text-xs text-gray-400">
+                {featured.published_date && (
+                  <span>{new Date(featured.published_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                )}
+                {featured.read_time_minutes && (
+                  <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {featured.read_time_minutes} min</span>
+                )}
+              </div>
+            </Link>
           </div>
 
-          {/* Article Navigation Indicators */}
-          <div className="flex justify-center mt-6 space-x-2">
-            {articles.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => handleTransition(index)}
-                disabled={isTransitioning}
-                className={`w-3 h-3 rounded-full transition-all duration-300 disabled:opacity-50 ${
-                  index === currentIndex 
-                    ? 'bg-[#f25a1a] scale-110' 
-                    : 'bg-gray-300 hover:bg-gray-400'
-                }`}
-              />
+          {/* Side articles */}
+          <div className="lg:col-span-5 space-y-5">
+            {rest.map((article: BlogPost) => (
+              <Link key={article.id} to={`/blog/${article.slug}`} className="flex gap-4 group">
+                <div className="w-24 h-24 rounded-2xl overflow-hidden bg-gray-200 shrink-0">
+                  {article.hero_image_url
+                    ? <img src={article.hero_image_url} alt={article.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                    : <div className="w-full h-full bg-gradient-to-br from-[#1F2853]/20 to-[#f25a1a]/20" />
+                  }
+                </div>
+                <div className="flex-1 min-w-0">
+                  {article.category && (
+                    <span className="text-[10px] font-bold text-[#f25a1a] uppercase tracking-wider">{article.category}</span>
+                  )}
+                  <h4 className="font-bold text-[#1F2853] text-sm group-hover:text-[#f25a1a] transition-colors line-clamp-2 mt-0.5 leading-snug">
+                    {article.title}
+                  </h4>
+                  <div className="flex items-center gap-2 mt-2 text-xs text-gray-400">
+                    {article.published_date && (
+                      <span>{new Date(article.published_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                    )}
+                    {article.read_time_minutes && (
+                      <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {article.read_time_minutes}m</span>
+                    )}
+                  </div>
+                </div>
+              </Link>
             ))}
+
+            <Link to="/resource-centre/blogs"
+              className="flex items-center gap-2 text-sm font-semibold text-[#1F2853] hover:text-[#f25a1a] transition-colors pt-2">
+              View All Articles <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
         </div>
       </div>

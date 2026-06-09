@@ -1,3 +1,6 @@
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../../lib/api';
+
 interface DirectoryFiltersProps {
   searchTerm: string;
   setSearchTerm: (term: string) => void;
@@ -29,6 +32,15 @@ export default function DirectoryFilters({
   pricingOptions,
   totalResults
 }: DirectoryFiltersProps) {
+  const { data: section } = useQuery({
+    queryKey: ['page-section', 'directory', 'filters'],
+    queryFn: () => siteContentApi.section('directory', 'filters'),
+  });
+
+  const c = section?.content as Record<string, string> | undefined;
+  const searchPlaceholder = c?.search_placeholder ?? 'Search apps, categories, or features...';
+  const resultsSuffix = c?.results_suffix ?? 'results';
+
   return (
     <section className="py-6 sm:py-8 bg-gray-50 border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -40,7 +52,7 @@ export default function DirectoryFilters({
             </div>
             <input
               type="text"
-              placeholder="Search apps, categories, or features..."
+              placeholder={searchPlaceholder}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-11 sm:pl-12 pr-4 py-3 sm:py-4 text-base sm:text-lg border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#1F2853] focus:border-transparent outline-none transition-all duration-300 font-poppins"
@@ -61,7 +73,7 @@ export default function DirectoryFilters({
               >
                 {categories.map(category => (
                   <option key={category} value={category}>
-                    {category === 'All' ? 'All Categories' : category}
+                    {category === 'All' ? (c?.category_label ?? 'All Categories') : category}
                   </option>
                 ))}
               </select>
@@ -79,7 +91,7 @@ export default function DirectoryFilters({
               >
                 {pricingOptions.map(pricing => (
                   <option key={pricing} value={pricing}>
-                    {pricing === 'All' ? 'All Pricing' : pricing}
+                    {pricing === 'All' ? (c?.pricing_label ?? 'All Pricing') : pricing}
                   </option>
                 ))}
               </select>
@@ -95,10 +107,10 @@ export default function DirectoryFilters({
                 onChange={(e) => setSortBy(e.target.value)}
                 className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2.5 pr-8 text-sm font-medium text-gray-700 hover:border-gray-400 focus:ring-2 focus:ring-[#1F2853] focus:border-transparent outline-none transition-all duration-300 cursor-pointer font-poppins"
               >
-                <option value="rating">Sort by Rating</option>
-                <option value="reviews">Sort by Reviews</option>
-                <option value="name">Sort by Name</option>
-                <option value="featured">Sort by Featured</option>
+                <option value="rating">{c?.sort_rating ?? 'Sort by Rating'}</option>
+                <option value="reviews">{c?.sort_reviews ?? 'Sort by Reviews'}</option>
+                <option value="name">{c?.sort_name ?? 'Sort by Name'}</option>
+                <option value="featured">{c?.sort_featured ?? 'Sort by Featured'}</option>
               </select>
               <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
                 <i className="ri-arrow-down-s-line text-gray-400"></i>
@@ -109,7 +121,7 @@ export default function DirectoryFilters({
           {/* View Controls and Results */}
           <div className="flex items-center justify-between lg:justify-start gap-3 sm:gap-4 w-full lg:w-auto">
             <span className="text-sm text-gray-600 font-medium font-poppins whitespace-nowrap">
-              {totalResults} results
+              {totalResults} {resultsSuffix}
             </span>
             
             {/* View Mode Toggle */}

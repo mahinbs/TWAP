@@ -1,190 +1,143 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../lib/api';
 
-export default function StatsSection() {
+interface StatRow { label: string; value: string }
+
+// Parse "85%" → 85, "12K+" → 12000, "4.8★" → 4.8
+function parseStatNumber(s: string): number {
+  if (!s) return 0;
+  const cleaned = s.replace(/[%★+,]/g, '').trim();
+  if (cleaned.toLowerCase().endsWith('k')) return parseFloat(cleaned) * 1000;
+  if (cleaned.toLowerCase().endsWith('m')) return parseFloat(cleaned) * 1_000_000;
+  return parseFloat(cleaned) || 0;
+}
+
+function formatStatNumber(n: number, original: string): string {
+  // Match the original format (% / K / +)
+  if (!original) return String(Math.floor(n));
+  if (original.includes('%')) return `${Math.floor(n)}%`;
+  if (original.toLowerCase().includes('k')) return `${(n / 1000).toFixed(0)}K${original.includes('+') ? '+' : ''}`;
+  if (original.includes('★')) return `${n.toFixed(1)}★`;
+  return `${Math.floor(n)}${original.includes('+') ? '+' : ''}`;
+}
+
+interface StatsSectionProps {
+  page?: string;
+  sectionKey?: string;
+}
+
+export default function StatsSection({ page = 'home', sectionKey }: StatsSectionProps) {
+  const resolvedSection = sectionKey ?? (page === 'tools' ? 'stats' : 'measurable');
   const [isVisible, setIsVisible] = useState(false);
-  const [counters, setCounters] = useState({
-    main: 0,
-    userSat: 0,
-    toolAdopt: 0,
-    activeUsers: 0,
-    premium: 0
-  });
+  const [counters, setCounters] = useState<number[]>([]);
   const sectionRef = useRef<HTMLDivElement>(null);
 
-  // Intersection Observer to detect when component is in view
+  const { data: section } = useQuery({
+    queryKey: ['page-section', page, resolvedSection],
+    queryFn: () => siteContentApi.section(page, resolvedSection),
+  });
+
+  const { data: stats = [] } = useQuery({
+    queryKey: ['stats', page],
+    queryFn: () => siteContentApi.stats(page),
+  });
+
+  // Compute target numbers from DB stats (top 5)
+  const targets = useMemo(
+    () => (stats as StatRow[]).slice(0, 5).map(s => parseStatNumber(s.value)),
+    [stats]
+  );
+
+  // Intersection Observer
   useEffect(() => {
     const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !isVisible) {
-          setIsVisible(true);
-        }
-      },
+      ([entry]) => { if (entry.isIntersecting && !isVisible) setIsVisible(true); },
       { threshold: 0.2 }
     );
-
-    if (sectionRef.current) {
-      observer.observe(sectionRef.current);
-    }
-
-    return () => {
-      if (sectionRef.current) {
-        observer.unobserve(sectionRef.current);
-      }
-    };
+    if (sectionRef.current) observer.observe(sectionRef.current);
+    return () => { if (sectionRef.current) observer.unobserve(sectionRef.current); };
   }, [isVisible]);
 
-  // Counter animation
+  // Animate counters
   useEffect(() => {
-    if (!isVisible) return;
-
-    const targets = {
-      main: 85,
-      userSat: 92,
-      toolAdopt: 78,
-      activeUsers: 65,
-      premium: 42
-    };
-
-    const duration = 2000; // 2 seconds
+    if (!isVisible || targets.length === 0) return;
+    const duration = 2000;
     const steps = 60;
-    const stepDuration = duration / steps;
-
     let currentStep = 0;
-
+    setCounters(targets.map(() => 0));
     const timer = setInterval(() => {
       currentStep++;
-      const progress = currentStep / steps;
-
-      setCounters({
-        main: Math.floor(targets.main * progress),
-        userSat: Math.floor(targets.userSat * progress),
-        toolAdopt: Math.floor(targets.toolAdopt * progress),
-        activeUsers: Math.floor(targets.activeUsers * progress),
-        premium: Math.floor(targets.premium * progress)
-      });
-
+      const progress = Math.min(currentStep / steps, 1);
+      setCounters(targets.map(t => t * progress));
       if (currentStep >= steps) {
         setCounters(targets);
         clearInterval(timer);
       }
-    }, stepDuration);
-
+    }, duration / steps);
     return () => clearInterval(timer);
-  }, [isVisible]);
+  }, [isVisible, targets]);
+
+  const title = section?.title ?? 'Measurable';
+  const statsData = stats as StatRow[];
+
+  if (statsData.length === 0) return null;
+
+  const [main, userSat, toolAdopt, activeUsers, premium] = [
+    counters[0] ?? 0, counters[1] ?? 0, counters[2] ?? 0, counters[3] ?? 0, counters[4] ?? 0,
+  ];
 
   return (
     <section ref={sectionRef} className="py-16 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white rounded-2xl p-8 md:p-12 shadow-sm">
-          <h2 className="text-3xl md:text-4xl font-bold text-brand-dark mb-12">
-            Measurable
-          </h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-[#1F2853] mb-12">{title}</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Main Stat - Platform Growth */}
-            <div className="md:col-span-1">
-              <div className="flex items-center gap-3 mb-4">
-                <h3 className="text-sm font-semibold text-gray-700">Platform Growth</h3>
-                <div className="flex items-center gap-1 text-brand-orange text-sm font-bold">
-                  <i className="ri-arrow-up-circle-fill"></i>
-                  <span>+45%</span>
+            {/* Main stat */}
+            {statsData[0] && (
+              <div className="md:col-span-1">
+                <div className="flex items-center gap-3 mb-4">
+                  <h3 className="text-sm font-semibold text-gray-700">{statsData[0].label}</h3>
+                  <div className="flex items-center gap-1 text-[#f25a1a] text-sm font-bold">
+                    <i className="ri-arrow-up-circle-fill" /><span>+45%</span>
+                  </div>
                 </div>
+                <div className="h-1 bg-[#f25a1a]/10 rounded-full mb-6">
+                  <div className="h-full bg-[#f25a1a] rounded-full transition-all duration-1000"
+                       style={{ width: `${isVisible ? 75 : 0}%` }} />
+                </div>
+                <div className="text-6xl md:text-7xl font-bold text-[#1F2853] mb-4">
+                  {formatStatNumber(main, statsData[0].value)}
+                </div>
+                <p className="text-sm text-gray-500 leading-relaxed">
+                  {section?.description ?? 'Regular updates and new tools — the best way to grow your platform success rate.'}
+                </p>
               </div>
-              <div className="h-1 bg-brand-orange/10 rounded-full mb-6">
-                <div
-                  className="h-full bg-brand-orange rounded-full transition-all duration-2000 ease-out"
-                  style={{ width: `${isVisible ? (counters.main / 85) * 75 : 0}%` }}
-                ></div>
-              </div>
-              <div className="text-6xl md:text-7xl font-bold text-brand-dark mb-4">
-                {counters.main}%
-              </div>
-              <p className="text-sm text-gray-500 leading-relaxed">
-                Regular updates and new tools best way to grow platform <span className="text-brand-orange font-semibold">Success Rate</span>. It also helps us understand your team's needs and improve the accuracy of recommendations.
-              </p>
-            </div>
+            )}
 
-            {/* Stats Grid - Right Side */}
+            {/* 4-stat grid */}
             <div className="md:col-span-2 grid md:grid-cols-2 gap-6">
-              {/* User Satisfaction */}
-              <div>
-                <div className="flex items-center gap-3 mb-3">
-                  <h3 className="text-sm font-semibold text-gray-700">User Satisfaction</h3>
-                  <div className="flex items-center gap-1 text-brand-lime text-sm font-bold">
-                    <i className="ri-arrow-up-circle-fill"></i>
-                    <span>+32%</span>
+              {statsData.slice(1, 5).map((stat, i) => {
+                const value = [userSat, toolAdopt, activeUsers, premium][i];
+                const colors = ['#c6f135', '#22c55e', '#3b82f6', '#8b5cf6'];
+                return (
+                  <div key={stat.label}>
+                    <div className="flex items-center gap-3 mb-3">
+                      <h3 className="text-sm font-semibold text-gray-700">{stat.label}</h3>
+                    </div>
+                    <div className="h-1 rounded-full mb-4" style={{ background: `${colors[i]}1A` }}>
+                      <div
+                        className="h-full rounded-full transition-all duration-1000"
+                        style={{ width: `${isVisible ? Math.min(parseStatNumber(stat.value), 100) : 0}%`, background: colors[i] }}
+                      />
+                    </div>
+                    <div className="text-4xl md:text-5xl font-bold text-[#1F2853]">
+                      {formatStatNumber(value, stat.value)}
+                    </div>
                   </div>
-                </div>
-                <div className="h-1 bg-brand-lime/10 rounded-full mb-4">
-                  <div
-                    className="h-full bg-brand-lime rounded-full transition-all duration-2000 ease-out"
-                    style={{ width: `${isVisible ? counters.userSat : 0}%` }}
-                  ></div>
-                </div>
-                <div className="text-4xl md:text-5xl font-bold text-brand-dark">
-                  {counters.userSat}%
-                </div>
-              </div>
-
-              {/* Tool Adoption */}
-              <div>
-                <div className="flex items-center gap-3 mb-3">
-                  <h3 className="text-sm font-semibold text-gray-700">Tool Adoption</h3>
-                  <div className="flex items-center gap-1 text-green-500 text-sm font-bold">
-                    <i className="ri-arrow-up-circle-fill"></i>
-                    <span>+18%</span>
-                  </div>
-                </div>
-                <div className="h-1 bg-brand-lime/10 rounded-full mb-4">
-                  <div
-                    className="h-full bg-brand-lime rounded-full transition-all duration-2000 ease-out"
-                    style={{ width: `${isVisible ? counters.toolAdopt : 0}%` }}
-                  ></div>
-                </div>
-                <div className="text-4xl md:text-5xl font-bold text-brand-dark">
-                  {counters.toolAdopt}%
-                </div>
-              </div>
-
-              {/* Active Users */}
-              <div>
-                <div className="flex items-center gap-3 mb-3">
-                  <h3 className="text-sm font-semibold text-gray-700">Active Users</h3>
-                  <div className="flex items-center gap-1 text-pink-400 text-sm font-bold">
-                    <i className="ri-arrow-down-circle-fill"></i>
-                    <span>-2%</span>
-                  </div>
-                </div>
-                <div className="h-1 bg-brand-burgundy/10 rounded-full mb-4">
-                  <div
-                    className="h-full bg-brand-burgundy rounded-full transition-all duration-2000 ease-out"
-                    style={{ width: `${isVisible ? counters.activeUsers : 0}%` }}
-                  ></div>
-                </div>
-                <div className="text-4xl md:text-5xl font-bold text-brand-dark">
-                  {counters.activeUsers}%
-                </div>
-              </div>
-
-              {/* Premium Conversion */}
-              <div>
-                <div className="flex items-center gap-3 mb-3">
-                  <h3 className="text-sm font-semibold text-gray-700">Premium Conversion</h3>
-                  <div className="flex items-center gap-1 text-brand-dark text-sm font-bold">
-                    <i className="ri-arrow-up-circle-fill"></i>
-                    <span>+15%</span>
-                  </div>
-                </div>
-                <div className="h-1 bg-brand-dark/10 rounded-full mb-4">
-                  <div
-                    className="h-full bg-brand-dark rounded-full transition-all duration-2000 ease-out"
-                    style={{ width: `${isVisible ? counters.premium : 0}%` }}
-                  ></div>
-                </div>
-                <div className="text-4xl md:text-5xl font-bold text-brand-dark">
-                  {counters.premium}%
-                </div>
-              </div>
+                );
+              })}
             </div>
           </div>
         </div>

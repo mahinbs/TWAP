@@ -1,12 +1,19 @@
 export type PromoteCategoryTheme = {
   key: string;
   viewingLabel: string;
+  viewingPrefix: string;
+  switchCategoryText: string;
   topBarBg: string;
   accent: string;
   accentSoft: string;
   badgeText: string;
   title: string;
   description: string;
+  heroImageUrl?: string;
+  primaryCtaText: string;
+  primaryCtaUrl: string;
+  secondaryCtaText: string;
+  secondaryCtaUrl: string;
 };
 
 type Metric = {
@@ -28,7 +35,13 @@ export default function PromoteCategoryHero({ theme, metrics }: PromoteCategoryH
       />
 
       <section className="px-4 sm:px-6 lg:px-8 py-10 relative z-10">
-        <div className="max-w-5xl mx-auto text-center">
+        <div className={`max-w-5xl mx-auto text-center ${theme.heroImageUrl ? 'lg:grid lg:grid-cols-2 lg:gap-12 lg:text-left lg:items-center' : ''}`}>
+          {theme.heroImageUrl && (
+            <div className="hidden lg:block order-2">
+              <img src={theme.heroImageUrl} alt="" className="rounded-3xl shadow-2xl w-full object-cover aspect-[4/3]" />
+            </div>
+          )}
+          <div className={theme.heroImageUrl ? 'order-1' : ''}>
           <span
             className="inline-flex rounded-full border px-4 py-1.5 text-[10px] sm:text-xs uppercase tracking-wide font-semibold"
             style={{
@@ -57,16 +70,21 @@ export default function PromoteCategoryHero({ theme, metrics }: PromoteCategoryH
             ))}
           </div>
 
-          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
-            <button
-              className="w-full sm:w-auto rounded-full px-6 py-3 text-sm font-semibold text-white transition-opacity"
+          <div className={`mt-10 flex flex-col sm:flex-row items-center gap-3 ${theme.heroImageUrl ? 'lg:justify-start' : 'justify-center'}`}>
+            <a
+              href={theme.primaryCtaUrl}
+              className="w-full sm:w-auto rounded-full px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90 text-center"
               style={{ backgroundColor: theme.topBarBg }}
             >
-              Submit Your Product <i className="ri-arrow-right-line ml-1"></i>
-            </button>
-            <button className="w-full sm:w-auto rounded-full px-6 py-3 text-sm font-semibold border border-white/20 text-white hover:bg-white/5 transition-colors">
-              See What&apos;s Included
-            </button>
+              {theme.primaryCtaText} <i className="ri-arrow-right-line ml-1"></i>
+            </a>
+            <a
+              href={theme.secondaryCtaUrl}
+              className="w-full sm:w-auto rounded-full px-6 py-3 text-sm font-semibold border border-white/20 text-white hover:bg-white/5 transition-colors text-center"
+            >
+              {theme.secondaryCtaText}
+            </a>
+          </div>
           </div>
         </div>
       </section>

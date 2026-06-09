@@ -266,3 +266,15 @@
 .animate-scan-line {
   animation: scan-line 4s linear infinite;
 }
+
+/* Rich HTML content from CMS */
+.rich-content h1 { @apply text-3xl font-bold mb-4; }
+.rich-content h2 { @apply text-2xl font-bold mb-3; }
+.rich-content h3 { @apply text-xl font-semibold mb-2; }
+.rich-content p { @apply mb-3; }
+.rich-content ul { @apply list-disc pl-6 mb-3; }
+.rich-content ol { @apply list-decimal pl-6 mb-3; }
+.rich-content mark { @apply bg-yellow-200 px-0.5 rounded; }
+.rich-content strong { @apply font-bold; }
+.rich-content em { @apply italic; }
+.rich-content u { @apply underline; }

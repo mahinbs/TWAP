@@ -1,9 +1,30 @@
 import { useEffect, useRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../../lib/api';
+
+interface StatItem { icon: string; label: string; color: string }
+
+const DEFAULT_STATS: StatItem[] = [
+  { icon: 'ri-apps-line', label: '500+ Apps Listed', color: 'text-brand-orange' },
+  { icon: 'ri-star-line', label: '10,000+ Reviews', color: 'text-brand-lime' },
+  { icon: 'ri-user-line', label: '50,000+ Users', color: 'text-white' },
+];
 
 export default function DirectoryHero() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Canvas Particle Animation Logic from AIHero
+  const { data: section } = useQuery({
+    queryKey: ['page-section', 'directory', 'hero'],
+    queryFn: () => siteContentApi.section('directory', 'hero'),
+  });
+
+  const c = section?.content as Record<string, unknown> | undefined;
+  const badge = section?.badge_text ?? 'DISCOVERY HUB';
+  const titlePart1 = (c?.title_part1 as string) ?? 'App';
+  const titlePart2 = (c?.title_part2 as string) ?? 'Directory';
+  const description = section?.description ?? 'Discover the best AI-powered tools and applications. Compare features, read reviews, and find the perfect solution.';
+  const stats = (Array.isArray(c?.stats) ? c.stats : DEFAULT_STATS) as StatItem[];
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -100,43 +121,44 @@ export default function DirectoryHero() {
 
   return (
     <section className="relative w-full min-h-screen bg-black overflow-hidden flex items-center justify-center">
-      {/* Canvas Background */}
-      <canvas
-        ref={canvasRef}
-        className="absolute inset-0 w-full h-full z-0 opacity-40 pointer-events-none"
-      />
+      {section?.media_url && (
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-30 z-0"
+          style={{ backgroundImage: `url(${section.media_url})` }}
+        />
+      )}
+      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full z-0 opacity-40 pointer-events-none" />
 
-      {/* Background Gradients */}
       <div className="absolute top-0 left-0 w-full h-full z-0">
-        <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-brand-burgundy/30 rounded-full blur-[120px] animate-blob"></div>
-        <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-brand-dark/40 rounded-full blur-[120px] animate-blob-reverse animation-delay-2000"></div>
-        <div className="absolute top-[40%] left-[60%] w-[300px] h-[300px] bg-brand-orange/20 rounded-full blur-[80px] animate-float-large animation-delay-4000"></div>
+        <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-brand-burgundy/30 rounded-full blur-[120px] animate-blob" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-brand-dark/40 rounded-full blur-[120px] animate-blob-reverse animation-delay-2000" />
+        <div className="absolute top-[40%] left-[60%] w-[300px] h-[300px] bg-brand-orange/20 rounded-full blur-[80px] animate-float-large animation-delay-4000" />
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 text-center">
-        <div className="inline-block px-4 py-2 rounded-full border border-gray-700 bg-white/5 backdrop-blur-sm text-gray-300 text-sm mb-6 tracking-widest uppercase">
-          Discovery Hub
-        </div>
+        {badge && (
+          <div className="inline-block px-4 py-2 rounded-full border border-gray-700 bg-white/5 backdrop-blur-sm text-gray-300 text-sm mb-6 tracking-widest uppercase">
+            {badge}
+          </div>
+        )}
 
         <h1 className="text-5xl md:text-7xl font-bold text-white mb-8 tracking-tight leading-tight">
-          App <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-orange via-white to-brand-lime">Directory</span>
+          {titlePart1}{' '}
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-orange via-white to-brand-lime">
+            {titlePart2}
+          </span>
         </h1>
-        
+
         <p className="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed mb-10">
-          Discover the best AI-powered tools and applications. <br className="hidden md:block" /> 
-          Compare features, read reviews, and find the perfect solution.
+          {description}
         </p>
-        
+
         <div className="flex flex-wrap gap-4 justify-center items-center">
-          {[
-            { icon: "ri-apps-line", label: "500+ Apps Listed", color: "text-brand-orange" },
-            { icon: "ri-star-line", label: "10,000+ Reviews", color: "text-brand-lime" },
-            { icon: "ri-user-line", label: "50,000+ Users", color: "text-white" }
-          ].map((stat, i) => (
+          {stats.map((stat, i) => (
             <div key={i} className="group bg-white/5 backdrop-blur-md rounded-2xl px-6 py-4 border border-gray-700 hover:border-gray-500 transition-all hover:-translate-y-1">
               <span className="flex items-center gap-3 text-white font-bold text-sm">
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center bg-white/10 group-hover:bg-white/20 transition-colors`}>
-                    <i className={`${stat.icon} ${stat.color} text-lg`}></i>
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/10 group-hover:bg-white/20 transition-colors">
+                  <i className={`${stat.icon} ${stat.color} text-lg`} />
                 </div>
                 {stat.label}
               </span>

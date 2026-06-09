@@ -1,6 +1,23 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { siteContentApi } from "../../lib/api";
 
 export default function AIAutomationServices() {
+  const { data: section } = useQuery({
+    queryKey: ['page-section', 'home', 'ai_automation'],
+    queryFn: () => siteContentApi.section('home', 'ai_automation'),
+  });
+  const c = section?.content as Record<string, unknown> | undefined;
+  const sectionTitle = section?.title ?? 'How AI Automation is reshaping business solutions';
+  const sectionDesc  = section?.description ?? 'Discover how leading businesses use AI automation to scale, save time, and boost ROI.';
+  const tags = Array.isArray(c?.tags) ? (c.tags as string[]) : ['Performance', 'Efficiency', 'Scalability', 'Integration'];
+  const concepts = Array.isArray(c?.concepts) ? (c.concepts as string[]) : ['Automation', 'Efficiency', 'Data', 'Innovation'];
+  const rightTitle = (c?.right_title as string) ?? 'The Future Forged in Precision.';
+  const rightDesc  = (c?.right_description as string) ?? 'By merging AI technology with innovation, businesses are unlocking smarter solutions that reduce costs, enhance performance, and shape the future of automation.';
+  const namePlaceholder  = (c?.form_name_placeholder as string) ?? 'Your Name';
+  const emailPlaceholder = (c?.form_email_placeholder as string) ?? 'Your Email';
+  const submitText       = (c?.form_submit_text as string) ?? 'Start Automation';
+  const submittingText   = (c?.form_submitting_text as string) ?? 'Submitting...';
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -49,7 +66,7 @@ export default function AIAutomationServices() {
     }
   };
 
-  const [selectedConcept, setSelectedConcept] = useState("Automation");
+  const [selectedConcept, setSelectedConcept] = useState(concepts[0] ?? 'Automation');
 
   return (
     <section className="bg-[#f7f5ef] py-16">
@@ -59,49 +76,30 @@ export default function AIAutomationServices() {
           <div className="bg-gray-100 rounded-3xl lg:rounded-l-3xl lg:rounded-r-none sm:p-8 lg:p-12 flex flex-col justify-between reveal-fade-up">
             <div>
               <h2
-                className="text-3xl lg:text-4xl font-bold mb-6"
+                className="text-3xl lg:text-4xl font-bold mb-6 text-[#1F2853]"
                 style={{ fontFamily: "Manrope, sans-serif" }}
               >
-                <span className="text-gray-400">How</span>{" "}
-                <span className="text-[#1F2853]">AI Automation</span> is
-                reshaping business solutions
+                {sectionTitle}
               </h2>
 
               <p
                 className="text-lg text-gray-700 mb-8 leading-relaxed"
                 style={{ fontFamily: "Poppins, sans-serif" }}
               >
-                From advanced automation to cutting-edge AI, intelligent
-                automation is driving a new era of efficiency, reliability, and
-                scalability.
+                {sectionDesc}
               </p>
 
               {/* Pill-shaped Tags */}
               <div className="flex flex-wrap gap-3 mb-8">
-                <span
-                  className="px-4 py-2 bg-white/80 backdrop-blur-sm text-gray-800 rounded-full text-sm font-medium shadow-sm"
-                  style={{ fontFamily: "Poppins, sans-serif" }}
-                >
-                  Performance
-                </span>
-                <span
-                  className="px-4 py-2 bg-white/80 backdrop-blur-sm text-gray-800 rounded-full text-sm font-medium shadow-sm"
-                  style={{ fontFamily: "Poppins, sans-serif" }}
-                >
-                  Efficiency
-                </span>
-                <span
-                  className="px-4 py-2 bg-white/80 backdrop-blur-sm text-gray-800 rounded-full text-sm font-medium shadow-sm"
-                  style={{ fontFamily: "Poppins, sans-serif" }}
-                >
-                  Scalability
-                </span>
-                <span
-                  className="px-4 py-2 bg-white/80 backdrop-blur-sm text-gray-800 rounded-full text-sm font-medium shadow-sm"
-                  style={{ fontFamily: "Poppins, sans-serif" }}
-                >
-                  Integration
-                </span>
+                {tags.map(tag => (
+                  <span
+                    key={tag}
+                    className="px-4 py-2 bg-white/80 backdrop-blur-sm text-gray-800 rounded-full text-sm font-medium shadow-sm"
+                    style={{ fontFamily: "Poppins, sans-serif" }}
+                  >
+                    {tag}
+                  </span>
+                ))}
               </div>
             </div>
 
@@ -117,7 +115,7 @@ export default function AIAutomationServices() {
                   <input
                     type="text"
                     name="name"
-                    placeholder="Your Name"
+                    placeholder={namePlaceholder}
                     value={formData.name}
                     onChange={handleInputChange}
                     required
@@ -127,7 +125,7 @@ export default function AIAutomationServices() {
                   <input
                     type="email"
                     name="email"
-                    placeholder="Your Email"
+                    placeholder={emailPlaceholder}
                     value={formData.email}
                     onChange={handleInputChange}
                     required
@@ -145,7 +143,7 @@ export default function AIAutomationServices() {
                   <div className="w-5 h-5 bg-[#f25a1a] rounded-full flex items-center justify-center group-hover:translate-x-[15rem] group-hover:opacity-0 transition-all duration-1000">
                     <i className="ri-play-fill text-white text-xs"></i>
                   </div>
-                  {isSubmitting ? "Submitting..." : "Start Automation"}
+                  {isSubmitting ? submittingText : submitText}
                 </button>
 
                 {submitStatus && (
@@ -182,16 +180,14 @@ export default function AIAutomationServices() {
                   className="text-3xl lg:text-4xl font-bold text-white mb-6"
                   style={{ fontFamily: "Manrope, sans-serif" }}
                 >
-                  The Future Forged in Precision.
+                  {rightTitle}
                 </h3>
 
                 <p
                   className="text-lg text-white/80 mb-10 leading-relaxed"
                   style={{ fontFamily: "Poppins, sans-serif" }}
                 >
-                  By merging AI technology with innovation, businesses are
-                  unlocking smarter solutions that reduce costs, enhance
-                  performance, and shape the future of automation.
+                  {rightDesc}
                 </p>
 
                 {/* Circular Concept Elements */}
@@ -211,7 +207,7 @@ export default function AIAutomationServices() {
                   </svg>
 
                   <div className="grid grid-cols-2 gap-4 sm:gap-0 sm:flex justify-between items-center relative z-10">
-                    {["Automation", "Efficiency", "Data", "Innovation"].map(
+                    {concepts.map(
                       (concept) => (
                         <button
                           key={concept}

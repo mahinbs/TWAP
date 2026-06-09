@@ -1,57 +1,89 @@
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Navigation } from 'swiper/modules';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { methodologyApi, siteContentApi } from '../../lib/api';
+import type { MethodologyItem } from '../../lib/api';
 
 import 'swiper/css';
 import 'swiper/css/navigation';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const rankingSteps = [
-    {
-        label: "Service Line",
-        points: 50,
-        color: "bg-brand-orange",
-        description: "We analyze your tech stack concentration. Solutions that focus on specific strengths score higher.",
-        highlight: "Specialization = Authority"
-    },
-    {
-        label: "Reviews",
-        points: 15,
-        color: "bg-brand-lime",
-        description: "Verified testimonials from reputable platforms validate your service quality and reliability.",
-        highlight: "Trust = Higher Rank"
-    },
-    {
-        label: "Portfolio",
-        points: 15,
-        color: "bg-brand-orange",
-        description: "Diverse, high-quality case studies demonstrate your ability to deliver complex solutions.",
-        highlight: "Proven Track Record"
-    },
-    {
-        label: "Awards",
-        points: 10,
-        color: "bg-brand-lime",
-        description: "Industry recognition serves as a third-party validation of your excellence and innovation.",
-        highlight: "Credibility Bonus"
-    },
-    {
-        label: "Interviews with TWAP",
-        points: 10,
-        color: "bg-brand-orange",
-        description: "For a higher score, get in touch with The Web App Pro for an interview of the C-suite executive.",
-        highlight: "1 interview = 5 points"
-    }
-];
+type RankStep = { label: string; points: number; color: string; description: string; highlight: string };
+
+function toRankSteps(items: MethodologyItem[]): RankStep[] {
+    return items.map(item => {
+        const e = item.extras ?? {};
+        return {
+            label: item.title,
+            points: Number(e.points) || 0,
+            color: String(e.color ?? 'bg-brand-orange'),
+            description: item.description ?? '',
+            highlight: String(e.highlight ?? ''),
+        };
+    });
+}
 
 const MethodologyProcess = () => {
     const [activeRankIndex, setActiveRankIndex] = useState(0);
     const containerRef = useRef<HTMLDivElement>(null);
     const prevRef = useRef<HTMLDivElement>(null);
     const nextRef = useRef<HTMLDivElement>(null);
+
+    const { data: rankingSection } = useQuery({
+        queryKey: ['page-section', 'methodology', 'ranking'],
+        queryFn: () => siteContentApi.section('methodology', 'ranking'),
+    });
+    const { data: testingSection } = useQuery({
+        queryKey: ['page-section', 'methodology', 'testing'],
+        queryFn: () => siteContentApi.section('methodology', 'testing'),
+    });
+    const { data: editorialSection } = useQuery({
+        queryKey: ['page-section', 'methodology', 'editorial'],
+        queryFn: () => siteContentApi.section('methodology', 'editorial'),
+    });
+    const { data: editorsSection } = useQuery({
+        queryKey: ['page-section', 'methodology', 'editors'],
+        queryFn: () => siteContentApi.section('methodology', 'editors'),
+    });
+
+    const { data: rankingItems = [] } = useQuery({
+        queryKey: ['methodology-items', 'ranking'],
+        queryFn: () => methodologyApi.items('ranking'),
+    });
+    const { data: processItems = [] } = useQuery({
+        queryKey: ['methodology-items', 'process'],
+        queryFn: () => methodologyApi.items('process'),
+    });
+    const { data: sourceItems = [] } = useQuery({
+        queryKey: ['methodology-items', 'sources'],
+        queryFn: () => methodologyApi.items('sources'),
+    });
+    const { data: reviewItems = [] } = useQuery({
+        queryKey: ['methodology-items', 'review'],
+        queryFn: () => methodologyApi.items('review'),
+    });
+    const { data: ratingItems = [] } = useQuery({
+        queryKey: ['methodology-items', 'rating'],
+        queryFn: () => methodologyApi.items('rating'),
+    });
+    const { data: standardItems = [] } = useQuery({
+        queryKey: ['methodology-items', 'standards'],
+        queryFn: () => methodologyApi.items('standards'),
+    });
+    const { data: editorItems = [] } = useQuery({
+        queryKey: ['methodology-items', 'editors'],
+        queryFn: () => methodologyApi.items('editors'),
+    });
+
+    const rankingSteps = useMemo(() => toRankSteps(rankingItems), [rankingItems]);
+
+    const rankC = (rankingSection?.content ?? {}) as Record<string, string>;
+    const testC = (testingSection?.content ?? {}) as Record<string, string>;
+    const editC = (editorialSection?.content ?? {}) as Record<string, string>;
 
     useEffect(() => {
         const ctx = gsap.context(() => {
@@ -112,19 +144,20 @@ const MethodologyProcess = () => {
                         <div className="absolute -top-[20%] -right-[20%] w-[80%] h-[80%] bg-brand-orange rounded-full blur-[120px] opacity-20"></div>
                     </div>
 
-                    <div className="text-xl font-bold tracking-widest border-t-2 border-brand-orange/50 pt-4 text-brand-orange mb-12 relative z-10 w-fit">01</div>
+                    <div className="text-xl font-bold tracking-widest border-t-2 border-brand-orange/50 pt-4 text-brand-orange mb-12 relative z-10 w-fit">{rankingSection?.subtitle ?? '01'}</div>
 
                     <h2 className="c1-title text-5xl md:text-7xl font-bold leading-tight mb-8 relative z-10 text-white">
-                        How Do We<br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-orange to-brand-orange">Rank Solutions?</span>
+                        {rankingSection?.title?.replace(rankC.title_highlight ?? 'Rank Solutions?', '') ?? 'How Do We'}<br />
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-orange to-brand-orange">{rankC.title_highlight ?? 'Rank Solutions?'}</span>
                     </h2>
 
                     <p className="chapter-1-text text-gray-400 text-lg leading-relaxed max-w-md mb-12 relative z-10">
-                        Our selection isn't just about picking popular stacks. It's a rigorous filtration process powered by data science and engineering expertise to identify the perfect architectural fit for your business.
+                        {rankingSection?.description ?? "Our selection isn't just about picking popular stacks. It's a rigorous filtration process powered by data science and engineering expertise to identify the perfect architectural fit for your business."}
                     </p>
 
                     <div className="chapter-1-process-section border-t border-brand-orange/30 pt-8 relative z-10">
-                        <div className="chapter-1-process text-brand-orange font-bold uppercase tracking-widest mb-2">The Web App Pro</div>
-                        <div className="chapter-1-process text-gray-500 text-base">Algorithm to Feature Solutions</div>
+                        <div className="chapter-1-process text-brand-orange font-bold uppercase tracking-widest mb-2">{rankC.footer_brand ?? 'The Web App Pro'}</div>
+                        <div className="chapter-1-process text-gray-500 text-base">{rankC.footer_sub ?? 'Algorithm to Feature Solutions'}</div>
                     </div>
                 </div>
 
@@ -134,7 +167,7 @@ const MethodologyProcess = () => {
                     <div className="grid grid-cols-1 gap-16">
                         {/* Intro Text */}
                         <div>
-                            <h3 className="text-3xl font-bold text-gray-900 mb-6">How Our Algorithm Ranks<br />Tech Stacks (Out of 100 Points)</h3>
+                            <h3 className="text-3xl font-bold text-gray-900 mb-6">{rankC.algorithm_heading ?? 'How Our Algorithm Ranks Tech Stacks (Out of 100 Points)'}</h3>
 
                             {/* Ranking List */}
                             <div className="chapter-1-rank-list space-y-4">
@@ -188,6 +221,7 @@ const MethodologyProcess = () => {
                                     />
                                 </svg>
 
+                                {rankingSteps[activeRankIndex] && (
                                 <div className="text-center z-10 flex flex-col items-center animate-[fadeIn_0.5s_ease-out]" key={activeRankIndex}>
                                     <span className="text-[10px] text-gray-500 uppercase tracking-widest mb-2">{activeRankIndex + 1} of {rankingSteps.length}</span>
                                     <span className="text-base font-bold text-gray-900 uppercase tracking-widest mb-3 max-w-[150px] leading-tight">{rankingSteps[activeRankIndex].label}</span>
@@ -195,17 +229,18 @@ const MethodologyProcess = () => {
                                         {rankingSteps.slice(0, activeRankIndex + 1).reduce((acc, step) => acc + step.points, 0)} points
                                     </span>
                                 </div>
+                                )}
                             </div>
 
+                            {rankingSteps[activeRankIndex] && (
                             <p className="text-center text-base text-gray-600 mt-8 max-w-[250px] leading-relaxed relative z-10 min-h-[60px]">
-                                {rankingSteps[activeRankIndex].description.replace('The Web App Pro', '')}
-                                {rankingSteps[activeRankIndex].label === "Interviews with TWAP" && <span className="text-gray-900 font-bold">The Web App Pro</span>}
-                                {rankingSteps[activeRankIndex].label === "Interviews with TWAP" && " for an interview of the C-suite executive."}
+                                {rankingSteps[activeRankIndex].description}
                                 <br />
                                 <span className={`mt-1 block font-bold ${activeRankIndex % 2 === 0 ? 'text-brand-orange' : 'text-brand-lime'}`}>
                                     {rankingSteps[activeRankIndex].highlight}
                                 </span>
                             </p>
+                            )}
 
                             {/* Nav Buttons */}
                             <div className="flex gap-4 mt-6 relative z-10">
@@ -252,48 +287,21 @@ const MethodologyProcess = () => {
                             <div className="flex justify-center mb-16 relative">
                                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-px bg-gray-200 -z-10"></div>
                                 <div className="bg-brand-orange font-bold px-12 py-4 rounded-full shadow-[0_4px_20px_rgba(220,38,38,0.4)] border border-white/10">
-                                    Here's how the process looks!
+                                    {rankC.process_banner ?? "Here's how the process looks!"}
                                 </div>
                             </div>
 
-                            {/* Step Cards Grid */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
-
-                                {/* Step 1 */}
-                                <div className="c1-process-card bg-white border border-gray-100 p-6 rounded-2xl group hover:-translate-y-2 transition-transform duration-300 shadow-xl shadow-gray-200/50">
-                                    <span className="inline-block px-3 py-1 bg-yellow-400 text-black font-bold rounded-full mb-4">Step - 1</span>
-                                    <h4 className="text-black font-bold text-lg leading-tight mb-3">Signal Collection Begins</h4>
-                                    <p className="text-gray-500 text-base leading-relaxed">
-                                        As soon as a project enters our ecosystem, our algorithm kicks into gear. It begins tracking publicly available data, repository activity, and performance indicators across five core dimensions.
-                                    </p>
-                                </div>
-
-                                {/* Step 2 */}
-                                <div className="bg-white p-6 rounded-2xl group hover:-translate-y-2 transition-transform duration-300 delay-100">
-                                    <span className="inline-block px-3 py-1 bg-yellow-400 text-black font-bold rounded-full mb-4">Step - 2</span>
-                                    <h4 className="text-black font-bold text-lg leading-tight mb-3">Architectural Analysis</h4>
-                                    <p className="text-gray-500 text-base leading-relaxed">
-                                        Our system analyzes your code structure and service concentration. Solutions that double down on what they do best score higher. No fluff, no diluted offerings.
-                                    </p>
-                                </div>
-
-                                {/* Step 3 */}
-                                <div className="bg-white p-6 rounded-2xl group hover:-translate-y-2 transition-transform duration-300 delay-200">
-                                    <span className="inline-block px-3 py-1 bg-yellow-400 text-black font-bold rounded-full mb-4">Step - 3</span>
-                                    <h4 className="text-black font-bold text-lg leading-tight mb-3">Velocity & Impact Check</h4>
-                                    <p className="text-gray-500 text-base leading-relaxed">
-                                        We don't just count commits; we measure impact. Our algorithm tracks release frequency, issue resolution time, and community engagement to gauge real-world momentum.
-                                    </p>
-                                </div>
-
-                                <div className="c1-process-card bg-white border border-gray-100 p-6 rounded-2xl group hover:-translate-y-2 transition-transform duration-300 delay-300 shadow-xl shadow-gray-200/50">
-                                    <span className="inline-block px-3 py-1 bg-yellow-400 text-black font-bold rounded-full mb-4">Step - 4</span>
-                                    <h4 className="text-black font-bold text-lg leading-tight mb-3">Award Recognition</h4>
-                                    <p className="text-gray-500 text-base leading-relaxed">
-                                        The system scans and validates industry awards, ensuring they're recent and relevant. Our backend allocates credibility-based badges that can't be bought.
-                                    </p>
-                                </div>
-
+                                {processItems.map((step, i) => {
+                                    const stepLabel = (step.extras?.step_label as string) ?? `Step - ${i + 1}`;
+                                    return (
+                                        <div key={step.id} className={`${i === 0 || i === 3 ? 'c1-process-card border border-gray-100 shadow-xl shadow-gray-200/50' : ''} bg-white p-6 rounded-2xl group hover:-translate-y-2 transition-transform duration-300`}>
+                                            <span className="inline-block px-3 py-1 bg-yellow-400 text-black font-bold rounded-full mb-4">{stepLabel}</span>
+                                            <h4 className="text-black font-bold text-lg leading-tight mb-3">{step.title}</h4>
+                                            {step.description && <p className="text-gray-500 text-base leading-relaxed">{step.description}</p>}
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
                     </div>
@@ -304,9 +312,14 @@ const MethodologyProcess = () => {
             <div className="relative min-h-screen flex flex-col md:flex-row border-b">
                 {/* Sticky Header */}
                 <div className="w-full md:w-1/2 p-10 md:p-20 bg-brand-lime text-brand-dark flex flex-col justify-between md:sticky md:top-0 md:h-screen z-10">
-                    <div className="text-xl font-bold tracking-widest border-t border-brand-dark/30 pt-4">02</div>
+                    <div className="text-xl font-bold tracking-widest border-t border-brand-dark/30 pt-4">{testingSection?.subtitle ?? '02'}</div>
                     <h2 className="text-5xl md:text-7xl font-bold leading-tight mt-10">
-                        How Do We Test<br />and Review Digital Products?
+                        {(testingSection?.title ?? 'How Do We Test and Review Digital Products?').includes(' and ')
+                            ? (() => {
+                                const [a, ...rest] = (testingSection?.title ?? 'How Do We Test and Review Digital Products?').split(' and ');
+                                return <>{a}<br />and {rest.join(' and ')}</>;
+                            })()
+                            : (testingSection?.title ?? 'How Do We Test and Review Digital Products?')}
                     </h2>
                     <div className="mt-10 border-t border-brand-dark/30 pt-4 w-20"></div>
                 </div>
@@ -316,146 +329,92 @@ const MethodologyProcess = () => {
 
                     {/* Intro Section */}
                     <div className="p-10 md:p-20 border-b border-gray-200">
-                        <h3 className="text-2xl font-bold text-gray-900 mb-6">Each product featured on<br />The Web App Pro is tested.</h3>
-                        <p className="text-gray-600 mb-6">But before we tell you about how we test featured products, here's how we find them!</p>
+                        <h3 className="text-2xl font-bold text-gray-900 mb-6">{testC.intro_heading ?? 'Each product featured on The Web App Pro is tested.'}</h3>
+                        <p className="text-gray-600 mb-6">{testC.intro_lead ?? "But before we tell you about how we test featured products, here's how we find them!"}</p>
 
                         <div className="space-y-4">
-                            <h4 className="text-gray-900 font-bold">Our sources to find top digital products include:</h4>
+                            <h4 className="text-gray-900 font-bold">{testC.sources_heading ?? 'Our sources to find top digital products include:'}</h4>
                             <ul className="c2-list space-y-3">
-                                {[
-                                    "Stats from sources like Statista, SimilarWeb, etc.",
-                                    "Awards and accolades include App Store Award, Google Play's best apps and games, etc.",
-                                    "News and release notes are also taken into account.",
-                                    "We also let product owners themselves reach out to us and submit their product for a thorough review."
-                                ].map((item, i) => (
-                                    <li key={i} className="c2-list-item flex gap-3 text-base text-gray-600 items-start">
+                                {sourceItems.map((item) => (
+                                    <li key={item.id} className="c2-list-item flex gap-3 text-base text-gray-600 items-start">
                                         <div className="w-4 h-4 rounded-full bg-brand-orange flex-shrink-0 flex items-center justify-center mt-0.5">
                                             <i className="ri-check-line text-white"></i>
                                         </div>
-                                        {item}
+                                        {item.title}
                                     </li>
                                 ))}
                             </ul>
-                            <p className="text-gray-500 mt-4">We explore the vast universe of data and statistics to find out which digital products are being talked about the most.</p>
+                            <p className="text-gray-500 mt-4">{testC.sources_closing ?? 'We explore the vast universe of data and statistics to find out which digital products are being talked about the most.'}</p>
                         </div>
                     </div>
 
                     {/* Red Banner */}
                     <div className="c2-banner bg-gradient-to-r from-brand-orange to-brand-orange p-10 md:p-20">
-                        <h3 className="text-2xl font-bold text-white mb-4">But...We Don't Just<br />Focus on What's Popular</h3>
-                        <p className="text-gray-200 leading-relaxed">
-                            While we keep tracking trending and award-winning apps, our space remains open for underrated or newly launched products as well. In short, beyond quality, we also keep an eye out for potential. That is why you find tons of underrated apps, websites, and software reviewed on The Web App Pro.
-                            <br /><br />
-                            As for the parameters to review digital products, here are a few that we use:
+                        <h3 className="text-2xl font-bold text-white mb-4">{testC.banner_title ?? "But...We Don't Just Focus on What's Popular"}</h3>
+                        <p className="text-gray-200 leading-relaxed whitespace-pre-line">
+                            {testC.banner_body ?? "While we keep tracking trending and award-winning apps, our space remains open for underrated or newly launched products as well."}
                         </p>
                     </div>
 
-                    {/* Review Parameters List */}
                     <div className="p-10 md:p-20 space-y-12 border-b border-gray-200">
-
-                        {/* User Experience */}
-                        <div className="grid grid-cols-1 md:grid-cols-[150px_1fr] gap-8">
-                            <h4 className="text-lg font-bold text-gray-900">User Experience</h4>
-                            <div className="text-base text-gray-600 space-y-4">
-                                <p>We take a deep dive into the functionality of the product to identify what the user journey looks like. Our experts explore each product page in detail and test every publicly accessible feature for the intended users.</p>
-                                <div>
-                                    <p className="font-bold text-gray-800 mb-2">As a part of testing the user experience, we assess:</p>
-                                    <ul className="list-disc pl-4 space-y-1 text-base">
-                                        <li>Navigation structure and flow</li>
-                                        <li>Design consistency, responsiveness, and intuitiveness</li>
-                                        <li>Feature usefulness — are they essential or bloated?</li>
-                                        <li>User feedback from app stores, online communities, and early testers</li>
-                                    </ul>
+                        {reviewItems.map((item, idx) => {
+                            const bullets = (item.extras?.bullets as string[]) ?? [];
+                            const intro = item.extras?.intro as string | undefined;
+                            return (
+                                <div key={item.id}>
+                                    {idx > 0 && <div className={`h-px w-full mb-12 ${idx % 2 === 0 ? 'bg-gray-800' : 'bg-gray-200'}`}></div>}
+                                    <div className="grid grid-cols-1 md:grid-cols-[150px_1fr] gap-8">
+                                        <h4 className="text-lg font-bold text-gray-900">{item.title}</h4>
+                                        <div className="text-base text-gray-600 space-y-4">
+                                            {item.description && <p>{item.description}</p>}
+                                            {bullets.length > 0 && (
+                                                <div>
+                                                    {intro && <p className="font-bold text-gray-800 mb-2">{intro}</p>}
+                                                    <ul className="list-disc pl-4 space-y-1 text-base">
+                                                        {bullets.map((b, i) => <li key={i}>{b}</li>)}
+                                                    </ul>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
-
-                        <div className="h-px bg-gray-200 w-full"></div>
-
-                        {/* Functional Testing */}
-                        <div className="grid grid-cols-1 md:grid-cols-[150px_1fr] gap-8">
-                            <h4 className="text-lg font-bold text-gray-900">Functional Testing</h4>
-                            <div className="text-base text-gray-600 space-y-4">
-                                <p>Buggy apps can ruin the whole experience for users, even if the UX is top-notch. Our expert product reviewers are pros at testing functionalities.</p>
-                                <div>
-                                    <p className="font-bold text-gray-800 mb-2">Our testers actively use the app or software, evaluating:</p>
-                                    <ul className="list-disc pl-4 space-y-1 text-base">
-                                        <li>Real-time performance</li>
-                                        <li>Bugs or lags</li>
-                                        <li>Integrations with other tools</li>
-                                        <li>Scalability and updates</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="h-px bg-gray-800 w-full"></div>
-
-                        {/* Market Fit & Innovation */}
-                        <div className="grid grid-cols-1 md:grid-cols-[150px_1fr] gap-8">
-                            <h4 className="text-lg font-bold text-gray-900">Market Fit & Innovation</h4>
-                            <div className="text-base text-gray-600 space-y-4">
-                                <p>We are continuously focused on identifying products that solve real-world issues. In our pursuit, we identify if the product:</p>
-                                <ul className="list-disc pl-4 space-y-1 text-base">
-                                    <li>Solves a real-world issue</li>
-                                    <li>Offers USPs</li>
-                                    <li>Aligns with the latest trends</li>
-                                </ul>
-                            </div>
-                        </div>
-
-                        <div className="h-px bg-gray-800 w-full"></div>
-
-                        {/* Privacy & Compliance */}
-                        <div className="grid grid-cols-1 md:grid-cols-[150px_1fr] gap-8">
-                            <h4 className="text-lg font-bold text-gray-900">Privacy & Compliance</h4>
-                            <div className="text-base text-gray-600 space-y-4">
-                                <p>Data security is a critical concern given how fast cyberattackers are adopting new trends. Here's how we judge the security standards of products:</p>
-                                <ul className="list-disc pl-4 space-y-1 text-base">
-                                    <li>Data collection policies</li>
-                                    <li>Security features (encryption, permissions, etc.)</li>
-                                    <li>Compliance with GDPR, HIPAA, or other relevant standards</li>
-                                </ul>
-                            </div>
-                        </div>
-
+                            );
+                        })}
                     </div>
 
                     {/* Golden Rating System */}
                     <div className="p-10 md:p-20">
-                        <h4 className="text-xl font-bold text-brand-dark text-center mb-10">Our Golden Rating System</h4>
+                        <h4 className="text-xl font-bold text-brand-dark text-center mb-10">{testC.rating_system_title ?? 'Our Golden Rating System'}</h4>
 
                         <div className="c2-grid grid grid-cols-1 md:grid-cols-2 gap-px bg-gray-200 border border-gray-200">
-                            {/* Box 1 (5 Stars) */}
-                            <div className="c2-grid-item bg-gray-50 p-8 flex flex-col items-center justify-center text-center md:aspect-square md:row-span-2 hover:bg-brand-orange hover:text-black transition-colors duration-300 group">
-                                <div className="text-brand-orange group-hover:text-brand-lime text-lg mb-2 tracking-widest">★★★★★</div>
-                                <div className="font-semibold text-gray-900 group-hover:text-black">A perfectly<br />planned product</div>
-                            </div>
-
-                            {/* Box 2 (4 Stars) */}
-                            <div className="c2-grid-item bg-gray-50 p-8 flex flex-col items-center justify-center text-center md:aspect-square h-full hover:bg-brand-orange hover:text-black transition-colors duration-300 group">
-                                <div className="text-brand-orange group-hover:text-brand-lime text-lg mb-2 tracking-widest">★★★★</div>
-                                <div className="font-semibold text-gray-900 group-hover:text-black">Good product, with scope for<br />improvement</div>
-                            </div>
-
-                            {/* Box 3 (Split) */}
+                            {ratingItems.filter(r => (r.extras?.layout as string) === 'large').map(item => (
+                                <div key={item.id} className="c2-grid-item bg-gray-50 p-8 flex flex-col items-center justify-center text-center md:aspect-square md:row-span-2 hover:bg-brand-orange hover:text-black transition-colors duration-300 group">
+                                    <div className="text-brand-orange group-hover:text-brand-lime text-lg mb-2 tracking-widest">{'★'.repeat(Number(item.extras?.stars) || 5)}</div>
+                                    <div className="font-semibold text-gray-900 group-hover:text-black">{item.title}</div>
+                                </div>
+                            ))}
+                            {ratingItems.filter(r => (r.extras?.layout as string) === 'medium' && Number(r.extras?.stars) === 4).map(item => (
+                                <div key={item.id} className="c2-grid-item bg-gray-50 p-8 flex flex-col items-center justify-center text-center md:aspect-square h-full hover:bg-brand-orange hover:text-black transition-colors duration-300 group">
+                                    <div className="text-brand-orange group-hover:text-brand-lime text-lg mb-2 tracking-widest">★★★★</div>
+                                    <div className="font-semibold text-gray-900 group-hover:text-black">{item.title}</div>
+                                </div>
+                            ))}
                             <div className="c2-grid-item bg-gray-50 grid grid-cols-1 md:grid-cols-10 md:aspect-video md:col-span-2">
                                 <div className="border-r border-gray-200 flex flex-col md:col-span-5">
-                                    <div className="flex-1 flex flex-col items-center justify-center border-b border-gray-200 p-8 md:p-2 hover:bg-brand-orange hover:text-black transition-colors duration-300 group">
-                                        <div className="text-brand-orange group-hover:text-brand-lime text-lg mb-1">★</div>
-                                        <div className="leading-tight text-center font-semibold text-gray-900 group-hover:text-black">Wouldn't<br />recommend</div>
-                                    </div>
-                                    <div className="flex-1 flex flex-col items-center justify-center p-8 md:p-2 hover:bg-brand-orange hover:text-black transition-colors duration-300 group">
-                                        <div className="text-brand-orange group-hover:text-brand-lime text-lg mb-1">★★</div>
-                                        <div className="leading-tight text-center font-semibold text-gray-900 group-hover:text-black">Ignores key<br />improvements</div>
-                                    </div>
+                                    {ratingItems.filter(r => (r.extras?.layout as string) === 'small').map(item => (
+                                        <div key={item.id} className="flex-1 flex flex-col items-center justify-center border-b border-gray-200 last:border-0 p-8 md:p-2 hover:bg-brand-orange hover:text-black transition-colors duration-300 group">
+                                            <div className="text-brand-orange group-hover:text-brand-lime text-lg mb-1">{'★'.repeat(Number(item.extras?.stars) || 1)}</div>
+                                            <div className="leading-tight text-center font-semibold text-gray-900 group-hover:text-black">{item.title}</div>
+                                        </div>
+                                    ))}
                                 </div>
-                                <div className="flex flex-col items-center justify-center p-8 md:p-2 text-center md:col-span-5 hover:bg-brand-orange hover:text-black transition-colors duration-300 group">
-                                    <div className="text-brand-orange group-hover:text-brand-lime text-lg mb-2 tracking-widest">★★★</div>
-                                    <div className="leading-tight font-semibold text-gray-900 group-hover:text-black">Balanced, but easily replaceable</div>
-                                </div>
+                                {ratingItems.filter(r => (r.extras?.layout as string) === 'medium' && Number(r.extras?.stars) === 3).map(item => (
+                                    <div key={item.id} className="flex flex-col items-center justify-center p-8 md:p-2 text-center md:col-span-5 hover:bg-brand-orange hover:text-black transition-colors duration-300 group">
+                                        <div className="text-brand-orange group-hover:text-brand-lime text-lg mb-2 tracking-widest">★★★</div>
+                                        <div className="leading-tight font-semibold text-gray-900 group-hover:text-black">{item.title}</div>
+                                    </div>
+                                ))}
                             </div>
-
                         </div>
                     </div>
                 </div>
@@ -465,10 +424,15 @@ const MethodologyProcess = () => {
             <div className="relative min-h-screen flex flex-col md:flex-row border-b">
                 {/* Sticky Header */}
                 <div className="w-full md:w-1/2 p-10 md:p-20 bg-brand-burgundy text-white flex flex-col justify-between md:sticky md:top-0 md:h-screen z-10">
-                    <div className="text-xl font-bold tracking-widest border-t border-white/30 pt-4">03</div>
+                    <div className="text-xl font-bold tracking-widest border-t border-white/30 pt-4">{editorialSection?.subtitle ?? '03'}</div>
                     <div className="mt-10">
                         <h2 className="text-5xl md:text-7xl font-bold leading-tight relative">
-                            The Web App Pro's<br />Editorial Standards
+                            {(editorialSection?.title ?? "The Web App Pro's Editorial Standards").includes("'s ")
+                                ? (() => {
+                                    const [a, b] = (editorialSection?.title ?? "The Web App Pro's Editorial Standards").split("'s ");
+                                    return <>{a}'s<br />{b}</>;
+                                })()
+                                : editorialSection?.title}
                             {/* Decorative Diamond Pattern */}
                             <div className="hidden xl:block absolute -right-32 top-1/2 -translate-y-1/2 w-40 h-80 opacity-20 pointer-events-none">
                                 <div className="w-full h-1/2 bg-white transform -skew-y-12 mb-4"></div>
@@ -485,76 +449,38 @@ const MethodologyProcess = () => {
 
                         {/* Intro */}
                         <div className="border-b border-gray-200 pb-12">
-                            <p className="text-gray-600 leading-relaxed mb-8">
-                                Our content is diverse and independent. Internally, we have experts assigned on multiple industries and niches. Some folks are doing it all for the SaaS industry, while others are completely focused on publishing high-quality thought leadership blogs.
-                            </p>
-                            <h4 className="text-gray-900 font-bold text-lg">However, there are certain parameters for every category of the content. For instance,</h4>
+                            {editC.intro_paragraph && (
+                                <p className="text-gray-600 leading-relaxed mb-8">{editC.intro_paragraph}</p>
+                            )}
+                            {editC.intro_heading && (
+                                <h4 className="text-gray-900 font-bold text-lg">{editC.intro_heading}</h4>
+                            )}
                         </div>
 
-                        {/* Standard 1 */}
-                        <div className="c3-standard group">
-                            <h4 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-4">
-                                <span className="text-gray-700 font-black text-3xl group-hover:text-brand-burgundy transition-colors">01.</span>
-                                Unbiased and Uninfluenced Information
-                            </h4>
-                            <ul className="space-y-3 pl-12">
-                                <li className="text-gray-600 text-base leading-relaxed flex items-start gap-3">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-brand-burgundy mt-2 shrink-0"></span>
-                                    <span>No external organization or party influences our decision-making. If we don't like a product, we simply don't like it.</span>
-                                </li>
-                                <li className="text-gray-600 text-base leading-relaxed flex items-start gap-3">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-brand-burgundy mt-2 shrink-0"></span>
-                                    <span>Our goal remains to publish unbiased information. Therefore, we ensure every opinion we share, whether of an app or a tech, is based on our actual research or experience.</span>
-                                </li>
-                            </ul>
-                        </div>
-
-                        {/* Standard 2 */}
-                        <div className="c3-standard group">
-                            <h4 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-4">
-                                <span className="text-gray-700 font-black text-3xl group-hover:text-brand-burgundy transition-colors">02.</span>
-                                Every Detail is Fact-Checked and Peer-Reviewed
-                            </h4>
-                            <ul className="space-y-3 pl-12">
-                                <li className="text-gray-600 text-base leading-relaxed flex items-start gap-3">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-brand-burgundy mt-2 shrink-0"></span>
-                                    <span>Everything that goes live on the website has to be factually accurate. Beyond using high-quality data sources and organizing our own research, we have certain editors assigned to maintain quality standards and fact-check every piece of information before it goes live.</span>
-                                </li>
-                                <li className="text-gray-600 text-base leading-relaxed flex items-start gap-3">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-brand-burgundy mt-2 shrink-0"></span>
-                                    <span>Beyond fact-checking, each editorial passes through a two-layer editorial review—first by the primary author, and then by a senior editor who ensures accuracy, consistency, and neutrality.</span>
-                                </li>
-                            </ul>
-                        </div>
-
-                        {/* Standard 3 */}
-                        <div className="c3-standard group">
-                            <h4 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-4">
-                                <span className="text-gray-700 font-black text-3xl group-hover:text-brand-burgundy transition-colors">03.</span>
-                                We Hear You, Beyond Search Engines
-                            </h4>
-                            <p className="text-gray-600 text-base leading-relaxed pl-12">
-                                We collab with social media experts to identify what our target audience wants. We prepare additional content around these observed queries.
-                            </p>
-                        </div>
-
-                        {/* Standard 4 (Corrected Title based on context) */}
-                        <div className="c3-standard group">
-                            <h4 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-4">
-                                <span className="text-gray-700 font-black text-3xl group-hover:text-brand-burgundy transition-colors">04.</span>
-                                Our Editorial Voice
-                            </h4>
-                            <ul className="space-y-3 pl-12">
-                                <li className="text-gray-600 text-base leading-relaxed flex items-start gap-3">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-brand-burgundy mt-2 shrink-0"></span>
-                                    <span>Our editorial voice is informed, clear, and accessible. The goal remains to simplify complex ideas without influencing the depth of the concept.</span>
-                                </li>
-                                <li className="text-gray-600 text-base leading-relaxed flex items-start gap-3">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-brand-burgundy mt-2 shrink-0"></span>
-                                    <span>We also adapt tone depending on the audience, for example, C-suite content tends to be strategic and direct, while product-focused content remains more technical.</span>
-                                </li>
-                            </ul>
-                        </div>
+                        {standardItems.map((std, idx) => {
+                            const bullets = (std.extras?.bullets as string[]) ?? [];
+                            return (
+                                <div key={std.id} className="c3-standard group">
+                                    <h4 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-4">
+                                        <span className="text-gray-700 font-black text-3xl group-hover:text-brand-burgundy transition-colors">{String(idx + 1).padStart(2, '0')}.</span>
+                                        {std.title}
+                                    </h4>
+                                    {std.description && (
+                                        <p className="text-gray-600 text-base leading-relaxed pl-12">{std.description}</p>
+                                    )}
+                                    {bullets.length > 0 && (
+                                        <ul className="space-y-3 pl-12 mt-3">
+                                            {bullets.map((b, i) => (
+                                                <li key={i} className="text-gray-600 text-base leading-relaxed flex items-start gap-3">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-brand-burgundy mt-2 shrink-0"></span>
+                                                    <span>{b}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
+                                </div>
+                            );
+                        })}
 
                     </div>
                 </div>
@@ -570,9 +496,14 @@ const MethodologyProcess = () => {
                     <div className="absolute right-40 -top-20 w-80 h-80 bg-white rounded-full"></div>
                     <div className="absolute right-40 top-[40%] w-80 h-80 bg-white rounded-full"></div>
 
-                    <div className="text-xl font-bold tracking-widest border-t border-brand-dark/30 pt-4 relative z-10">04</div>
+                    <div className="text-xl font-bold tracking-widest border-t border-brand-dark/30 pt-4 relative z-10">{editorsSection?.subtitle ?? '04'}</div>
                     <h2 className="text-5xl md:text-7xl font-bold leading-tight mt-10 relative z-10">
-                        The Web App Pro<br />Editors
+                        {(editorsSection?.title ?? 'The Web App Pro Editors').includes(' Editors')
+                            ? (() => {
+                                const t = editorsSection?.title ?? 'The Web App Pro Editors';
+                                return <>{t.replace(' Editors', '')}<br />Editors</>;
+                            })()
+                            : editorsSection?.title}
                     </h2>
                     <div className="mt-10 border-t border-brand-dark/30 pt-4 w-20 relative z-10"></div>
                 </div>
@@ -597,68 +528,41 @@ const MethodologyProcess = () => {
                         autoplay={{ delay: 5000 }}
                         className="w-full !pb-10"
                     >
-                        {[
-                            {
-                                name: "Sarah Jenkins",
-                                role: "Sr. Content Editor",
-                                image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=200",
-                                bio: "With over nine years of experience in Content Marketing, Sarah has developed a strong expertise in creating, curating, and evaluating content. Her collaborative approach with stakeholders has broadened her knowledge in AI, Fintech, HealthTech, and more.",
-                                videoCover: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=600",
-                                articles: [
-                                    "10 Free AI Chatbots | Our Top Picks After a Week of Robotic Chats",
-                                    "How is AI in Mobile App Security Transforming the Digital Landscape?",
-                                    "Oply Review: Is It a Worthwhile Home Management Assistant App?",
-                                    "My Week on BYDFi | A (Non) Trader's Honest Review",
-                                    "How to Build User Friendly AI Products"
-                                ]
-                            },
-                            {
-                                name: "David Chen",
-                                role: "Tech Lead",
-                                image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200",
-                                bio: "David brings a developer's perspective to our editorial team. With a background in full-stack engineering, he ensures that our technical reviews are code-accurate and architecturally sound.",
-                                videoCover: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=600",
-                                articles: [
-                                    "The State of React Server Components in 2024",
-                                    "Micro-Frontends: A Practical Guide for Enterprises",
-                                    "Debugging Memory Leaks in Node.js Applications",
-                                    "AWS vs Azure vs GCP: A Cost Analysis for Startups",
-                                    "Rust for Web Development: Is it Ready?"
-                                ]
-                            }
-                        ].map((editor, index) => (
-                            <SwiperSlide key={index}>
+                        {editorItems.map((editor, index) => {
+                            const articles = (editor.extras?.articles as string[]) ?? [];
+                            return (
+                            <SwiperSlide key={editor.id}>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pb-12 h-full">
-                                    {/* Left Card: Profile */}
                                     <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 flex flex-col h-full shadow-md">
                                         <div className="flex items-center gap-4 mb-4">
-                                            <div className="w-12 h-12 rounded-full overflow-hidden">
-                                                <img src={editor.image} alt={editor.name} className="w-full h-full object-cover" />
-                                            </div>
+                                            {editor.image_url && (
+                                                <div className="w-12 h-12 rounded-full overflow-hidden">
+                                                    <img src={editor.image_url} alt={editor.title} className="w-full h-full object-cover" />
+                                                </div>
+                                            )}
                                         </div>
-                                        <h4 className="text-xl font-bold text-black">{editor.name}</h4>
-                                        <span className="inline-block bg-gray-200 text-gray-700 px-2 py-1 rounded-md mb-4 w-fit text-sm">{editor.role}</span>
-
-                                        <p className="text-gray-600 leading-relaxed text-sm">
-                                            {editor.bio}
-                                        </p>
+                                        <h4 className="text-xl font-bold text-black">{editor.title}</h4>
+                                        {editor.subtitle && (
+                                            <span className="inline-block bg-gray-200 text-gray-700 px-2 py-1 rounded-md mb-4 w-fit text-sm">{editor.subtitle}</span>
+                                        )}
+                                        {editor.description && (
+                                            <p className="text-gray-600 leading-relaxed text-sm">{editor.description}</p>
+                                        )}
                                     </div>
-
-                                    {/* Center Card: Video */}
                                     <div className="bg-gray-800 rounded-2xl overflow-hidden relative h-[400px] md:h-auto">
-                                        <img src={editor.videoCover} alt="Video Cover" className="w-full h-full object-cover opacity-80" />
+                                        {(editor.media_url || editor.image_url) && (
+                                            <img src={editor.media_url ?? editor.image_url} alt="Video Cover" className="w-full h-full object-cover opacity-80" />
+                                        )}
                                         <div className="absolute inset-0 flex items-center justify-center">
                                             <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center cursor-pointer hover:scale-110 transition-transform">
                                                 <i className="ri-play-fill text-black text-2xl"></i>
                                             </div>
                                         </div>
                                     </div>
-
-                                    {/* Right Card: Articles */}
                                     <div className="bg-white rounded-2xl p-6 flex flex-col h-full">
                                         <h4 className="text-black font-bold mb-4">Reviewed Articles</h4>
                                         <div className="space-y-4 overflow-y-auto max-h-[300px] pr-2 custom-scrollbar">
-                                            {editor.articles.map((title, i) => (
+                                            {articles.map((title, i) => (
                                                 <div key={i} className="flex gap-3 items-start border-b border-gray-100 pb-3 last:border-0 last:pb-0">
                                                     <div className="w-10 h-10 bg-gray-100 rounded-md shrink-0 overflow-hidden">
                                                         <img src={`https://source.unsplash.com/random/100x100?tech&sig=${index * 10 + i}`} alt="Article" className="w-full h-full object-cover" />
@@ -670,7 +574,8 @@ const MethodologyProcess = () => {
                                     </div>
                                 </div>
                             </SwiperSlide>
-                        ))}
+                            );
+                        })}
 
                     </Swiper>
 

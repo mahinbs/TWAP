@@ -21,7 +21,7 @@ const SuccessStoriesPage = () => {
                 <SuccessTopics />
                 <SuccessNotes />
                 <SuccessCTA />
-                <AgenciesContact/>
+                <AgenciesContact page="success_stories" />
             </main>
             <Footer />
         </div>
