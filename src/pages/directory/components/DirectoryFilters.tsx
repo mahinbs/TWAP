@@ -1,3 +1,6 @@
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../../lib/api';
+
 interface DirectoryFiltersProps {
   searchTerm: string;
   setSearchTerm: (term: string) => void;
@@ -29,6 +32,15 @@ export default function DirectoryFilters({
   pricingOptions,
   totalResults
 }: DirectoryFiltersProps) {
+  const { data: section } = useQuery({
+    queryKey: ['page-section', 'directory', 'filters'],
+    queryFn: () => siteContentApi.section('directory', 'filters'),
+  });
+
+  const c = (section?.content ?? {}) as Record<string, string>;
+  const searchPlaceholder = c.search_placeholder ?? 'Search apps, categories, or features...';
+  const resultsSuffix = c.results_suffix ?? 'results';
+
   return (
     <section className="py-6 sm:py-8 bg-gray-50 border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -40,7 +52,7 @@ export default function DirectoryFilters({
             </div>
             <input
               type="text"
-              placeholder="Search apps, categories, or features..."
+              placeholder={searchPlaceholder}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-11 sm:pl-12 pr-4 py-3 sm:py-4 text-base sm:text-lg border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#1F2853] focus:border-transparent outline-none transition-all duration-300 font-poppins"
@@ -109,7 +121,7 @@ export default function DirectoryFilters({
           {/* View Controls and Results */}
           <div className="flex items-center justify-between lg:justify-start gap-3 sm:gap-4 w-full lg:w-auto">
             <span className="text-sm text-gray-600 font-medium font-poppins whitespace-nowrap">
-              {totalResults} results
+              {totalResults} {resultsSuffix}
             </span>
             
             {/* View Mode Toggle */}

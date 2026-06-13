@@ -1,6 +1,39 @@
 import { useEffect, useRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../../lib/api';
+
+const FALLBACK_STATS = [
+  { icon: "ri-apps-line", label: "500+ Apps Listed", color: "text-brand-orange" },
+  { icon: "ri-star-line", label: "10,000+ Reviews", color: "text-brand-lime" },
+  { icon: "ri-user-line", label: "50,000+ Users", color: "text-white" }
+];
 
 export default function DirectoryHero() {
+  const { data: section } = useQuery({
+    queryKey: ['page-section', 'directory', 'hero'],
+    queryFn: () => siteContentApi.section('directory', 'hero'),
+  });
+
+  const { data: stats = [] } = useQuery({
+    queryKey: ['site-stats', 'directory'],
+    queryFn: () => siteContentApi.stats('directory'),
+  });
+
+  const content = (section?.content ?? {}) as Record<string, string>;
+  const badgeText = section?.badge_text ?? 'Discovery Hub';
+  const titlePrefix = content.title_prefix ?? 'App';
+  const titleHighlight = content.title_highlight ?? 'Directory';
+  const descriptionLine1 = section?.subtitle ?? 'Discover the best AI-powered tools and applications.';
+  const descriptionLine2 = section?.description ?? 'Compare features, read reviews, and find the perfect solution.';
+
+  const heroStats = stats.length > 0
+    ? stats.map((s, i) => ({
+        icon: s.icon ?? FALLBACK_STATS[i]?.icon ?? 'ri-apps-line',
+        label: s.value ? `${s.value}${s.label ? ` ${s.label}` : ''}` : s.label,
+        color: FALLBACK_STATS[i]?.color ?? 'text-white',
+      }))
+    : FALLBACK_STATS;
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Canvas Particle Animation Logic from AIHero
@@ -115,24 +148,20 @@ export default function DirectoryHero() {
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 text-center">
         <div className="inline-block px-4 py-2 rounded-full border border-gray-700 bg-white/5 backdrop-blur-sm text-gray-300 text-sm mb-6 tracking-widest uppercase">
-          Discovery Hub
+          {badgeText}
         </div>
 
         <h1 className="text-5xl md:text-7xl font-bold text-white mb-8 tracking-tight leading-tight">
-          App <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-orange via-white to-brand-lime">Directory</span>
+          {titlePrefix} <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-orange via-white to-brand-lime">{titleHighlight}</span>
         </h1>
         
         <p className="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed mb-10">
-          Discover the best AI-powered tools and applications. <br className="hidden md:block" /> 
-          Compare features, read reviews, and find the perfect solution.
+          {descriptionLine1} <br className="hidden md:block" /> 
+          {descriptionLine2}
         </p>
         
         <div className="flex flex-wrap gap-4 justify-center items-center">
-          {[
-            { icon: "ri-apps-line", label: "500+ Apps Listed", color: "text-brand-orange" },
-            { icon: "ri-star-line", label: "10,000+ Reviews", color: "text-brand-lime" },
-            { icon: "ri-user-line", label: "50,000+ Users", color: "text-white" }
-          ].map((stat, i) => (
+          {heroStats.map((stat, i) => (
             <div key={i} className="group bg-white/5 backdrop-blur-md rounded-2xl px-6 py-4 border border-gray-700 hover:border-gray-500 transition-all hover:-translate-y-1">
               <span className="flex items-center gap-3 text-white font-bold text-sm">
                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center bg-white/10 group-hover:bg-white/20 transition-colors`}>
