@@ -22,7 +22,6 @@ export type PromoteSuccessStoriesCarouselProps = {
   eyebrow: string;
   headingHtml: string;
   introText: string;
-  metricsLabel: string;
   slides: SuccessSlide[];
 };
 
@@ -31,7 +30,6 @@ export default function PromoteSuccessStoriesCarousel({
   eyebrow,
   headingHtml,
   introText,
-  metricsLabel,
   slides,
 }: PromoteSuccessStoriesCarouselProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -94,7 +92,7 @@ export default function PromoteSuccessStoriesCarousel({
                   <p className="mt-6 text-[#555] italic leading-relaxed">{slide.quote}</p>
 
                   <div className="mt-6">
-                    <p className="text-xs font-bold tracking-wide text-[#111] uppercase">{metricsLabel}</p>
+                    <p className="text-xs font-bold tracking-wide text-[#111] uppercase">results</p>
                     <div className="mt-3 space-y-4">
                       {slide.metrics.map((metric) => (
                         <div key={metric.value + metric.label}>

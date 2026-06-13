@@ -1,74 +1,231 @@
-import { Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { agenciesApi, siteContentApi } from '../../lib/api';
+import { useState, useRef, useEffect } from "react";
+import { Star, ChevronLeft, ChevronRight } from "lucide-react";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation } from "swiper/modules";
+import type { Swiper as SwiperType } from "swiper";
+import "swiper/css";
+import "swiper/css/navigation";
 
-const FALLBACK_LOGO = 'https://readdy.ai/api/search-image?query=Modern%20minimalist%20AI%20technology%20company%20logo%20design%20with%20geometric%20shapes%2C%20clean%20lines%2C%20professional%20corporate%20branding%2C%20blue%20and%20white%20color%20scheme%2C%20simple%20abstract%20symbol%20representing%20artificial%20intelligence%20and%20innovation%2C%20high-tech%20aesthetic%2C%20vector%20style%20logo%20on%20transparent%20background&width=96&height=96&seq=agency-logo-001&orientation=squarish';
-const FALLBACK_AGENCY = {
-  name: 'AI Innovations Studio',
-  slug: '',
-  description: 'Leading AI development agency specializing in custom automation solutions for enterprise clients. 50+ successful AI implementations.',
-};
+interface Agency {
+  id: number;
+  name: string;
+  location: string;
+  image: string;
+  rating: number;
+  title: string;
+  description: string;
+}
+
+const agencies: Agency[] = [
+  {
+    id: 1,
+    name: "AI Innovations Studio",
+    location: "San Francisco, CA",
+    image: "/assets/ai_innovations_studio.png",
+    rating: 5,
+    title: "Leading the Future",
+    description:
+      "This month, we spotlight AI Innovations Studio, redefining the digital landscape. They have demonstrated outstanding creativity and technical prowess, delivering high-impact solutions for ambitious product teams worldwide.",
+  },
+  {
+    id: 2,
+    name: "NextGen Digital",
+    location: "Austin, TX",
+    image:
+      "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&w=1200&q=80",
+    rating: 5,
+    title: "Digital Excellence",
+    description:
+      "NextGen Digital stands out for their cutting-edge approach to web development. Their team of experts consistently delivers scalable and robust applications that drive business growth and user engagement.",
+  },
+  {
+    id: 3,
+    name: "Creative Minds",
+    location: "New York, NY",
+    image:
+      "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&w=1200&q=80",
+    rating: 5,
+    title: "Design That Speaks",
+    description:
+      "Creative Minds brings a fresh perspective to brand identity and user experience design. Their portfolio showcases a diverse range of visually stunning and intuitively designed digital products.",
+  },
+  {
+    id: 4,
+    name: "TechFlow Solutions",
+    location: "Seattle, WA",
+    image:
+      "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1200&q=80",
+    rating: 4,
+    title: "Seamless Integration",
+    description:
+      "TechFlow Solutions specializes in complex system integrations and backend architecture. They are the go-to agency for enterprises looking to streamline their operations with custom software solutions.",
+  },
+];
 
 export default function TopAgency() {
-  const { data: section } = useQuery({
-    queryKey: ['page-section', 'home', 'top_agency'],
-    queryFn: () => siteContentApi.section('home', 'top_agency'),
-  });
+  const [activeIndex, setActiveIndex] = useState(0);
+  const swiperRef = useRef<SwiperType>(null);
 
-  const { data: agencies = [] } = useQuery({
-    queryKey: ['agencies', 'top'],
-    queryFn: () => agenciesApi.list({ featured: true, limit: 1 }),
-  });
+  useEffect(() => {
+    if (swiperRef.current) {
+      swiperRef.current.update();
+    }
+  }, []);
 
-  const title = section?.title ?? 'Top Agency Of The Month';
-  const ctaText = section?.cta_text ?? 'Visit Agency Profile';
+  const handleSlideChange = (swiper: SwiperType) => {
+    const index = swiper.realIndex;
+    if (index >= 0 && index < agencies.length) {
+      setActiveIndex(index);
+    }
+  };
 
-  const agency = agencies[0];
-  const agencyName = agency?.name ?? FALLBACK_AGENCY.name;
-  const agencyDesc = agency?.description ?? FALLBACK_AGENCY.description;
-  const agencyLogo = agency?.avatar_url ?? FALLBACK_LOGO;
-  const agencyHref = agency ? `/agencies/${agency.slug}` : '/agencies';
+  const handleSlideClick = (index: number) => {
+    if (swiperRef.current) {
+      swiperRef.current.slideToLoop(index);
+    }
+  };
+
+  const handleNext = () => {
+    if (swiperRef.current) {
+      swiperRef.current.slideNext();
+    }
+  };
+
+  const handlePrev = () => {
+    if (swiperRef.current) {
+      swiperRef.current.slidePrev();
+    }
+  };
+
+  const activeAgency = agencies[activeIndex] || agencies[0];
 
   return (
-    <section className="py-16 bg-[#f7f5ef]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="text-3xl font-bold text-center text-[#1F2853] mb-12 font-['Manrope']">
-          {title}
-        </h2>
+    <section className="bg-[#f7f5ef] py-16">
+      <style>{`
+        .agency-card {
+          border: 4px solid transparent;
+        }
+        .swiper-slide-active .agency-card,
+        .swiper-slide-duplicate-active .agency-card {
+          border-color: #f25a1a;
+        }
+      `}</style>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
+        <div className="mb-10 reveal-fade-up">
+          <h2 className="text-3xl font-bold text-[#1F2853] text-left font-['Manrope']">
+            Top Agencies Of The Month
+          </h2>
+        </div>
 
-        <div className="relative bg-gradient-to-br from-[#1F2853] to-[#162040] rounded-3xl p-12 text-center overflow-hidden">
-          {/* Glassmorphism overlay */}
-          <div className="absolute inset-0 bg-white/5 backdrop-blur-sm"></div>
+        <div className="rounded-[52px] bg-[#252c52] text-white px-6 py-10 sm:px-10 lg:px-16 lg:py-12 shadow-2xl reveal-fade-up">
+          <div className="flex flex-col lg:flex-row gap-12 items-center">
+            {/* Slider Section */}
+            <div className="w-full lg:w-7/12 relative group">
+              <div className="px-12">
+                <Swiper
+                  onSwiper={(swiper) => {
+                    swiperRef.current = swiper;
+                    setTimeout(() => {
+                      swiper.update();
+                    }, 50);
+                  }}
+                  onSlideChange={handleSlideChange}
+                  modules={[Navigation]}
+                  spaceBetween={24}
+                  slidesPerView={1}
+                  loop={true}
+                  speed={500}
+                  breakpoints={{
+                    640: {
+                      slidesPerView: 2,
+                    },
+                  }}
+                  className="w-full"
+                >
+                  {agencies.map((agency, index) => (
+                    <SwiperSlide key={agency.id}>
+                      <div
+                        className="agency-card relative rounded-[32px] h-64 sm:h-80 overflow-hidden shadow-xl group cursor-pointer transition-all duration-300 border border-white/10"
+                        onClick={() => handleSlideClick(index)}
+                      >
+                        <img
+                          src={agency.image}
+                          alt={agency.name}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent">
+                          <div className="absolute bottom-0 left-0 p-6 w-full">
+                            <div className="flex gap-1 mb-2">
+                              {Array.from({ length: agency.rating }).map(
+                                (_, i) => (
+                                  <Star
+                                    key={i}
+                                    className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400"
+                                  />
+                                )
+                              )}
+                            </div>
+                            <h4 className="text-xl font-bold font-['Manrope'] text-white">
+                              {agency.name}
+                            </h4>
+                            <p className="text-xs text-white/60 font-['Poppins']">
+                              {agency.location}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </SwiperSlide>
+                  ))}
+                </Swiper>
+              </div>
 
-          <div className="relative max-w-2xl mx-auto">
-            {/* Agency Logo */}
-            <div className="w-24 h-24 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl mx-auto mb-8 flex items-center justify-center shadow-lg overflow-hidden">
-              <img
-                src={agencyLogo}
-                alt={`${agencyName} Logo`}
-                className="w-full h-full object-cover"
-              />
+              {/* Navigation Buttons - Positioned on sides without overlap */}
+              <button
+                onClick={handlePrev}
+                className="absolute left-0 md:-left-1 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center hover:bg-[#f25a1a] hover:border-[#f25a1a] transition-all duration-300 group/btn shadow-lg"
+                aria-label="Previous slide"
+              >
+                <ChevronLeft className="w-5 h-5 text-white group-hover/btn:scale-110" />
+              </button>
+              <button
+                onClick={handleNext}
+                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center hover:bg-[#f25a1a] hover:border-[#f25a1a] transition-all duration-300 group/btn shadow-lg"
+                aria-label="Next slide"
+              >
+                <ChevronRight className="w-5 h-5 text-white group-hover/btn:scale-110" />
+              </button>
             </div>
 
-            <h3 className="text-3xl font-bold text-white mb-4 font-['Manrope']">
-              {agencyName}
-            </h3>
+            {/* Content block */}
+            <div className="w-full lg:w-5/12 text-left flex flex-col justify-center py-4 lg:pl-4">
+              <p className="text-[10px] uppercase tracking-[0.3em] text-[#f25a1a] font-bold font-['Manrope'] mb-4">
+                featured agency
+              </p>
+              <div
+                key={activeAgency.id}
+                className="transition-all duration-500 animate-in fade-in slide-in-from-right-8"
+              >
+                <div className="flex items-center gap-1.5 mb-4">
+                  {Array.from({ length: activeAgency.rating }).map((_, i) => (
+                    <Star
+                      key={i}
+                      className="w-4 h-4 fill-yellow-400 text-yellow-400"
+                    />
+                  ))}
+                </div>
+                <h4 className="text-3xl font-bold font-['Manrope'] text-white mb-5 leading-tight">
+                  {activeAgency.name}
+                </h4>
+                <p className="text-sm sm:text-base text-white/70 leading-relaxed font-['Poppins'] mb-8 max-w-md">
+                  {activeAgency.description}
+                </p>
+              </div>
 
-            <p className="text-white/90 text-lg mb-8 leading-relaxed font-['Poppins']">
-              {agencyDesc}
-            </p>
-
-            <Link
-              to={agencyHref}
-              className="inline-block bg-gradient-to-r from-[#f25a1a] to-[#ff7043] hover:shadow-xl text-white px-8 py-4 rounded-lg font-semibold transition-all duration-300 hover:scale-105 whitespace-nowrap font-['Poppins'] cursor-pointer"
-            >
-              {ctaText}
-            </Link>
+              <button className="inline-flex items-center justify-center bg-[#f25a1a] text-white px-7 py-3 rounded-full font-bold text-sm font-['Poppins'] shadow-xl hover:bg-[#ff7635] hover:-translate-y-0.5 transition-all duration-300 w-fit">
+                View Agency Details
+              </button>
+            </div>
           </div>
-
-          {/* Decorative elements */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-[#f25a1a]/10 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#f25a1a]/10 rounded-full blur-3xl"></div>
         </div>
       </div>
     </section>

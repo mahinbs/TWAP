@@ -4,7 +4,6 @@ import { Calendar, Eye, Flame, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface BlogCardProps {
-    slug?: string;
     image: string;
     authorImage: string;
     authorName: string;
@@ -16,7 +15,6 @@ interface BlogCardProps {
 }
 
 const BlogCard = ({
-    slug,
     image,
     authorImage,
     authorName,
@@ -68,7 +66,7 @@ const BlogCard = ({
                     </div>
                 </div>
 
-                <Link to={slug ? `/blog/${slug}` : '#'} className="w-full py-3 rounded-full border border-gray-200 text-gray-700 bg-white/50 hover:bg-[#f25a1a] hover:text-white hover:border-transparent transition-all duration-300 text-sm font-semibold flex items-center justify-center gap-2 group/btn shadow-sm">
+                <Link to={`/blog/financial-news-roundup`} className="w-full py-3 rounded-full border border-gray-200 text-gray-700 bg-white/50 hover:bg-[#f25a1a] hover:text-white hover:border-transparent transition-all duration-300 text-sm font-semibold flex items-center justify-center gap-2 group/btn shadow-sm">
                     Read More
                 </Link>
             </div>

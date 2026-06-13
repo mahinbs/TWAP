@@ -41,7 +41,7 @@ export default function PromoteBenefitsSection({
   reviewBenefits,
 }: PromoteBenefitsSectionProps) {
   return (
-    <section id="promote-benefits" className="bg-[#f2f2f1] py-16 sm:py-20 px-4 sm:px-6 lg:px-8">
+    <section className="bg-[#f2f2f1] py-16 sm:py-20 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-10 sm:mb-14">
           <p className="text-[11px] sm:text-xs font-bold tracking-[0.16em] uppercase" style={{ color: accentColor }}>
