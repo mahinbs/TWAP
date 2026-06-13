@@ -63,7 +63,9 @@ export default function NewsletterSection() {
             {features.map((feat, i) => (
               <div key={i} className="text-center">
                 <div className="w-12 h-12 bg-[#ffcee0]/20 rounded-xl flex items-center justify-center mx-auto mb-4">
-                  <i className={`${feat.icon ?? 'ri-mail-line'} text-[#ffcee0] text-xl`} />
+                  <div className="w-6 h-6 flex items-center justify-center">
+                    <i className={`${feat.icon ?? 'ri-mail-line'} text-[#ffcee0] text-xl`}></i>
+                  </div>
                 </div>
                 <h3 className="text-lg font-bold text-white mb-2" style={{ fontFamily: 'Manrope, sans-serif' }}>
                   {feat.title}
@@ -84,13 +86,13 @@ export default function NewsletterSection() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder={String(content.email_placeholder ?? 'Enter your email address')}
               required
-              className="flex-1 px-6 py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#ffcee0]"
+              className="flex-1 px-6 py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#ffcee0] focus:border-transparent transition-all duration-300"
               style={{ fontFamily: 'Poppins, sans-serif' }}
             />
             <button
               type="submit"
               disabled={submitting}
-              className="bg-gradient-to-r from-[#f25a1a] to-[#ff7043] text-white px-8 py-4 rounded-xl font-semibold hover:shadow-lg whitespace-nowrap disabled:opacity-60"
+              className="bg-gradient-to-r from-[#f25a1a] to-[#ff7043] text-white px-8 py-4 rounded-xl font-semibold hover:shadow-lg hover:scale-105 transition-all duration-300 whitespace-nowrap disabled:opacity-60"
               style={{ fontFamily: 'Poppins, sans-serif' }}
             >
               {submitting ? 'Subscribing…' : String(content.button_text ?? 'Subscribe Now')}
@@ -101,7 +103,9 @@ export default function NewsletterSection() {
         {isSubscribed && (
           <div className="mt-6 p-4 bg-green-500/20 border border-green-500/30 rounded-xl text-green-200">
             <div className="flex items-center justify-center space-x-2">
-              <i className="ri-check-line" />
+              <div className="w-5 h-5 flex items-center justify-center">
+                <i className="ri-check-line"></i>
+              </div>
               <span style={{ fontFamily: 'Poppins, sans-serif' }}>
                 {String(content.success_message ?? 'Successfully subscribed!')}
               </span>
@@ -110,10 +114,12 @@ export default function NewsletterSection() {
         )}
 
         {trustIndicators.length > 0 && (
-          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 text-gray-300">
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-8 text-gray-300">
             {trustIndicators.map((t, i) => (
               <div key={i} className="flex items-center space-x-2">
-                <i className={`${t.icon ?? 'ri-shield-check-line'} text-[#ffcee0]`} />
+                <div className="w-4 h-4 flex items-center justify-center">
+                  <i className={`${t.icon ?? 'ri-shield-check-line'} text-[#ffcee0]`}></i>
+                </div>
                 <span className="text-sm" style={{ fontFamily: 'Poppins, sans-serif' }}>{t.label}</span>
               </div>
             ))}

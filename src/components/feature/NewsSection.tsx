@@ -1,131 +1,231 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronLeft, ChevronRight, Clock, ArrowRight } from 'lucide-react';
 import { blogsApi, siteContentApi } from '../../lib/api';
 import type { BlogPost } from '../../lib/api';
 
+const FALLBACK_TITLE = 'Latest in AI & App Development';
+
 export default function NewsSection() {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   const { data: section } = useQuery({
     queryKey: ['page-section', 'home', 'news'],
     queryFn: () => siteContentApi.section('home', 'news'),
   });
 
-  const { data: articles = [], isLoading } = useQuery({
+  const { data: articles = [] } = useQuery({
     queryKey: ['blogs', 'news-section'],
     queryFn: () => blogsApi.list({ limit: 6 }),
   });
 
-  if (isLoading) return (
-    <section className="py-20 bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[...Array(3)].map((_, i) => <div key={i} className="h-64 bg-gray-200 rounded-3xl animate-pulse" />)}
-        </div>
-      </div>
-    </section>
-  );
+  const title = section?.title ?? FALLBACK_TITLE;
+  const viewAllLabel = section?.cta_text ?? 'View All Articles';
+  const viewAllUrl   = section?.cta_url   ?? '/resource-centre/blogs';
 
   if (articles.length === 0) return null;
 
-  const featured = (articles as BlogPost[])[currentIndex];
-  const rest = (articles as BlogPost[]).filter((_, i) => i !== currentIndex).slice(0, 2);
+  const featuredArticle = (articles as BlogPost[])[currentIndex];
+  const sideArticles = (articles as BlogPost[]).slice(currentIndex + 1, currentIndex + 3).concat(
+    (articles as BlogPost[]).slice(0, Math.max(0, (currentIndex + 3) - articles.length))
+  );
 
-  const prev = () => setCurrentIndex(i => (i - 1 + articles.length) % articles.length);
-  const next = () => setCurrentIndex(i => (i + 1) % articles.length);
+  const handleTransition = (newIndex: number) => {
+    if (newIndex === currentIndex || isTransitioning) return;
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setCurrentIndex(newIndex);
+      setTimeout(() => setIsTransitioning(false), 50);
+    }, 150);
+  };
+
+  const handlePrevious = () => {
+    const newIndex = currentIndex === 0 ? articles.length - 1 : currentIndex - 1;
+    handleTransition(newIndex);
+  };
+
+  const handleNext = () => {
+    const newIndex = currentIndex === articles.length - 1 ? 0 : currentIndex + 1;
+    handleTransition(newIndex);
+  };
+
+  const handleSideArticleClick = (article: BlogPost) => {
+    const newIndex = (articles as BlogPost[]).findIndex(a => a.id === article.id);
+    if (newIndex !== -1) handleTransition(newIndex);
+  };
+
+  const formatDate = (d?: string) => d ? new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : '';
 
   return (
-    <section className="py-20 bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-
-        {/* Header */}
-        <div className="flex items-end justify-between mb-10">
-          <div>
-            <h2 className="text-3xl md:text-4xl font-bold text-[#1F2853] font-['Manrope']">
-              {section?.title ?? 'Latest News & Insights'}
-            </h2>
-            {section?.subtitle && <p className="text-gray-400 mt-2 text-sm">{section.subtitle}</p>}
-          </div>
-          <div className="flex items-center gap-2">
-            <button onClick={prev}
-              className="w-9 h-9 rounded-full border border-gray-200 bg-white flex items-center justify-center hover:bg-[#1F2853] hover:text-white hover:border-[#1F2853] transition-colors">
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <button onClick={next}
-              className="w-9 h-9 rounded-full border border-gray-200 bg-white flex items-center justify-center hover:bg-[#1F2853] hover:text-white hover:border-[#1F2853] transition-colors">
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
+    <section className="py-12 bg-gradient-to-br from-[#f7f5ef] to-white">
+      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+        <div className="text-center mb-8">
+          <h2 className="text-3xl md:text-4xl font-bold text-[#1F2853] mb-4" style={{ fontFamily: 'Manrope, sans-serif' }}>
+            {title}
+          </h2>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="relative max-w-6xl mx-auto">
+          {/* Left Navigation Button */}
+          <button
+            onClick={handlePrevious}
+            disabled={isTransitioning}
+            className="absolute left-[-80px] top-1/2 transform -translate-y-1/2 z-20 w-12 h-12 bg-[#1F2853] text-white rounded-full flex items-center justify-center hover:bg-[#f25a1a] transition-all duration-300 shadow-lg disabled:opacity-50"
+          >
+            <div className="w-5 h-5 flex items-center justify-center">
+              <i className="ri-arrow-left-line text-lg"></i>
+            </div>
+          </button>
 
-          {/* Featured article */}
-          <div className="lg:col-span-7">
-            <Link to={`/blog/${featured.slug}`} className="block group h-full">
-              <div className="relative rounded-3xl overflow-hidden aspect-[16/9] mb-5 bg-gray-200">
-                {featured.hero_image_url
-                  ? <img src={featured.hero_image_url} alt={featured.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                  : <div className="w-full h-full bg-gradient-to-br from-[#1F2853] to-[#f25a1a]" />
-                }
-                {featured.category && (
-                  <span className="absolute top-4 left-4 bg-[#f25a1a] text-white text-xs font-bold px-3 py-1 rounded-full">
-                    {featured.category}
-                  </span>
-                )}
-              </div>
-              <h3 className="text-xl font-bold text-[#1F2853] group-hover:text-[#f25a1a] transition-colors mb-2 leading-snug font-['Manrope']">
-                {featured.title}
-              </h3>
-              {featured.excerpt && (
-                <p className="text-gray-500 text-sm leading-relaxed line-clamp-2">{featured.excerpt}</p>
-              )}
-              <div className="flex items-center gap-3 mt-3 text-xs text-gray-400">
-                {featured.published_date && (
-                  <span>{new Date(featured.published_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                )}
-                {featured.read_time_minutes && (
-                  <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {featured.read_time_minutes} min</span>
-                )}
-              </div>
-            </Link>
-          </div>
+          {/* Right Navigation Button */}
+          <button
+            onClick={handleNext}
+            disabled={isTransitioning}
+            className="absolute right-[-80px] top-1/2 transform -translate-y-1/2 z-20 w-12 h-12 bg-[#1F2853] text-white rounded-full flex items-center justify-center hover:bg-[#f25a1a] transition-all duration-300 shadow-lg disabled:opacity-50"
+          >
+            <div className="w-5 h-5 flex items-center justify-center">
+              <i className="ri-arrow-right-line text-lg"></i>
+            </div>
+          </button>
 
-          {/* Side articles */}
-          <div className="lg:col-span-5 space-y-5">
-            {rest.map((article: BlogPost) => (
-              <Link key={article.id} to={`/blog/${article.slug}`} className="flex gap-4 group">
-                <div className="w-24 h-24 rounded-2xl overflow-hidden bg-gray-200 shrink-0">
-                  {article.hero_image_url
-                    ? <img src={article.hero_image_url} alt={article.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                    : <div className="w-full h-full bg-gradient-to-br from-[#1F2853]/20 to-[#f25a1a]/20" />
-                  }
-                </div>
-                <div className="flex-1 min-w-0">
-                  {article.category && (
-                    <span className="text-[10px] font-bold text-[#f25a1a] uppercase tracking-wider">{article.category}</span>
-                  )}
-                  <h4 className="font-bold text-[#1F2853] text-sm group-hover:text-[#f25a1a] transition-colors line-clamp-2 mt-0.5 leading-snug">
-                    {article.title}
-                  </h4>
-                  <div className="flex items-center gap-2 mt-2 text-xs text-gray-400">
-                    {article.published_date && (
-                      <span>{new Date(article.published_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+          {/* Articles Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[380px]">
+            {/* Featured Article - Left Column (2/3 width) */}
+            <div className="lg:col-span-2">
+              <Link to={`/blog/${featuredArticle.slug}`}>
+                <article className={`bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group cursor-pointer h-full ${isTransitioning ? 'opacity-50 scale-95' : 'opacity-100 scale-100'}`}>
+                  <div className="relative overflow-hidden h-[200px]">
+                    {featuredArticle.hero_image_url && (
+                      <img
+                        src={featuredArticle.hero_image_url}
+                        alt={featuredArticle.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
                     )}
-                    {article.read_time_minutes && (
-                      <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {article.read_time_minutes}m</span>
+                    <div className="absolute top-4 left-4">
+                      <span className="bg-[#f25a1a] text-white px-3 py-1 rounded-full text-sm font-medium">
+                        Featured
+                      </span>
+                    </div>
+                    {featuredArticle.category && (
+                      <div className="absolute top-4 right-4">
+                        <span className="bg-white/90 text-[#1F2853] px-3 py-1 rounded-full text-sm font-medium">
+                          {featuredArticle.category}
+                        </span>
+                      </div>
                     )}
                   </div>
-                </div>
-              </Link>
-            ))}
 
-            <Link to="/resource-centre/blogs"
-              className="flex items-center gap-2 text-sm font-semibold text-[#1F2853] hover:text-[#f25a1a] transition-colors pt-2">
-              View All Articles <ArrowRight className="w-4 h-4" />
-            </Link>
+                  <div className="p-6 h-[180px] flex flex-col justify-between">
+                    <div className="flex-1">
+                      <h3 className="text-xl font-bold text-[#1F2853] mb-2 group-hover:text-[#f25a1a] transition-colors leading-tight line-clamp-2" style={{ fontFamily: 'Manrope, sans-serif' }}>
+                        {featuredArticle.title}
+                      </h3>
+
+                      <div className="flex items-center text-sm text-gray-600 mb-2 space-x-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                        <span>{formatDate(featuredArticle.published_date)}</span>
+                        {featuredArticle.author?.name && (<><span>•</span><span>By {featuredArticle.author.name}</span></>)}
+                        {featuredArticle.read_time_minutes && (<><span>•</span><span>{featuredArticle.read_time_minutes} min read</span></>)}
+                      </div>
+
+                      {featuredArticle.excerpt && (
+                        <p className="text-gray-700 text-sm leading-relaxed line-clamp-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                          {featuredArticle.excerpt}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex items-center text-[#ffcee0] font-medium text-sm hover:text-[#f25a1a] transition-colors cursor-pointer" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                      Read Full Article
+                      <div className="w-4 h-4 flex items-center justify-center ml-2">
+                        <i className="ri-arrow-right-line"></i>
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              </Link>
+            </div>
+
+            {/* Side Articles - Right Column (1/3 width) */}
+            <div className="lg:col-span-1 flex flex-col gap-4 h-full">
+              {sideArticles.map((article) => (
+                <article
+                  key={article.id}
+                  onClick={() => handleSideArticleClick(article)}
+                  className={`bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group cursor-pointer h-[180px] ${isTransitioning ? 'opacity-50' : 'opacity-100'}`}
+                >
+                  <div className="h-full flex flex-col">
+                    <div className="relative overflow-hidden h-[90px]">
+                      {article.hero_image_url && (
+                        <img
+                          src={article.hero_image_url}
+                          alt={article.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      )}
+                      {article.category && (
+                        <div className="absolute top-2 left-2">
+                          <span className="bg-[#f25a1a] text-white px-2 py-1 rounded-full text-xs font-medium">
+                            {article.category}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="p-4 h-[90px] flex flex-col justify-between">
+                      <div className="flex-1">
+                        <h4 className="text-sm font-bold text-[#1F2853] mb-1 group-hover:text-[#f25a1a] transition-colors leading-tight line-clamp-2" style={{ fontFamily: 'Manrope, sans-serif' }}>
+                          {article.title}
+                        </h4>
+
+                        <div className="flex items-center text-xs text-gray-600 mb-1 space-x-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                          <span>{formatDate(article.published_date)}</span>
+                          {article.read_time_minutes && (<><span>•</span><span>{article.read_time_minutes} min read</span></>)}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center text-[#ffcee0] font-medium text-xs hover:text-[#f25a1a] transition-colors cursor-pointer" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                        Read More
+                        <div className="w-4 h-4 flex items-center justify-center ml-1">
+                          <i className="ri-arrow-right-line"></i>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              ))}
+
+              {/* View All Articles Button */}
+              <div className="mt-2">
+                <Link
+                  to={viewAllUrl}
+                  className="block text-center w-full bg-gradient-to-r from-[#1F2853] to-[#2a3a6b] text-white py-2 px-4 rounded-lg font-semibold hover:shadow-lg hover:scale-105 transition-all duration-300 whitespace-nowrap text-sm"
+                  style={{ fontFamily: 'Poppins, sans-serif' }}
+                >
+                  {viewAllLabel}
+                  <div className="w-4 h-4 inline-flex items-center justify-center ml-2">
+                    <i className="ri-external-link-line"></i>
+                  </div>
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Article Navigation Indicators */}
+          <div className="flex justify-center mt-6 space-x-2">
+            {(articles as BlogPost[]).map((_, index) => (
+              <button
+                key={index}
+                onClick={() => handleTransition(index)}
+                disabled={isTransitioning}
+                className={`w-3 h-3 rounded-full transition-all duration-300 disabled:opacity-50 ${
+                  index === currentIndex
+                    ? 'bg-[#f25a1a] scale-110'
+                    : 'bg-gray-300 hover:bg-gray-400'
+                }`}
+              />
+            ))}
           </div>
         </div>
       </div>

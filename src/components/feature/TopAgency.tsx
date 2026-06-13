@@ -1,117 +1,74 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Star, ChevronLeft, ChevronRight, ShieldCheck } from 'lucide-react';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation } from 'swiper/modules';
-import type { Swiper as SwiperType } from 'swiper';
-import 'swiper/css';
-import 'swiper/css/navigation';
 import { agenciesApi, siteContentApi } from '../../lib/api';
-import type { Agency } from '../../lib/api';
+
+const FALLBACK_LOGO = 'https://readdy.ai/api/search-image?query=Modern%20minimalist%20AI%20technology%20company%20logo%20design%20with%20geometric%20shapes%2C%20clean%20lines%2C%20professional%20corporate%20branding%2C%20blue%20and%20white%20color%20scheme%2C%20simple%20abstract%20symbol%20representing%20artificial%20intelligence%20and%20innovation%2C%20high-tech%20aesthetic%2C%20vector%20style%20logo%20on%20transparent%20background&width=96&height=96&seq=agency-logo-001&orientation=squarish';
+const FALLBACK_AGENCY = {
+  name: 'AI Innovations Studio',
+  slug: '',
+  description: 'Leading AI development agency specializing in custom automation solutions for enterprise clients. 50+ successful AI implementations.',
+};
 
 export default function TopAgency() {
-  const [swiperRef, setSwiperRef] = useState<SwiperType | null>(null);
-
   const { data: section } = useQuery({
     queryKey: ['page-section', 'home', 'top_agency'],
     queryFn: () => siteContentApi.section('home', 'top_agency'),
   });
 
-  const { data: agencies = [], isLoading } = useQuery({
+  const { data: agencies = [] } = useQuery({
     queryKey: ['agencies', 'top'],
-    queryFn: () => agenciesApi.list({ limit: 8 }),
+    queryFn: () => agenciesApi.list({ featured: true, limit: 1 }),
   });
 
-  if (isLoading) return (
-    <section className="py-20 bg-[#1F2853]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex gap-6">
-          {[...Array(3)].map((_, i) => <div key={i} className="min-w-[350px] h-72 bg-white/10 rounded-3xl animate-pulse" />)}
-        </div>
-      </div>
-    </section>
-  );
+  const title = section?.title ?? 'Top Agency Of The Month';
+  const ctaText = section?.cta_text ?? 'Visit Agency Profile';
 
-  if ((agencies as Agency[]).length === 0) return null;
+  const agency = agencies[0];
+  const agencyName = agency?.name ?? FALLBACK_AGENCY.name;
+  const agencyDesc = agency?.description ?? FALLBACK_AGENCY.description;
+  const agencyLogo = agency?.avatar_url ?? FALLBACK_LOGO;
+  const agencyHref = agency ? `/agencies/${agency.slug}` : '/agencies';
 
   return (
-    <section className="py-20 bg-[#1F2853] overflow-hidden">
+    <section className="py-16 bg-[#f7f5ef]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-end justify-between mb-10">
-          <div>
-            {section?.subtitle && (
-              <p className="text-[#f25a1a] text-sm font-semibold uppercase tracking-wider mb-2">{section.subtitle}</p>
-            )}
-            <h2 className="text-3xl md:text-4xl font-bold text-white font-['Manrope']">
-              {section?.title ?? 'Top Digital Agencies'}
-            </h2>
-            {section?.description && <p className="text-white/50 mt-2">{section.description}</p>}
+        <h2 className="text-3xl font-bold text-center text-[#1F2853] mb-12 font-['Manrope']">
+          {title}
+        </h2>
+
+        <div className="relative bg-gradient-to-br from-[#1F2853] to-[#162040] rounded-3xl p-12 text-center overflow-hidden">
+          {/* Glassmorphism overlay */}
+          <div className="absolute inset-0 bg-white/5 backdrop-blur-sm"></div>
+
+          <div className="relative max-w-2xl mx-auto">
+            {/* Agency Logo */}
+            <div className="w-24 h-24 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl mx-auto mb-8 flex items-center justify-center shadow-lg overflow-hidden">
+              <img
+                src={agencyLogo}
+                alt={`${agencyName} Logo`}
+                className="w-full h-full object-cover"
+              />
+            </div>
+
+            <h3 className="text-3xl font-bold text-white mb-4 font-['Manrope']">
+              {agencyName}
+            </h3>
+
+            <p className="text-white/90 text-lg mb-8 leading-relaxed font-['Poppins']">
+              {agencyDesc}
+            </p>
+
+            <Link
+              to={agencyHref}
+              className="inline-block bg-gradient-to-r from-[#f25a1a] to-[#ff7043] hover:shadow-xl text-white px-8 py-4 rounded-lg font-semibold transition-all duration-300 hover:scale-105 whitespace-nowrap font-['Poppins'] cursor-pointer"
+            >
+              {ctaText}
+            </Link>
           </div>
-          <div className="flex gap-2">
-            <button onClick={() => swiperRef?.slidePrev()}
-              className="w-10 h-10 rounded-full border border-white/20 text-white flex items-center justify-center hover:bg-white/10 transition-colors">
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <button onClick={() => swiperRef?.slideNext()}
-              className="w-10 h-10 rounded-full border border-white/20 text-white flex items-center justify-center hover:bg-white/10 transition-colors">
-              <ChevronRight className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
 
-        <Swiper
-          modules={[Navigation]}
-          spaceBetween={20}
-          slidesPerView="auto"
-          onSwiper={setSwiperRef}
-        >
-          {(agencies as Agency[]).map(agency => (
-            <SwiperSlide key={agency.id} className="!w-[320px]">
-              <Link to={`/agencies/${agency.slug}`}
-                className="block bg-white/5 hover:bg-white/10 border border-white/10 rounded-3xl p-6 transition-all duration-300 group h-full">
-                <div className="flex items-center gap-4 mb-5">
-                  <div className="w-16 h-16 rounded-2xl bg-white/10 overflow-hidden flex items-center justify-center border border-white/20 shrink-0">
-                    {agency.avatar_url
-                      ? <img src={agency.avatar_url} alt={agency.name} className="w-full h-full object-cover" />
-                      : <span className="text-2xl font-bold text-white">{agency.name[0]}</span>
-                    }
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <h3 className="font-bold text-white truncate group-hover:text-[#f25a1a] transition-colors">{agency.name}</h3>
-                      {agency.verified && <ShieldCheck className="w-4 h-4 text-green-400 shrink-0" />}
-                    </div>
-                    {agency.category && <p className="text-xs text-white/40 truncate">{agency.category}</p>}
-                  </div>
-                </div>
-
-                {agency.tagline ? (
-                  <p className="text-white/60 text-sm leading-relaxed line-clamp-3 mb-5">{agency.tagline}</p>
-                ) : agency.description ? (
-                  <p className="text-white/60 text-sm leading-relaxed line-clamp-3 mb-5">{agency.description}</p>
-                ) : null}
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className={`w-3.5 h-3.5 ${i < Math.round(agency.rating ?? 0) ? 'fill-amber-400 text-amber-400' : 'text-white/20'}`} />
-                    ))}
-                    <span className="text-xs text-white/50 ml-1">{agency.rating?.toFixed(1)}</span>
-                  </div>
-                  {agency.years_experience ? (
-                    <span className="text-xs text-white/40">{agency.years_experience}y exp</span>
-                  ) : null}
-                </div>
-              </Link>
-            </SwiperSlide>
-          ))}
-        </Swiper>
-
-        <div className="text-center mt-10">
-          <Link to={section?.cta_url ?? '/agencies'} className="inline-flex items-center gap-2 border border-white/20 text-white px-6 py-3 rounded-full font-semibold hover:bg-white hover:text-[#1F2853] transition-colors">
-            {section?.cta_text ?? 'Browse All Agencies'} <i className="ri-arrow-right-line" />
-          </Link>
+          {/* Decorative elements */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-[#f25a1a]/10 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#f25a1a]/10 rounded-full blur-3xl"></div>
         </div>
       </div>
     </section>

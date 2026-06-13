@@ -52,11 +52,18 @@ export default function NewsHero() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={content.search_placeholder ?? 'Search articles…'}
-                className="w-full px-6 py-4 pl-14 text-lg bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#ffcee0]"
+                placeholder={content.search_placeholder ?? 'Search news articles, topics, or keywords...'}
+                className="w-full px-6 py-4 pl-14 text-lg bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#ffcee0] focus:border-transparent transition-all duration-300"
+                style={{ fontFamily: 'Poppins, sans-serif' }}
               />
-              <i className="ri-search-line text-gray-300 text-xl absolute left-4 top-1/2 -translate-y-1/2" />
-              <button type="submit" className="absolute right-2 top-1/2 -translate-y-1/2 bg-gradient-to-r from-[#f25a1a] to-[#ff7043] text-white px-6 py-2 rounded-lg font-semibold hover:shadow-lg whitespace-nowrap">
+              <div className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6 flex items-center justify-center">
+                <i className="ri-search-line text-gray-300 text-xl"></i>
+              </div>
+              <button
+                type="submit"
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gradient-to-r from-[#f25a1a] to-[#ff7043] text-white px-6 py-2 rounded-lg font-semibold hover:shadow-lg hover:scale-105 transition-all duration-300 whitespace-nowrap"
+                style={{ fontFamily: 'Poppins, sans-serif' }}
+              >
                 Search
               </button>
             </div>

@@ -65,9 +65,17 @@ export default function FeaturedNews() {
                 </p>
               )}
               <div className="flex items-center space-x-4">
-                <span className="bg-gradient-to-r from-[#1F2853] to-[#2a3a6b] text-white px-8 py-3 rounded-lg font-semibold whitespace-nowrap" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                <span className="bg-gradient-to-r from-[#1F2853] to-[#2a3a6b] text-white px-8 py-3 rounded-lg font-semibold hover:shadow-lg hover:scale-105 transition-all duration-300 whitespace-nowrap" style={{ fontFamily: 'Poppins, sans-serif' }}>
                   Read Full Article
-                  <i className="ri-arrow-right-line ml-2" />
+                  <div className="w-4 h-4 inline-flex items-center justify-center ml-2">
+                    <i className="ri-arrow-right-line"></i>
+                  </div>
+                </span>
+                <span className="flex items-center space-x-2 text-gray-600 hover:text-[#f25a1a] transition-colors">
+                  <div className="w-5 h-5 flex items-center justify-center">
+                    <i className="ri-share-line"></i>
+                  </div>
+                  <span className="font-medium" style={{ fontFamily: 'Poppins, sans-serif' }}>Share</span>
                 </span>
               </div>
             </div>

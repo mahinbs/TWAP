@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { successStoriesApi, siteContentApi } from '../../../lib/api';
 
@@ -11,6 +12,9 @@ interface JourneyExtras {
   solution?: string;
   avatar_url?: string;
   company_logo?: string;
+  product_image?: string;
+  rating?: number;
+  rating_text?: string;
   metrics_users?: string;
   metrics_revenue?: string;
   metrics_growth?: string;
@@ -40,6 +44,9 @@ export default function EntrepreneurJourneys() {
       solution: ex.solution ?? '',
       avatar: ex.avatar_url ?? i.image_url ?? '',
       companyLogo: ex.company_logo ?? '',
+      productImage: ex.product_image ?? '',
+      rating: ex.rating ?? 5,
+      ratingText: ex.rating_text ?? '4.9/5',
       metrics: {
         users: ex.metrics_users ?? '',
         revenue: ex.metrics_revenue ?? '',
@@ -131,8 +138,53 @@ export default function EntrepreneurJourneys() {
                   </div>
                 )}
               </div>
+
+              {/* Product Preview Side */}
+              {(e.productName || e.productImage) && (
+                <div className="flex-1">
+                  <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+                    <div className="bg-gradient-to-r from-[#1F2853] to-[#2a3a6b] p-6 text-white">
+                      <h4 className="text-xl font-bold mb-2" style={{ fontFamily: 'Manrope, sans-serif' }}>
+                        {e.productName}
+                      </h4>
+                      <div className="flex items-center space-x-2">
+                        <div className="flex space-x-1">
+                          {[1,2,3,4,5].map((star) => (
+                            <div key={star} className="w-4 h-4 flex items-center justify-center text-yellow-400">
+                              <i className={`ri-star-${star <= e.rating ? 'fill' : 'line'} text-sm`}></i>
+                            </div>
+                          ))}
+                        </div>
+                        <span className="text-sm opacity-90">{e.ratingText}</span>
+                      </div>
+                    </div>
+                    <div className="p-6">
+                      {e.productImage && (
+                        <img
+                          src={e.productImage}
+                          alt={e.productName}
+                          className="w-full h-48 object-cover rounded-lg mb-4"
+                        />
+                      )}
+                      <button className="w-full bg-[#f25a1a] hover:bg-[#d14815] text-white py-3 rounded-lg font-semibold transition-colors cursor-pointer whitespace-nowrap" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                        View Full Case Study
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
+        </div>
+
+        <div className="text-center mt-16">
+          <Link
+            to={section?.cta_url ?? '/promote'}
+            className="inline-block bg-gradient-to-r from-[#f25a1a] to-[#ff7043] text-white px-8 py-4 rounded-lg font-semibold hover:shadow-lg hover:scale-105 transition-all duration-300 whitespace-nowrap"
+            style={{ fontFamily: 'Poppins, sans-serif' }}
+          >
+            {section?.cta_text ?? 'Share Your Journey'}
+          </Link>
         </div>
       </div>
     </section>

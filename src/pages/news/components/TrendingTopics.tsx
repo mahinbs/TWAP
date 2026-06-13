@@ -54,7 +54,9 @@ export default function TrendingTopics() {
                   <div className="w-8 h-8 bg-[#ffcee0]/20 rounded-lg flex items-center justify-center">
                     <span className="text-[#1F2853] font-bold text-sm">#{index + 1}</span>
                   </div>
-                  <i className="ri-arrow-up-line text-green-500" />
+                  <div className="flex items-center space-x-1">
+                    <i className="ri-arrow-up-line text-green-500"></i>
+                  </div>
                 </div>
                 <h3 className="text-lg font-bold text-[#1F2853] mb-2 group-hover:text-[#f25a1a] transition-colors" style={{ fontFamily: 'Manrope, sans-serif' }}>
                   {topic.name}
@@ -63,7 +65,9 @@ export default function TrendingTopics() {
                   <span className="text-sm text-gray-600" style={{ fontFamily: 'Poppins, sans-serif' }}>
                     {topic.count} article{topic.count === 1 ? '' : 's'}
                   </span>
-                  <i className="ri-arrow-right-line text-gray-400 group-hover:text-[#f25a1a] transition-colors" />
+                  <div className="w-4 h-4 flex items-center justify-center">
+                    <i className="ri-arrow-right-line text-gray-400 group-hover:text-[#f25a1a] transition-colors"></i>
+                  </div>
                 </div>
               </Link>
             ))}
