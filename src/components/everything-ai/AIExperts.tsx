@@ -1,4 +1,8 @@
 import { useRef, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../lib/api';
+
+const AIE_FALLBACK_TITLE = 'Featured AI Experts';
 
 const experts = [
     {
@@ -34,6 +38,11 @@ const experts = [
 ];
 
 const AIExperts = () => {
+    const { data: section } = useQuery({
+        queryKey: ['page-section', 'everything-ai', 'experts'],
+        queryFn: () => siteContentApi.section('everything-ai', 'experts'),
+    });
+    const sTitle = section?.title ?? AIE_FALLBACK_TITLE;
     const scrollRef = useRef<HTMLDivElement>(null);
 
     // Infinite Auto-Scroll Logic
@@ -62,7 +71,7 @@ const AIExperts = () => {
         <section className="py-24 bg-transparent overflow-hidden">
             <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center mb-12">
                 <h2 className="text-4xl font-bold text-brand-dark mb-4">
-                    Featured AI Experts
+                    {sTitle}
                 </h2>
                 <p className="text-gray-500 max-w-2xl mx-auto text-lg mb-8">
                     Some genius brains and brawns that are helping businesses leverage AI

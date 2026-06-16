@@ -1,4 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../lib/api';
+
+const AS_FALLBACK_TITLE = 'Our Experience Spans Every Industry and Challenge';
 
 const stats = [
     { label: "Satisfied Clients", value: 600, suffix: "+" },
@@ -91,6 +95,12 @@ const Counter = ({ end, duration = 2000, prefix = "", suffix = "" }: { end: numb
 
 export default function AgenciesStats() {
     const [openIndex, setOpenIndex] = useState<number | null>(0);
+
+    const { data: section } = useQuery({
+        queryKey: ['page-section', 'agencies', 'stats'],
+        queryFn: () => siteContentApi.section('agencies', 'stats'),
+    });
+    const sTitle = section?.title ?? AS_FALLBACK_TITLE;
 
     const toggleAccordion = (index: number) => {
         setOpenIndex(openIndex === index ? null : index);
@@ -206,7 +216,7 @@ export default function AgenciesStats() {
                     <div>
                         <span className="inline-block px-3 py-1 rounded-full bg-[#1A1B20]/5 text-[#1A1B20] text-xs font-semibold uppercase tracking-wider mb-6">Industries</span>
                         <h2 className="text-3xl md:text-5xl font-medium mb-10 leading-tight text-[#1A1B20]">
-                            Our Experience Spans Every Industry and Challenge
+                            {sTitle}
                         </h2>
 
                         <div className="space-y-4">

@@ -1,4 +1,19 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { siteContentApi } from "../../lib/api";
+
+const FALLBACK = {
+  badge: "Full-Scale Visibility Platform",
+  title: "Founder visibility that looks and feels editorial",
+  description1: "The Web App Pro elevates every founder story with cinematic visuals, curated interviews, and feature-grade exposure tailored to their growth stage.",
+  description2: "Get featured with bespoke coverage that mirrors the premium program grid you see on top-tier editorial sites.",
+  cta_title: "Ready to share your founder story?",
+  cta_subtitle: "Join our featured founders and get full-scale visibility for you and your product",
+  cta_text: "Share Your Story",
+  cta_url: "/promote",
+  prime_feature_label: "Prime Feature",
+};
 
 interface Founder {
   id: number;
@@ -13,7 +28,27 @@ interface Founder {
 }
 
 export default function FounderStories() {
-  const [founders] = useState<Founder[]>([
+  const { data: section } = useQuery({
+    queryKey: ["page-section", "home", "founder_stories"],
+    queryFn: () => siteContentApi.section("home", "founder_stories"),
+  });
+  const { data: dbFounders = [] } = useQuery({
+    queryKey: ["founder-stories"],
+    queryFn: siteContentApi.founderStories,
+  });
+
+  const c = (section?.content ?? {}) as Record<string, string>;
+  const badge       = section?.badge_text ?? c.badge ?? FALLBACK.badge;
+  const sTitle      = section?.title      ?? FALLBACK.title;
+  const sDesc1      = section?.description ?? FALLBACK.description1;
+  const sDesc2      = c.description_2 ?? FALLBACK.description2;
+  const ctaTitle    = c.cta_title    ?? FALLBACK.cta_title;
+  const ctaSubtitle = c.cta_subtitle ?? FALLBACK.cta_subtitle;
+  const ctaText     = section?.cta_text ?? FALLBACK.cta_text;
+  const ctaUrl      = section?.cta_url  ?? FALLBACK.cta_url;
+  const primeFeatureLabel = c.prime_feature_label ?? FALLBACK.prime_feature_label;
+
+  const [fallbackFounders] = useState<Founder[]>([
     {
       id: 1,
       name: "Sarah Chen",
@@ -58,6 +93,20 @@ export default function FounderStories() {
     },
   ]);
 
+  const founders: Founder[] = dbFounders.length > 0
+    ? dbFounders.map((f, i) => ({
+        id: i + 1,
+        name: f.name,
+        title: f.title ?? '',
+        company: f.company ?? '',
+        productName: f.product_name ?? '',
+        question: f.question ?? '',
+        answer: f.answer ?? '',
+        avatar: f.avatar_url ?? '',
+        videoThumbnail: f.video_thumbnail_url ?? '',
+      }))
+    : fallbackFounders;
+
   const cardThemes = [
     {
       background: "linear-gradient(150deg, #ecffbf 0%, #e1f97b 100%)",
@@ -92,27 +141,26 @@ export default function FounderStories() {
               className="px-6 py-2 bg-gradient-to-r from-[#ffcee0]/20 to-[#ffb3d6]/20 backdrop-blur-sm border border-[#ffcee0]/30 rounded-full text-[#f25a1a] text-sm font-semibold"
               style={{ fontFamily: "Poppins, sans-serif" }}
             >
-              Full-Scale Visibility Platform
+              {badge}
             </span>
           </div>
           <h2
             className="text-4xl sm:text-5xl lg:text-6xl font-bold text-[#1F2853] mb-4 leading-tight"
             style={{ fontFamily: "Manrope, sans-serif" }}
           >
-            Founder visibility that looks and feels editorial
+            {sTitle}
           </h2>
           <p
             className="text-xl sm:text-2xl text-gray-700 mb-4 max-w-3xl"
             style={{ fontFamily: "Poppins, sans-serif" }}
           >
-            The Web App Pro elevates every founder story with cinematic visuals,
-            curated interviews, and feature-grade exposure tailored to their growth stage.
+            {sDesc1}
           </p>
           <p
             className="text-lg text-gray-600 max-w-2xl"
             style={{ fontFamily: "Poppins, sans-serif" }}
           >
-            Get featured with bespoke coverage that mirrors the premium program grid you see on top-tier editorial sites.
+            {sDesc2}
           </p>
         </div>
 
@@ -139,7 +187,7 @@ export default function FounderStories() {
                   </span>
                   <span className="flex items-center gap-1 text-sm text-gray-800 font-semibold">
                     <i className="ri-star-fill text-[#f25a1a]"></i>
-                    Prime Feature
+                    {primeFeatureLabel}
                   </span>
                 </div>
 
@@ -217,28 +265,28 @@ export default function FounderStories() {
               className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[#1F2853] mb-4"
               style={{ fontFamily: "Manrope, sans-serif" }}
             >
-              Ready to share your founder story?
+              {ctaTitle}
             </h3>
             <p
               className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto"
               style={{ fontFamily: "Poppins, sans-serif" }}
             >
-              Join our featured founders and get full-scale visibility for you
-              and your product
+              {ctaSubtitle}
             </p>
-            <button
-              className="bg-gradient-to-r from-[#f25a1a] to-[#ff7043] text-white px-8 lg:px-10 py-4 lg:py-5 rounded-xl font-semibold hover:shadow-2xl hover:scale-105 transition-all duration-300 whitespace-nowrap text-base lg:text-lg relative overflow-hidden group/btn"
+            <Link
+              to={ctaUrl}
+              className="inline-block bg-gradient-to-r from-[#f25a1a] to-[#ff7043] text-white px-8 lg:px-10 py-4 lg:py-5 rounded-xl font-semibold hover:shadow-2xl hover:scale-105 transition-all duration-300 whitespace-nowrap text-base lg:text-lg relative overflow-hidden group/btn"
               style={{
                 fontFamily: "Poppins, sans-serif",
                 boxShadow: "0 10px 30px rgba(242, 90, 26, 0.4)",
               }}
             >
               <span className="relative z-10 flex items-center gap-2">
-                Share Your Story
+                {ctaText}
                 <i className="ri-arrow-right-line group-hover/btn:translate-x-1 transition-transform"></i>
               </span>
               <div className="absolute inset-0 bg-gradient-to-r from-[#ff7043] to-[#f25a1a] opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
-            </button>
+            </Link>
           </div>
         </div>
       </div>

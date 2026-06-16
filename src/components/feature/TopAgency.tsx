@@ -5,6 +5,9 @@ import { Navigation } from "swiper/modules";
 import type { Swiper as SwiperType } from "swiper";
 import "swiper/css";
 import "swiper/css/navigation";
+import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { siteContentApi } from "../../lib/api";
 
 interface Agency {
   id: number;
@@ -14,9 +17,10 @@ interface Agency {
   rating: number;
   title: string;
   description: string;
+  url?: string;
 }
 
-const agencies: Agency[] = [
+const FALLBACK_AGENCIES: Agency[] = [
   {
     id: 1,
     name: "AI Innovations Studio",
@@ -62,9 +66,27 @@ const agencies: Agency[] = [
   },
 ];
 
+const FALLBACK_TITLE = "Top Agencies Of The Month";
+const FALLBACK_BADGE = "featured agency";
+const FALLBACK_CTA = { text: "View Agency Details", url: "/agencies" };
+
 export default function TopAgency() {
   const [activeIndex, setActiveIndex] = useState(0);
   const swiperRef = useRef<SwiperType>(null);
+
+  const { data: section } = useQuery({
+    queryKey: ["page-section", "home", "top_agency"],
+    queryFn: () => siteContentApi.section("home", "top_agency"),
+  });
+
+  const c = (section?.content ?? {}) as Record<string, unknown>;
+  const title = section?.title ?? FALLBACK_TITLE;
+  const badgeText = section?.badge_text ?? FALLBACK_BADGE;
+  const ctaText = section?.cta_text ?? FALLBACK_CTA.text;
+  const ctaUrl  = section?.cta_url  ?? FALLBACK_CTA.url;
+  const agencies: Agency[] = Array.isArray(c.agencies) && (c.agencies as Agency[]).length > 0
+    ? (c.agencies as Agency[])
+    : FALLBACK_AGENCIES;
 
   useEffect(() => {
     if (swiperRef.current) {
@@ -113,7 +135,7 @@ export default function TopAgency() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
         <div className="mb-10 reveal-fade-up">
           <h2 className="text-3xl font-bold text-[#1F2853] text-left font-['Manrope']">
-            Top Agencies Of The Month
+            {title}
           </h2>
         </div>
 
@@ -199,7 +221,7 @@ export default function TopAgency() {
             {/* Content block */}
             <div className="w-full lg:w-5/12 text-left flex flex-col justify-center py-4 lg:pl-4">
               <p className="text-[10px] uppercase tracking-[0.3em] text-[#f25a1a] font-bold font-['Manrope'] mb-4">
-                featured agency
+                {badgeText}
               </p>
               <div
                 key={activeAgency.id}
@@ -221,9 +243,9 @@ export default function TopAgency() {
                 </p>
               </div>
 
-              <button className="inline-flex items-center justify-center bg-[#f25a1a] text-white px-7 py-3 rounded-full font-bold text-sm font-['Poppins'] shadow-xl hover:bg-[#ff7635] hover:-translate-y-0.5 transition-all duration-300 w-fit">
-                View Agency Details
-              </button>
+              <Link to={activeAgency.url ?? ctaUrl} className="inline-flex items-center justify-center bg-[#f25a1a] text-white px-7 py-3 rounded-full font-bold text-sm font-['Poppins'] shadow-xl hover:bg-[#ff7635] hover:-translate-y-0.5 transition-all duration-300 w-fit">
+                {ctaText}
+              </Link>
             </div>
           </div>
         </div>

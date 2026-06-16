@@ -1,5 +1,12 @@
 import { useKeenSlider } from "keen-slider/react";
 import "keen-slider/keen-slider.min.css";
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../lib/api';
+
+const ST_FALLBACK = {
+    title_prefix: 'Tap into Trending Topics:',
+    title_highlight: 'Latest Insights, Always On',
+};
 
 const topics = [
     {
@@ -37,6 +44,13 @@ const topics = [
 const animation = { duration: 15000, easing: (t: number) => t };
 
 const SuccessTopics = () => {
+    const { data: section } = useQuery({
+        queryKey: ['page-section', 'success-stories', 'topics'],
+        queryFn: () => siteContentApi.section('success-stories', 'topics'),
+    });
+    const c = (section?.content ?? {}) as Record<string, string>;
+    const tPre = c.title_prefix    ?? ST_FALLBACK.title_prefix;
+    const tHi  = c.title_highlight ?? ST_FALLBACK.title_highlight;
     const [sliderRef, internalSlider] = useKeenSlider<HTMLDivElement>({
         loop: true,
         renderMode: "performance",
@@ -84,8 +98,8 @@ const SuccessTopics = () => {
             <div className="max-w-7xl mx-auto px-6 lg:px-8 mb-16">
                 <div className="text-center">
                     <h2 className="text-4xl md:text-5xl font-bold text-brand-dark mb-4 !leading-tight">
-                        Tap into Trending Topics:<br />
-                        <span className="text-brand-burgundy">Latest Insights, Always On</span>
+                        {tPre}<br />
+                        <span className="text-brand-burgundy">{tHi}</span>
                     </h2>
                     <p className="text-gray-500 max-w-2xl mx-auto">
                         Stay ahead of the curve with our curated selection of hot topics and emerging trends in the digital landscape.

@@ -1,8 +1,23 @@
 import { useRef, useLayoutEffect } from 'react';
 import gsap from 'gsap';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../lib/api';
+
+const MH_FALLBACK = {
+    title_line1: 'THE',
+    title_line2: 'METHOD',
+};
 
 const MethodologyHero = () => {
     const containerRef = useRef<HTMLDivElement>(null);
+
+    const { data: section } = useQuery({
+        queryKey: ['page-section', 'methodology', 'hero'],
+        queryFn: () => siteContentApi.section('methodology', 'hero'),
+    });
+    const c = (section?.content ?? {}) as Record<string, string>;
+    const tLine1 = c.title_line1 ?? MH_FALLBACK.title_line1;
+    const tLine2 = c.title_line2 ?? MH_FALLBACK.title_line2;
     const coreRef = useRef<HTMLDivElement>(null);
     const ringsRef = useRef<HTMLDivElement>(null);
 
@@ -166,8 +181,8 @@ const MethodologyHero = () => {
                     </div>
 
                     <h1 className="glitch-text text-6xl md:text-9xl font-bold text-white tracking-tighter mb-4 drop-shadow-[0_0_30px_rgba(255,255,255,0.15)]">
-                        THE <br />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-br from-white via-gray-200 to-gray-500">METHOD</span>
+                        {tLine1} <br />
+                        <span className="text-transparent bg-clip-text bg-gradient-to-br from-white via-gray-200 to-gray-500">{tLine2}</span>
                     </h1>
 
                     <div className="glitch-text flex items-center gap-4 mt-4">

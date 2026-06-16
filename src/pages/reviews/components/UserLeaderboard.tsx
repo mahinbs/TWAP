@@ -1,4 +1,8 @@
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../../lib/api';
+
+const UL_FALLBACK_TITLE = 'User Favorites';
 
 interface UserReview {
   rank: number;
@@ -65,6 +69,12 @@ export default function UserLeaderboard() {
   const [showAll, setShowAll] = useState(false);
   const displayedReviews = showAll ? userReviews : userReviews.slice(0, 3);
 
+  const { data: section } = useQuery({
+    queryKey: ['page-section', 'reviews', 'user_leaderboard'],
+    queryFn: () => siteContentApi.section('reviews', 'user_leaderboard'),
+  });
+  const sTitle = section?.title ?? UL_FALLBACK_TITLE;
+
   const renderStars = (rating: number) => {
     const fullStars = Math.floor(rating);
     const hasHalfStar = rating % 1 !== 0;
@@ -99,7 +109,7 @@ export default function UserLeaderboard() {
         </div>
         <div>
           <h2 className="text-2xl font-bold text-[#1F2853]" style={{ fontFamily: 'Manrope, sans-serif' }}>
-            User Favorites
+            {sTitle}
           </h2>
           <p className="text-gray-600 text-sm" style={{ fontFamily: 'Poppins, sans-serif' }}>
             Voted by users, for users

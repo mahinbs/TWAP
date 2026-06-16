@@ -1,6 +1,13 @@
 import Header from '../../components/feature/Header';
 import Footer from '../../components/feature/Footer';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../lib/api';
+
+const PROMOTE_HERO_FALLBACK = {
+  title_line1: 'Who Are You',
+  title_line2: 'Promoting?',
+};
 
 const promoteOptions = [
   {
@@ -39,6 +46,13 @@ const promoteOptions = [
 ];
 
 export default function PromotePage() {
+  const { data: section } = useQuery({
+    queryKey: ['page-section', 'promote', 'hero'],
+    queryFn: () => siteContentApi.section('promote', 'hero'),
+  });
+  const c = (section?.content ?? {}) as Record<string, string>;
+  const tL1 = c.title_line1 ?? PROMOTE_HERO_FALLBACK.title_line1;
+  const tL2 = c.title_line2 ?? PROMOTE_HERO_FALLBACK.title_line2;
   return (
     <div className="min-h-screen bg-[#050608] text-white overflow-x-hidden">
       <Header />
@@ -51,8 +65,8 @@ export default function PromotePage() {
             </span>
 
             <h1 className="mt-6 text-4xl sm:text-5xl lg:text-7xl font-black leading-[0.95] tracking-tight font-['Manrope']">
-              <span className="block text-white">Who Are You</span>
-              <span className="block text-[#ff6a3d] mt-1 sm:mt-2">Promoting?</span>
+              <span className="block text-white">{tL1}</span>
+              <span className="block text-[#ff6a3d] mt-1 sm:mt-2">{tL2}</span>
             </h1>
 
             <p className="mt-5 sm:mt-6 max-w-2xl mx-auto text-sm sm:text-base text-white/60 leading-relaxed font-['Poppins']">

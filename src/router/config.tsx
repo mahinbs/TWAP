@@ -27,6 +27,8 @@ import SearchPage from '../pages/search/page';
 import NewsPage from '../pages/news/page';
 import ReviewsPage from '../pages/reviews/page';
 import InsightsPage from '../pages/insights/page';
+import ProductReviewPage from '../pages/product-review/page';
+import BestProjectManagementSoftwarePage from '../pages/best-project-management-software/page';
 
 const routes: RouteObject[] = [
   { path: '/',                          element: <HomePage /> },
@@ -37,6 +39,7 @@ const routes: RouteObject[] = [
   { path: '/blog/:slug',                element: <BlogDetailPage /> },
   { path: '/blogs',                     element: <BlogsPage /> },
   { path: '/agencies',                  element: <AgenciesPage /> },
+  { path: '/agencies/profile',          element: <AgencyProfilePage /> },
   { path: '/agencies/:slug',            element: <AgencyProfilePage /> },
   { path: '/everything-ai',             element: <EverythingAIPage /> },
   { path: '/interviews-success-stories',element: <SuccessStoriesPage /> },
@@ -54,6 +57,8 @@ const routes: RouteObject[] = [
   { path: '/services',                  element: <ServicesPage /> },
   { path: '/promote',                   element: <PromotePage /> },
   { path: '/promote/:category',         element: <PromoteCategoryPage /> },
+  { path: '/product-review',            element: <ProductReviewPage /> },
+  { path: '/top-10-project-management-software-2026', element: <BestProjectManagementSoftwarePage /> },
   { path: '/showcase',                  element: <StaticRedirect from="/showcase" /> },
   { path: '/products',                  element: <StaticRedirect from="/products" /> },
   { path: '/best-project-management-software', element: <StaticRedirect from="/best-project-management-software" /> },

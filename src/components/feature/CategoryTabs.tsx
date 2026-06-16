@@ -1,5 +1,9 @@
 
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../lib/api';
+
+const CT_FALLBACK_TITLE = 'Top App Reviews – Handpicked for You';
 
 const categories = [
   { id: 'marketing', name: 'Marketing' },
@@ -11,13 +15,19 @@ const categories = [
 export default function CategoryTabs() {
   const [activeCategory, setActiveCategory] = useState('marketing');
 
+  const { data: section } = useQuery({
+    queryKey: ['page-section', 'home', 'category_tabs'],
+    queryFn: () => siteContentApi.section('home', 'category_tabs'),
+  });
+  const sTitle = section?.title ?? CT_FALLBACK_TITLE;
+
   return (
     <section className="bg-white py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-[#1F2853] mb-4" style={{ fontFamily: 'Inter, sans-serif' }}>
-            Top App Reviews – Handpicked for You
+            {sTitle}
           </h2>
         </div>
 

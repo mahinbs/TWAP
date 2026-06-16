@@ -1,6 +1,20 @@
 
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../lib/api';
+
+const SSH_FALLBACK = {
+    title_prefix: 'Unlock the Secrets of',
+    title_highlight: 'Success',
+};
 
 const SuccessStoriesHero = () => {
+    const { data: section } = useQuery({
+        queryKey: ['page-section', 'success-stories', 'hero'],
+        queryFn: () => siteContentApi.section('success-stories', 'hero'),
+    });
+    const c = (section?.content ?? {}) as Record<string, string>;
+    const tPre = c.title_prefix    ?? SSH_FALLBACK.title_prefix;
+    const tHi  = c.title_highlight ?? SSH_FALLBACK.title_highlight;
 
     const scrollToSection = (id: string) => {
         const element = document.getElementById(id);
@@ -30,8 +44,8 @@ const SuccessStoriesHero = () => {
 
                 {/* Main Headline */}
                 <h1 className="text-5xl md:text-7xl font-bold text-center mb-6 leading-tight max-w-4xl mx-auto">
-                    Unlock the Secrets of
-                    <span className="text-brand-orange"> Success</span>
+                    {tPre}
+                    <span className="text-brand-orange"> {tHi}</span>
                 </h1>
 
                 {/* Subheadline */}

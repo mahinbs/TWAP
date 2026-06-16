@@ -1,4 +1,11 @@
 import { useRef, useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../lib/api';
+
+const AII_FALLBACK = {
+    title_prefix: 'Catch Up with',
+    title_highlight: 'AI Insights',
+};
 
 const insights = [
     {
@@ -59,6 +66,13 @@ const insights = [
 ];
 
 const AIInsights = () => {
+    const { data: section } = useQuery({
+        queryKey: ['page-section', 'everything-ai', 'insights'],
+        queryFn: () => siteContentApi.section('everything-ai', 'insights'),
+    });
+    const c = (section?.content ?? {}) as Record<string, string>;
+    const tPre = c.title_prefix    ?? AII_FALLBACK.title_prefix;
+    const tHi  = c.title_highlight ?? AII_FALLBACK.title_highlight;
     const [isVisible, setIsVisible] = useState(false);
     const sectionRef = useRef<HTMLDivElement>(null);
 
@@ -89,7 +103,7 @@ const AIInsights = () => {
                             <span className="text-brand-orange font-bold text-xs tracking-widest uppercase">Latest Intel</span>
                         </div>
                         <h2 className="text-4xl md:text-5xl font-bold text-brand-dark max-w-lg mb-4 leading-tight">
-                            Catch Up with <span className="underline decoration-brand-lime decoration-4 underline-offset-4">AI Insights</span>
+                            {tPre} <span className="underline decoration-brand-lime decoration-4 underline-offset-4">{tHi}</span>
                         </h2>
                         <p className="text-gray-500 max-w-xl text-lg">
                             Deep dives into the technology shaping our future. Stay ahead of the curve.

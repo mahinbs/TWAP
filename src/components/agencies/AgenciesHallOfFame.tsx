@@ -1,5 +1,12 @@
 import React, { useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../lib/api';
+
+const HOF_FALLBACK = {
+    title: 'Our Hall of Fame',
+    description: 'These are the game-changers—the companies redefining excellence in their fields. Discover the innovators, disruptors, and visionaries.',
+};
 
 const agencies = [
     {
@@ -42,6 +49,13 @@ const agencies = [
 export default function AgenciesHallOfFame() {
     const scrollRef = useRef<HTMLDivElement>(null);
     const lastInteractionTime = useRef(0);
+
+    const { data: section } = useQuery({
+        queryKey: ['page-section', 'agencies', 'hall_of_fame'],
+        queryFn: () => siteContentApi.section('agencies', 'hall_of_fame'),
+    });
+    const sTitle = section?.title       ?? HOF_FALLBACK.title;
+    const sDesc  = section?.description ?? HOF_FALLBACK.description;
 
     // Auto-scroll logic
     useEffect(() => {
@@ -100,10 +114,10 @@ export default function AgenciesHallOfFame() {
         >
             <div className="max-w-7xl mx-auto px-6 lg:px-8 mb-12 text-center">
                 <div className="flex items-center justify-center gap-6">
-                    <h2 className="text-4xl lg:text-5xl font-bold text-[#1A1B20]">Our Hall of Fame</h2>
+                    <h2 className="text-4xl lg:text-5xl font-bold text-[#1A1B20]">{sTitle}</h2>
                 </div>
                 <p className="mt-4 text-gray-500 max-w-2xl mx-auto text-lg">
-                    These are the game-changers—the companies redefining excellence in their fields. Discover the innovators, disruptors, and visionaries.
+                    {sDesc}
                 </p>
             </div>
 

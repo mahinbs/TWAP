@@ -1,5 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../lib/api';
+
+const TPG_FALLBACK_TITLE = 'All Products in Artificial Intelligence (57 results)';
 
 // Mock Data for the Grid (Aligned with reference image style)
 const gridProducts = [
@@ -64,6 +68,12 @@ export default function TopProductsGrid() {
     const [openFilter, setOpenFilter] = useState<string | null>(null);
     const [activeFilters, setActiveFilters] = useState<Record<string, string>>({});
     const filterRef = useRef<HTMLDivElement>(null);
+
+    const { data: section } = useQuery({
+        queryKey: ['page-section', 'top-products', 'grid'],
+        queryFn: () => siteContentApi.section('top-products', 'grid'),
+    });
+    const sTitle = section?.title ?? TPG_FALLBACK_TITLE;
 
     // Close filters when clicking outside
     useEffect(() => {
@@ -182,7 +192,7 @@ export default function TopProductsGrid() {
             {/* 3. Content Area */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                 <h2 className="text-2xl font-medium text-[#1F2853] mb-8">
-                    All Products in Artificial Intelligence (57 results)
+                    {sTitle}
                 </h2>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

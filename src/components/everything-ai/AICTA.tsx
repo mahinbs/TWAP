@@ -1,7 +1,29 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../lib/api';
+
+const AICTA_FALLBACK = {
+    badge: 'System Status: Ready to Launch',
+    title_line1: 'Unlock the',
+    title_line2: 'Next Dimension',
+    description: "Don't just adapt to the future. Create it. Join the elite circle of AI-native enterprises today.",
+    cta1: { text: 'Start Transformation', url: '/promote' },
+};
 
 const AICTA = () => {
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
+    const { data: section } = useQuery({
+        queryKey: ['page-section', 'everything-ai', 'cta'],
+        queryFn: () => siteContentApi.section('everything-ai', 'cta'),
+    });
+    const c = (section?.content ?? {}) as Record<string, string>;
+    const sBadge = section?.badge_text ?? AICTA_FALLBACK.badge;
+    const tLine1 = c.title_line1 ?? AICTA_FALLBACK.title_line1;
+    const tLine2 = c.title_line2 ?? AICTA_FALLBACK.title_line2;
+    const ctaText = section?.cta_text ?? AICTA_FALLBACK.cta1.text;
+    const ctaUrl  = section?.cta_url  ?? AICTA_FALLBACK.cta1.url;
 
     const handleMouseMove = (e: React.MouseEvent) => {
         const { clientX, clientY } = e;
@@ -52,14 +74,14 @@ const AICTA = () => {
                         style={{ transform: `translate(${mousePos.x * 0.1}px, ${mousePos.y * 0.1}px)` }}>
                         <div className="inline-block mb-6">
                             <span className="py-2 px-6 rounded-full border border-gray-100 bg-white text-brand-orange font-mono text-sm tracking-widest uppercase shadow-sm">
-                                System Status: Ready to Launch
+                                {sBadge}
                             </span>
                         </div>
 
                         <h2 className="text-5xl md:text-7xl font-bold text-brand-dark mb-8 tracking-tighter leading-none">
-                            Unlock the <br />
+                            {tLine1} <br />
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-orange via-brand-dark to-brand-lime animate-gradient bg-300%">
-                                Next Dimension
+                                {tLine2}
                             </span>
                         </h2>
 
@@ -69,10 +91,10 @@ const AICTA = () => {
                         </p>
 
                         <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-                            <button className="px-10 py-5 rounded-full bg-brand-orange text-white font-bold hover:bg-brand-dark transition-all flex items-center gap-3 group shadow-xl shadow-brand-orange/20 hover:scale-105">
-                                Start Transformation
+                            <Link to={ctaUrl} className="px-10 py-5 rounded-full bg-brand-orange text-white font-bold hover:bg-brand-dark transition-all flex items-center gap-3 group shadow-xl shadow-brand-orange/20 hover:scale-105">
+                                {ctaText}
                                 <i className="ri-arrow-right-line group-hover:translate-x-1 transition-transform"></i>
-                            </button>
+                            </Link>
                         </div>
                     </div>
 

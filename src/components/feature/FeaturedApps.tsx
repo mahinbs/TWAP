@@ -1,13 +1,22 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../lib/api';
 
-const categories = [
+const FALLBACK_TITLE = 'Top App Reviews – Handpicked for You';
+const FALLBACK_DESCRIPTION = 'Discover the most popular and highly-rated AI applications';
+const FALLBACK_CTA = { text: 'View All Apps', url: '/directory' };
+const FALLBACK_VIEW_DETAILS = 'View Details';
+const FALLBACK_FEATURED_BADGE = 'Featured';
+
+const FALLBACK_CATEGORIES = [
   { id: 'marketing', name: 'Marketing' },
   { id: 'productivity', name: 'Productivity' },
   { id: 'finance', name: 'Finance' },
   { id: 'design', name: 'Design' }
 ];
 
-const allApps = {
+const FALLBACK_APPS = {
   marketing: [
     {
       name: 'Jasper AI',
@@ -186,10 +195,31 @@ const allApps = {
   ]
 };
 
+interface AppCardData { name: string; category: string; rating: number; description: string; logo: string }
+
 export default function FeaturedApps() {
   const [activeCategory, setActiveCategory] = useState('marketing');
   const [currentIndex, setCurrentIndex] = useState(0);
   const [cardsPerView, setCardsPerView] = useState(3);
+
+  const { data: section } = useQuery({
+    queryKey: ['page-section', 'home', 'featured_apps'],
+    queryFn: () => siteContentApi.section('home', 'featured_apps'),
+  });
+
+  const c = (section?.content ?? {}) as Record<string, unknown>;
+  const title       = section?.title       ?? FALLBACK_TITLE;
+  const description = section?.description ?? FALLBACK_DESCRIPTION;
+  const ctaText = section?.cta_text ?? FALLBACK_CTA.text;
+  const ctaUrl  = section?.cta_url  ?? FALLBACK_CTA.url;
+  const viewDetailsText = (c.view_details_text as string) ?? FALLBACK_VIEW_DETAILS;
+  const featuredBadge   = (c.featured_badge as string)    ?? FALLBACK_FEATURED_BADGE;
+  const categories = Array.isArray(c.categories) && (c.categories as { id: string; name: string }[]).length > 0
+    ? (c.categories as { id: string; name: string }[])
+    : FALLBACK_CATEGORIES;
+  const allApps = (c.apps && typeof c.apps === 'object' && !Array.isArray(c.apps))
+    ? (c.apps as Record<string, AppCardData[]>)
+    : FALLBACK_APPS;
 
   // Determine cards per view responsively
   useEffect(() => {
@@ -205,8 +235,8 @@ export default function FeaturedApps() {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  const currentApps = allApps[activeCategory as keyof typeof allApps];
-  const totalSlides = Math.ceil(currentApps.length / cardsPerView);
+  const currentApps: AppCardData[] = (allApps as Record<string, AppCardData[]>)[activeCategory] ?? [];
+  const totalSlides = Math.max(1, Math.ceil(currentApps.length / cardsPerView));
 
   const nextSlide = () => {
     setCurrentIndex((prev) => (prev + 1) % totalSlides);
@@ -230,10 +260,10 @@ export default function FeaturedApps() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12 reveal-fade-up">
           <h2 className="text-3xl md:text-4xl font-bold text-[#1F2853] mb-4" style={{ fontFamily: 'Inter, sans-serif' }}>
-            Top App Reviews – Handpicked for You
+            {title}
           </h2>
           <p className="text-lg text-gray-600">
-            Discover the most popular and highly-rated AI applications
+            {description}
           </p>
         </div>
 
@@ -300,7 +330,7 @@ export default function FeaturedApps() {
                           {/* Featured Badge */}
                           {slideIndex === 0 && index < 2 && (
                             <div className="inline-block bg-[#b9ed2a] text-[#1F2853] px-3 py-1 rounded-full text-sm font-medium mb-4">
-                              Featured
+                              {featuredBadge}
                             </div>
                           )}
 
@@ -334,7 +364,7 @@ export default function FeaturedApps() {
 
                           {/* View Details Button */}
                           <button className="w-full bg-[#b9ed2a] hover:bg-[#a5d426] text-[#1F2853] py-2.5 md:py-3 px-4 rounded-lg font-medium transition-colors cursor-pointer whitespace-nowrap">
-                            View Details
+                            {viewDetailsText}
                           </button>
                         </div>
                       ))}
@@ -360,9 +390,9 @@ export default function FeaturedApps() {
         </div>
 
         <div className="text-center mt-12">
-          <button className="bg-[#f25a1a] hover:bg-[#d14815] text-white px-8 py-3 rounded-lg font-medium transition-colors cursor-pointer whitespace-nowrap">
-            View All Apps
-          </button>
+          <Link to={ctaUrl} className="inline-block bg-[#f25a1a] hover:bg-[#d14815] text-white px-8 py-3 rounded-lg font-medium transition-colors cursor-pointer whitespace-nowrap">
+            {ctaText}
+          </Link>
         </div>
       </div>
     </div>

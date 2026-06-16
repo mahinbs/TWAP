@@ -1,6 +1,24 @@
 import { useEffect, useRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../lib/api';
+
+const FALLBACK = {
+  badge: 'The Future is Now',
+  title_line1: 'Scale Up For The',
+  title_line2: 'Future With AI',
+  description: "We've battled buggy bots and chased AI chaos to build your survival kit. Our blogs blend sharp insights, expert takes, and enough knowledge to keep you one step ahead of the machines.",
+};
 
 const AIHero = () => {
+  const { data: section } = useQuery({
+    queryKey: ['page-section', 'everything-ai', 'hero'],
+    queryFn: () => siteContentApi.section('everything-ai', 'hero'),
+  });
+  const c = (section?.content ?? {}) as Record<string, string>;
+  const badge       = section?.badge_text ?? FALLBACK.badge;
+  const titleLine1  = c.title_line1 ?? FALLBACK.title_line1;
+  const titleLine2  = c.title_line2 ?? FALLBACK.title_line2;
+  const description = section?.description ?? FALLBACK.description;
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
     // Canvas Particle Animation
@@ -146,17 +164,16 @@ const AIHero = () => {
             {/* Content */}
             <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
                 <span className="inline-block px-4 py-2 rounded-full border border-gray-700 bg-white/5 backdrop-blur-sm text-gray-300 text-sm mb-6 tracking-widest uppercase">
-                    The Future is Now
+                    {badge}
                 </span>
                 <h1 className="text-5xl md:text-7xl font-bold text-white mb-8 tracking-tight leading-tight">
-                    Scale Up For The <br />
+                    {titleLine1} <br />
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-orange via-white to-brand-lime">
-                        Future With AI
+                        {titleLine2}
                     </span>
                 </h1>
                 <p className="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed mb-10">
-                    We've battled buggy bots and chased AI chaos to build your survival kit.
-                    Our blogs blend sharp insights, expert takes, and enough knowledge to keep you one step ahead of the machines.
+                    {description}
                 </p>
 
                 {/* Particle Ring Animation - Enhanced */}

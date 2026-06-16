@@ -1,5 +1,16 @@
 
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../../lib/api';
+
+const FALLBACK_HEADER = {
+  title: 'Client Success Stories',
+  description: "Discover how we've helped businesses transform their operations, boost growth, and achieve remarkable results through innovative technology solutions.",
+  cta_text: 'Start Your Success Story',
+  cta_url: '/promote',
+  card_cta: 'Read Full Case Study',
+};
 
 interface SuccessStory {
   id: number;
@@ -20,6 +31,17 @@ interface SuccessStory {
 }
 
 export default function ClientSuccessStories() {
+  const { data: section } = useQuery({
+    queryKey: ['page-section', 'insights', 'client_stories'],
+    queryFn: () => siteContentApi.section('insights', 'client_stories'),
+  });
+  const c = (section?.content ?? {}) as Record<string, string>;
+  const sTitle = section?.title ?? FALLBACK_HEADER.title;
+  const sDesc  = section?.description ?? FALLBACK_HEADER.description;
+  const ctaText = section?.cta_text ?? FALLBACK_HEADER.cta_text;
+  const ctaUrl  = section?.cta_url  ?? FALLBACK_HEADER.cta_url;
+  const cardCta = c.card_cta_text ?? FALLBACK_HEADER.card_cta;
+
   const [stories] = useState<SuccessStory[]>([
     {
       id: 1,
@@ -94,10 +116,10 @@ export default function ClientSuccessStories() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold text-[#1F2853] mb-6" style={{ fontFamily: 'Manrope, sans-serif' }}>
-            Client Success Stories
+            {sTitle}
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto" style={{ fontFamily: 'Poppins, sans-serif' }}>
-            Discover how we've helped businesses transform their operations, boost growth, and achieve remarkable results through innovative technology solutions.
+            {sDesc}
           </p>
         </div>
 
@@ -202,7 +224,7 @@ export default function ClientSuccessStories() {
 
                 {/* CTA */}
                 <button className="w-full bg-gradient-to-r from-[#f25a1a] to-[#ff7043] text-white py-3 rounded-lg font-semibold hover:shadow-lg transition-all duration-300 group-hover:scale-105 cursor-pointer whitespace-nowrap" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                  Read Full Case Study
+                  {cardCta}
                 </button>
               </div>
             </div>
@@ -210,9 +232,9 @@ export default function ClientSuccessStories() {
         </div>
 
         <div className="text-center mt-16">
-          <button className="bg-gradient-to-r from-[#1F2853] to-[#2a3a6b] text-white px-8 py-4 rounded-lg font-semibold hover:shadow-lg hover:scale-105 transition-all duration-300 whitespace-nowrap" style={{ fontFamily: 'Poppins, sans-serif' }}>
-            Start Your Success Story
-          </button>
+          <Link to={ctaUrl} className="inline-block bg-gradient-to-r from-[#1F2853] to-[#2a3a6b] text-white px-8 py-4 rounded-lg font-semibold hover:shadow-lg hover:scale-105 transition-all duration-300 whitespace-nowrap" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            {ctaText}
+          </Link>
         </div>
       </div>
     </section>

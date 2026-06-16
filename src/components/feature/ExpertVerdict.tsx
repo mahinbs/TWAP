@@ -4,8 +4,15 @@ import { Autoplay, Navigation } from 'swiper/modules';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import 'swiper/css';
 import 'swiper/css/navigation';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../lib/api';
 
-const reviews = [
+interface Review { id: number; name: string; role: string; topic: string; image: string; text: string }
+
+const FALLBACK_TITLE = 'Our Verdict: We Test AI Tools';
+const FALLBACK_DESCRIPTION = 'Our expert team rigorously tests every AI tool to provide you with honest, unbiased reviews that help you make informed decisions.';
+const FALLBACK_BADGE = "Editor's Pick";
+const FALLBACK_REVIEWS: Review[] = [
   {
     id: 1,
     name: "Sarah Mitchell",
@@ -36,6 +43,18 @@ export default function ExpertVerdict() {
   const [prevEl, setPrevEl] = useState<HTMLButtonElement | null>(null);
   const [nextEl, setNextEl] = useState<HTMLButtonElement | null>(null);
 
+  const { data: section } = useQuery({
+    queryKey: ['page-section', 'home', 'expert_verdict'],
+    queryFn: () => siteContentApi.section('home', 'expert_verdict'),
+  });
+  const c = (section?.content ?? {}) as Record<string, unknown>;
+  const title       = section?.title       ?? FALLBACK_TITLE;
+  const description = section?.description ?? FALLBACK_DESCRIPTION;
+  const badge = (c.badge as string) ?? FALLBACK_BADGE;
+  const reviews: Review[] = Array.isArray(c.reviews) && (c.reviews as Review[]).length > 0
+    ? (c.reviews as Review[])
+    : FALLBACK_REVIEWS;
+
   return (
     <section className="bg-white py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -43,12 +62,11 @@ export default function ExpertVerdict() {
           {/* Left Content */}
           <div>
             <h2 className="text-3xl lg:text-4xl font-bold text-[#1F2853] mb-6" style={{ fontFamily: 'Manrope, sans-serif' }}>
-              Our Verdict: We Test AI Tools
+              {title}
             </h2>
 
             <p className="text-lg text-gray-600 mb-8" style={{ fontFamily: 'Poppins, sans-serif' }}>
-              Our expert team rigorously tests every AI tool to provide you with honest,
-              unbiased reviews that help you make informed decisions.
+              {description}
             </p>
           </div>
 
@@ -73,7 +91,7 @@ export default function ExpertVerdict() {
                 <SwiperSlide key={review.id}>
                   <div className="bg-[#f7f5ef] p-8 h-full min-h-[320px] flex flex-col justify-center">
                     <div className="inline-block bg-[#1F2853] text-white px-4 py-2 rounded-md text-sm font-medium mb-6 w-fit">
-                      Editor's Pick
+                      {badge}
                     </div>
 
                     <div className="flex items-start gap-4">

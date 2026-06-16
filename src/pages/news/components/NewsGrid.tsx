@@ -1,5 +1,12 @@
 
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi, blogsApi, categoriesApi } from '../../../lib/api';
+
+const NG_FALLBACK = {
+  title: 'Latest News & Insights',
+  description: 'Stay updated with the latest developments in technology and innovation',
+};
 
 interface NewsArticle {
   id: number;
@@ -19,7 +26,26 @@ export default function NewsGrid() {
   const [currentPage, setCurrentPage] = useState(1);
   const articlesPerPage = 9;
 
-  const categories = ['All', 'AI & ML', 'App Development', 'Blockchain', 'Cloud Computing', 'Cybersecurity', 'Mobile Tech'];
+  const { data: section } = useQuery({
+    queryKey: ['page-section', 'news', 'grid'],
+    queryFn: () => siteContentApi.section('news', 'grid'),
+  });
+  const { data: categoryRows = [] } = useQuery({
+    queryKey: ['categories', 'blogs'],
+    queryFn: () => categoriesApi.list('blogs'),
+  });
+  const { data: dbPosts = [] } = useQuery({
+    queryKey: ['blogs', 'news-grid'],
+    queryFn: () => blogsApi.list({ limit: 60 }),
+  });
+
+  const sTitle = section?.title ?? NG_FALLBACK.title;
+  const sDesc  = section?.description ?? NG_FALLBACK.description;
+
+  const FALLBACK_CATEGORIES = ['All', 'AI & ML', 'App Development', 'Blockchain', 'Cloud Computing', 'Cybersecurity', 'Mobile Tech'];
+  const categories = categoryRows.length > 0
+    ? ['All', ...(categoryRows as Array<{ name: string }>).map(c => c.name)]
+    : FALLBACK_CATEGORIES;
 
   const allArticles: NewsArticle[] = [
     {
@@ -123,9 +149,23 @@ export default function NewsGrid() {
     }
   ];
 
-  const filteredArticles = selectedCategory === 'All' 
-    ? allArticles 
-    : allArticles.filter(article => article.category === selectedCategory);
+  const articles: NewsArticle[] = dbPosts.length > 0
+    ? dbPosts.map((p, i) => ({
+        id: i + 1,
+        title: p.title,
+        excerpt: p.excerpt ?? '',
+        author: p.author?.name ?? 'TWAP',
+        date: p.published_date ? new Date(p.published_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : '',
+        readTime: p.read_time_minutes ? `${p.read_time_minutes} min read` : '',
+        category: p.category ?? '',
+        image: p.hero_image_url ?? '',
+        tags: p.tags ?? [],
+      }))
+    : allArticles;
+
+  const filteredArticles = selectedCategory === 'All'
+    ? articles
+    : articles.filter(article => article.category === selectedCategory);
 
   const totalPages = Math.ceil(filteredArticles.length / articlesPerPage);
   const startIndex = (currentPage - 1) * articlesPerPage;
@@ -136,10 +176,10 @@ export default function NewsGrid() {
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-[#1F2853] mb-4" style={{ fontFamily: 'Manrope, sans-serif' }}>
-            Latest News & Insights
+            {sTitle}
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto" style={{ fontFamily: 'Poppins, sans-serif' }}>
-            Stay updated with the latest developments in technology and innovation
+            {sDesc}
           </p>
         </div>
 

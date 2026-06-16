@@ -1,5 +1,15 @@
 
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../../lib/api';
+
+const EJ_FALLBACK = {
+  title: 'Entrepreneur Journeys',
+  description: 'Real stories of transformation, challenge, and breakthrough innovation from founders who dared to solve problems that mattered.',
+  cta_text: 'Share Your Journey',
+  cta_url: '/promote',
+};
 
 interface Entrepreneur {
   id: number;
@@ -20,6 +30,14 @@ interface Entrepreneur {
 }
 
 export default function EntrepreneurJourneys() {
+  const { data: section } = useQuery({
+    queryKey: ['page-section', 'insights', 'entrepreneur_journeys'],
+    queryFn: () => siteContentApi.section('insights', 'entrepreneur_journeys'),
+  });
+  const ejTitle = section?.title ?? EJ_FALLBACK.title;
+  const ejDesc  = section?.description ?? EJ_FALLBACK.description;
+  const ejCtaText = section?.cta_text ?? EJ_FALLBACK.cta_text;
+  const ejCtaUrl  = section?.cta_url  ?? EJ_FALLBACK.cta_url;
   const [entrepreneurs] = useState<Entrepreneur[]>([
     {
       id: 1,
@@ -79,10 +97,10 @@ export default function EntrepreneurJourneys() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold text-[#1F2853] mb-6" style={{ fontFamily: 'Manrope, sans-serif' }}>
-            Entrepreneur Journeys
+            {ejTitle}
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto" style={{ fontFamily: 'Poppins, sans-serif' }}>
-            Real stories of transformation, challenge, and breakthrough innovation from founders who dared to solve problems that mattered.
+            {ejDesc}
           </p>
         </div>
 
@@ -211,9 +229,9 @@ export default function EntrepreneurJourneys() {
         </div>
 
         <div className="text-center mt-16">
-          <button className="bg-gradient-to-r from-[#f25a1a] to-[#ff7043] text-white px-8 py-4 rounded-lg font-semibold hover:shadow-lg hover:scale-105 transition-all duration-300 whitespace-nowrap" style={{ fontFamily: 'Poppins, sans-serif' }}>
-            Share Your Journey
-          </button>
+          <Link to={ejCtaUrl} className="inline-block bg-gradient-to-r from-[#f25a1a] to-[#ff7043] text-white px-8 py-4 rounded-lg font-semibold hover:shadow-lg hover:scale-105 transition-all duration-300 whitespace-nowrap" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            {ejCtaText}
+          </Link>
         </div>
       </div>
     </section>

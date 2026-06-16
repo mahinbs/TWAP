@@ -1,4 +1,11 @@
 // import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../lib/api';
+
+const SG_FALLBACK = {
+    title_prefix: 'Success Stories that',
+    title_highlight: 'Inspire Growth',
+};
 
 const stories = [
     {
@@ -32,6 +39,13 @@ const stories = [
 ];
 
 const StoriesGrid = () => {
+    const { data: section } = useQuery({
+        queryKey: ['page-section', 'success-stories', 'grid'],
+        queryFn: () => siteContentApi.section('success-stories', 'grid'),
+    });
+    const c = (section?.content ?? {}) as Record<string, string>;
+    const tPre = c.title_prefix    ?? SG_FALLBACK.title_prefix;
+    const tHi  = c.title_highlight ?? SG_FALLBACK.title_highlight;
     return (
         <section id="success-stories" className="py-24 bg-white relative overflow-hidden">
             <div className="max-w-7xl mx-auto px-6 lg:px-8">
@@ -40,8 +54,8 @@ const StoriesGrid = () => {
                     <div>
                         <span className="text-brand-orange font-bold text-xs tracking-widest uppercase mb-2 block">Real Results</span>
                         <h2 className="text-4xl md:text-5xl font-bold text-brand-dark">
-                            Success Stories that <br />
-                            <span className="text-brand-orange">Inspire Growth</span>
+                            {tPre} <br />
+                            <span className="text-brand-orange">{tHi}</span>
                         </h2>
                     </div>
                     <button className="px-6 py-3 rounded-full border border-gray-200 hover:border-brand-orange hover:text-brand-orange transition-all font-bold text-gray-500 flex items-center gap-2 group">

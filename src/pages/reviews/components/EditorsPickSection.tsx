@@ -1,3 +1,11 @@
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../../lib/api';
+
+const EP_FALLBACK = {
+  title: "Editor's Pick Reviews",
+  description: 'In-depth reviews of the most innovative and impactful apps, handpicked by our expert editorial team',
+};
+
 interface EditorsPick {
   id: number;
   name: string;
@@ -55,6 +63,13 @@ const editorsPicks: EditorsPick[] = [
 ];
 
 export default function EditorsPickSection() {
+  const { data: section } = useQuery({
+    queryKey: ['page-section', 'reviews', 'editors_pick'],
+    queryFn: () => siteContentApi.section('reviews', 'editors_pick'),
+  });
+  const sTitle = section?.title       ?? EP_FALLBACK.title;
+  const sDesc  = section?.description ?? EP_FALLBACK.description;
+
   const renderStars = (rating: number) => {
     const fullStars = Math.floor(rating);
     const hasHalfStar = rating % 1 !== 0;
@@ -79,10 +94,10 @@ export default function EditorsPickSection() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <h2 className="text-3xl lg:text-4xl font-bold text-[#1F2853] mb-4" style={{ fontFamily: 'Manrope, sans-serif' }}>
-            Editor's Pick Reviews
+            {sTitle}
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto" style={{ fontFamily: 'Poppins, sans-serif' }}>
-            In-depth reviews of the most innovative and impactful apps, handpicked by our expert editorial team
+            {sDesc}
           </p>
         </div>
 

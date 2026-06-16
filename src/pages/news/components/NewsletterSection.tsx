@@ -1,17 +1,38 @@
 
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../../lib/api';
+import { supabase } from '../../../lib/supabase';
+
+const NS_FALLBACK = {
+  title: 'Stay Ahead of the Tech Curve',
+  description: 'Get the latest AI and tech news delivered to your inbox. Join 25,000+ professionals who trust our weekly digest.',
+};
 
 export default function NewsletterSection() {
   const [email, setEmail] = useState('');
   const [isSubscribed, setIsSubscribed] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const { data: section } = useQuery({
+    queryKey: ['page-section', 'news', 'newsletter'],
+    queryFn: () => siteContentApi.section('news', 'newsletter'),
+  });
+  const sTitle = section?.title ?? NS_FALLBACK.title;
+  const sDesc  = section?.description ?? NS_FALLBACK.description;
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email) {
-      setIsSubscribed(true);
-      setEmail('');
-      setTimeout(() => setIsSubscribed(false), 3000);
-    }
+    if (!email) return;
+    try {
+      await supabase.from('form_submissions').insert({
+        form_type: 'newsletter',
+        source_page: 'news',
+        payload: { email },
+      });
+    } catch { /* ignore */ }
+    setIsSubscribed(true);
+    setEmail('');
+    setTimeout(() => setIsSubscribed(false), 3000);
   };
 
   return (
@@ -19,10 +40,10 @@ export default function NewsletterSection() {
       <div className="max-w-4xl mx-auto px-6 sm:px-8 lg:px-12 text-center">
         <div className="mb-8">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4" style={{ fontFamily: 'Manrope, sans-serif' }}>
-            Stay Ahead of the Tech Curve
+            {sTitle}
           </h2>
           <p className="text-xl text-gray-200 max-w-2xl mx-auto leading-relaxed" style={{ fontFamily: 'Poppins, sans-serif' }}>
-            Get the latest AI and tech news delivered to your inbox. Join 25,000+ professionals who trust our weekly digest.
+            {sDesc}
           </p>
         </div>
 

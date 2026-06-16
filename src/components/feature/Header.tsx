@@ -1,58 +1,46 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi, settingsApi } from '../../lib/api';
 import RichMenu from './RichMenu';
 
-const menuCategories = [
-  {
-    id: 'home',
-    label: 'Home',
-    link: "/"
-  },
-  {
-    id: 'directory',
-    label: 'Directory',
-    link: '/directory'
-  },
-  {
-    id: 'everything-ai',
-    label: 'Everything AI',
-    link: '/everything-ai'
-  },
-  {
-    id: 'services',
-    label: 'Services',
-    link: '/services'
-  },
-  {
-    id: 'methodology',
-    label: 'Methodology',
-    link: '/methodology'
-  },
-  // {
-  //   id: 'promote',
-  //   label: 'Promote',
-  //   link: '/promote'
-  // },
-  // {
-  //   id: 'reviews',
-  //   label: 'Reviews',
-  //   link: '/reviews'
-  // },
-  // {
-  //   id: 'feedback',
-  //   label: 'Feedback #1',
-  //   link: '/news'
-  // },
-  // {
-  //   id: 'tools',
-  //   label: 'Tools & Products Apps Agencies',
-  //   link: '/tools'
-  // },
-]
+const FALLBACK_MENU = [
+  { id: 'home',          label: 'Home',          link: '/' },
+  { id: 'directory',     label: 'Directory',     link: '/directory' },
+  { id: 'everything-ai', label: 'Everything AI', link: '/everything-ai' },
+  { id: 'services',      label: 'Services',      link: '/services' },
+  { id: 'methodology',   label: 'Methodology',   link: '/methodology' },
+];
+
+const FALLBACK_LOGO = 'https://static.readdy.ai/image/19a52a0e7cd11d182286c46a940c9855/e182590b8be678e75f8d6849629e767f.png';
+const FALLBACK_CTA = { text: 'Promote Now', url: '/promote' };
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isRichMenuOpen, setIsRichMenuOpen] = useState(false);
+
+  const { data: navItems = [] } = useQuery({
+    queryKey: ['navigation', 'header'],
+    queryFn: () => siteContentApi.navigation('header'),
+  });
+
+  const { data: headerSection } = useQuery({
+    queryKey: ['page-section', 'global', 'header'],
+    queryFn: () => siteContentApi.section('global', 'header'),
+  });
+
+  const { data: settings } = useQuery({
+    queryKey: ['global-settings'],
+    queryFn: () => settingsApi.get(),
+  });
+
+  const menuCategories = navItems.length > 0
+    ? navItems.map(n => ({ id: n.id, label: n.label, link: n.url }))
+    : FALLBACK_MENU;
+
+  const logoUrl = headerSection?.media_url ?? settings?.logo_url ?? FALLBACK_LOGO;
+  const ctaText = headerSection?.cta_text ?? FALLBACK_CTA.text;
+  const ctaUrl  = headerSection?.cta_url  ?? FALLBACK_CTA.url;
 
 
   // Prevent scrolling when menu is open
@@ -77,7 +65,7 @@ export default function Header() {
               {/* Logo */}
               <Link to="/" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
                 <img
-                  src="https://static.readdy.ai/image/19a52a0e7cd11d182286c46a940c9855/e182590b8be678e75f8d6849629e767f.png"
+                  src={logoUrl}
                   alt="The Web App Pro"
                   className="h-8 lg:h-10 w-auto min-w-[120px] object-contain"
                 />
@@ -109,10 +97,10 @@ export default function Header() {
 
                 {/* CTA - Hidden on mobile */}
                 <Link
-                  to="/promote"
+                  to={ctaUrl}
                   className="hidden lg:block bg-gradient-to-r from-[#f25a1a] to-[#ff7043] text-white px-5 py-2.5 rounded-full font-['Manrope'] font-semibold hover:shadow-lg hover:scale-105 transition-all duration-300 whitespace-nowrap text-sm lg:text-base"
                 >
-                  Promote Now
+                  {ctaText}
                 </Link>
               </div>
 
@@ -145,11 +133,11 @@ export default function Header() {
                   </Link>
                 ))}
                 <Link
-                  to="/promote"
+                  to={ctaUrl}
                   className="bg-gradient-to-r from-[#f25a1a] to-[#ff7043] text-white px-6 py-3 rounded-full font-['Manrope'] font-semibold hover:shadow-lg transition-all duration-300 text-center mt-2 whitespace-nowrap"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  Promote Now
+                  {ctaText}
                 </Link>
               </nav>
             </div>

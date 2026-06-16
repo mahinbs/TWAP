@@ -16,7 +16,25 @@ const avatars = [
     { src: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=100&h=100&q=80", position: "bottom-[15%] right-[15%] md:right-[20%]", size: "w-12 h-12 md:w-16 md:h-16" },
 ];
 
+import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../lib/api';
+
+const RSC_FALLBACK = {
+    title: 'Ready to get started?',
+    description: 'Join thousands of developers and designers who are already building the future with our top-rated tools and resources.',
+    cta: { text: 'Get Started', url: '/directory' },
+};
+
 export default function ReadyToStartCta() {
+    const { data: section } = useQuery({
+        queryKey: ['page-section', 'global', 'ready_to_start'],
+        queryFn: () => siteContentApi.section('global', 'ready_to_start'),
+    });
+    const sTitle = section?.title       ?? RSC_FALLBACK.title;
+    const sDesc  = section?.description ?? RSC_FALLBACK.description;
+    const ctaText = section?.cta_text ?? RSC_FALLBACK.cta.text;
+    const ctaUrl  = section?.cta_url  ?? RSC_FALLBACK.cta.url;
     return (
         <section className="relative bg-gray-50 py-32 overflow-hidden">
             {/* Decorative Avatars */}
@@ -28,15 +46,15 @@ export default function ReadyToStartCta() {
 
             <div className="max-w-3xl mx-auto px-4 relative z-20 text-center">
                 <h2 className="text-4xl md:text-5xl font-bold text-brand-dark mb-6 tracking-tight">
-                    Ready to get started?
+                    {sTitle}
                 </h2>
                 <p className="text-gray-600 text-base md:text-lg mb-10 max-w-2xl mx-auto leading-relaxed">
-                    Join thousands of developers and designers who are already building the future with our top-rated tools and resources.
+                    {sDesc}
                 </p>
 
-                <button className="inline-flex items-center gap-2 px-8 py-4 bg-brand-dark text-white text-sm font-bold rounded-xl hover:bg-brand-orange transition-all hover:gap-3 shadow-lg hover:shadow-xl">
-                    Get Started <i className="ri-arrow-right-line"></i>
-                </button>
+                <Link to={ctaUrl} className="inline-flex items-center gap-2 px-8 py-4 bg-brand-dark text-white text-sm font-bold rounded-xl hover:bg-brand-orange transition-all hover:gap-3 shadow-lg hover:shadow-xl">
+                    {ctaText} <i className="ri-arrow-right-line"></i>
+                </Link>
             </div>
         </section>
     );

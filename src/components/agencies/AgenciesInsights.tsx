@@ -1,4 +1,11 @@
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../lib/api';
+
+const AI_FALLBACK = {
+    title: 'Our Latest Insights',
+    description: 'Proprietary data, expert analysis and bold thinking for leaders who want to achieve the extraordinary.',
+};
 
 const insights = [
     {
@@ -25,6 +32,12 @@ const clients = [
 ];
 
 export default function AgenciesInsights() {
+    const { data: section } = useQuery({
+        queryKey: ['page-section', 'agencies', 'insights'],
+        queryFn: () => siteContentApi.section('agencies', 'insights'),
+    });
+    const sTitle = section?.title       ?? AI_FALLBACK.title;
+    const sDesc  = section?.description ?? AI_FALLBACK.description;
     return (
         <section className="py-24 bg-[#FAFAFA] overflow-hidden">
             <div className="max-w-7xl mx-auto px-6 lg:px-8">
@@ -32,9 +45,9 @@ export default function AgenciesInsights() {
                     <span className="inline-block px-4 py-1.5 rounded-full bg-white border border-gray-200 text-sm font-semibold text-gray-500 mb-4 uppercase tracking-wider">
                         Insights
                     </span>
-                    <h2 className="text-4xl font-bold text-[#1A1B20] mb-4">Our Latest Insights</h2>
+                    <h2 className="text-4xl font-bold text-[#1A1B20] mb-4">{sTitle}</h2>
                     <p className="text-gray-500 max-w-2xl mx-auto">
-                        Proprietary data, expert analysis and bold thinking for leaders who want to achieve the extraordinary.
+                        {sDesc}
                     </p>
                 </div>
 

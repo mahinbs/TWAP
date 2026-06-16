@@ -1,6 +1,22 @@
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../../lib/api';
+import { supabase } from '../../../lib/supabase';
+
+const FALLBACK = {
+  badge: 'App Promotion Service',
+  title: 'Feature Your App & Supercharge Your SEO',
+  description: 'Get your application featured on our premium directory and unlock powerful SEO benefits that drive organic growth. Our platform generates over 100 quality backlinks from relevant websites, helping you climb search rankings while we handle all the tedious submission work.',
+};
 
 const AppPromotionSection: React.FC = () => {
+  const { data: section } = useQuery({
+    queryKey: ['page-section', 'services', 'app_promotion'],
+    queryFn: () => siteContentApi.section('services', 'app_promotion'),
+  });
+  const sBadge = section?.badge_text ?? FALLBACK.badge;
+  const sTitle = section?.title       ?? FALLBACK.title;
+  const sDesc  = section?.description ?? FALLBACK.description;
   const [formData, setFormData] = useState({
     appName: '',
     appUrl: '',
@@ -29,15 +45,12 @@ const AppPromotionSection: React.FC = () => {
         formBody.append(key, value);
       });
 
-      const response = await fetch('https://readdy.ai/api/form/d49i93n43pgcqhvcq3cg', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: formBody.toString()
+      const { error } = await supabase.from('form_submissions').insert({
+        form_type: 'app_promotion',
+        source_page: 'services',
+        payload: Object.fromEntries(formBody.entries()),
       });
-
-      if (response.ok) {
+      if (!error) {
         setSubmitStatus('success');
         setFormData({
           appName: '',
@@ -96,15 +109,15 @@ const AppPromotionSection: React.FC = () => {
           {/* Left Side - Content */}
           <div>
             <div className="inline-block px-4 py-2 bg-[#ffcee0]/20 rounded-full mb-6">
-              <span className="text-[#f25a1a] font-semibold text-sm">App Promotion Service</span>
+              <span className="text-[#f25a1a] font-semibold text-sm">{sBadge}</span>
             </div>
-            
+
             <h2 className="text-4xl md:text-5xl font-bold text-[#1F2853] mb-6 font-['Poppins']">
-              Feature Your App &amp; Supercharge Your SEO
+              {sTitle}
             </h2>
-            
+
             <p className="text-lg text-gray-600 mb-8 leading-relaxed font-['Manrope']">
-              Get your application featured on our premium directory and unlock powerful SEO benefits that drive organic growth. Our platform generates over 100 quality backlinks from relevant websites, helping you climb search rankings while we handle all the tedious submission work.
+              {sDesc}
             </p>
 
             <div className="bg-gradient-to-br from-[#1F2853] to-[#2a3566] rounded-3xl p-8 mb-8 relative overflow-hidden">

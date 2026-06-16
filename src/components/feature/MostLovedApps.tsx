@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { siteContentApi } from "../../lib/api";
 
 interface LovedApp {
   rank: number;
@@ -9,6 +11,16 @@ interface LovedApp {
   weeklyGrowth: number;
   badge?: string;
 }
+
+const FALLBACK_TITLE = "Most Loved Apps This Week";
+const FALLBACK_DESCRIPTION = "Voted by users, for users";
+const FALLBACK_BOTTOM_STATS = [
+  { value: "50K+", label: "Total Votes This Week" },
+  { value: "127",  label: "Apps Competing" },
+  { value: "24H",  label: "Voting Updates" },
+];
+const FALLBACK_BTN_MORE = "View All Loved Apps";
+const FALLBACK_BTN_LESS = "Show Less";
 
 const mockLovedApps: LovedApp[] = [
   {
@@ -66,7 +78,25 @@ const mockLovedApps: LovedApp[] = [
 
 export default function MostLovedApps() {
   const [showAll, setShowAll] = useState(false);
-  const displayedApps = showAll ? mockLovedApps : mockLovedApps.slice(0, 4);
+
+  const { data: section } = useQuery({
+    queryKey: ["page-section", "home", "most_loved"],
+    queryFn: () => siteContentApi.section("home", "most_loved"),
+  });
+
+  const c = (section?.content ?? {}) as Record<string, unknown>;
+  const title       = section?.title       ?? FALLBACK_TITLE;
+  const description = section?.description ?? FALLBACK_DESCRIPTION;
+  const btnMore = (c.button_view_all as string) ?? FALLBACK_BTN_MORE;
+  const btnLess = (c.button_show_less as string) ?? FALLBACK_BTN_LESS;
+  const apps: LovedApp[] = Array.isArray(c.apps) && (c.apps as LovedApp[]).length > 0
+    ? (c.apps as LovedApp[])
+    : mockLovedApps;
+  const bottomStats = Array.isArray(c.bottom_stats) && (c.bottom_stats as { value: string; label: string }[]).length > 0
+    ? (c.bottom_stats as { value: string; label: string }[])
+    : FALLBACK_BOTTOM_STATS;
+
+  const displayedApps = showAll ? apps : apps.slice(0, 4);
 
   const formatVotes = (votes: number) => {
     if (votes >= 1000) {
@@ -95,13 +125,13 @@ export default function MostLovedApps() {
             className="text-4xl font-bold mb-4"
             style={{ color: "#1F2853", fontFamily: "Manrope, sans-serif" }}
           >
-            Most Loved Apps This Week
+            {title}
           </h2>
           <p
             className="text-xl text-gray-600"
             style={{ fontFamily: "Poppins, sans-serif" }}
           >
-            Voted by users, for users
+            {description}
           </p>
         </div>
 
@@ -265,7 +295,7 @@ export default function MostLovedApps() {
                   }}
                 >
                   <span className="relative z-10">
-                    {showAll ? "Show Less" : "View All Loved Apps"}
+                    {showAll ? btnLess : btnMore}
                   </span>
                   <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
                 </button>
@@ -276,71 +306,30 @@ export default function MostLovedApps() {
 
         {/* Bottom Stats */}
         <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-          <div
-            className="text-center p-6 rounded-xl"
-            style={{
-              background: "rgba(255, 255, 255, 0.8)",
-              backdropFilter: "blur(10px)",
-              border: "1px solid rgba(255, 255, 255, 0.3)",
-            }}
-          >
+          {bottomStats.slice(0, 3).map((stat, i) => (
             <div
-              className="text-3xl font-bold mb-2"
-              style={{ color: "#1F2853", fontFamily: "Manrope, sans-serif" }}
+              key={i}
+              className="text-center p-6 rounded-xl"
+              style={{
+                background: "rgba(255, 255, 255, 0.8)",
+                backdropFilter: "blur(10px)",
+                border: "1px solid rgba(255, 255, 255, 0.3)",
+              }}
             >
-              50K+
+              <div
+                className="text-3xl font-bold mb-2"
+                style={{ color: "#1F2853", fontFamily: "Manrope, sans-serif" }}
+              >
+                {stat.value}
+              </div>
+              <p
+                className="text-gray-600"
+                style={{ fontFamily: "Poppins, sans-serif" }}
+              >
+                {stat.label}
+              </p>
             </div>
-            <p
-              className="text-gray-600"
-              style={{ fontFamily: "Poppins, sans-serif" }}
-            >
-              Total Votes This Week
-            </p>
-          </div>
-
-          <div
-            className="text-center p-6 rounded-xl"
-            style={{
-              background: "rgba(255, 255, 255, 0.8)",
-              backdropFilter: "blur(10px)",
-              border: "1px solid rgba(255, 255, 255, 0.3)",
-            }}
-          >
-            <div
-              className="text-3xl font-bold mb-2"
-              style={{ color: "#1F2853", fontFamily: "Manrope, sans-serif" }}
-            >
-              127
-            </div>
-            <p
-              className="text-gray-600"
-              style={{ fontFamily: "Poppins, sans-serif" }}
-            >
-              Apps Competing
-            </p>
-          </div>
-
-          <div
-            className="text-center p-6 rounded-xl"
-            style={{
-              background: "rgba(255, 255, 255, 0.8)",
-              backdropFilter: "blur(10px)",
-              border: "1px solid rgba(255, 255, 255, 0.3)",
-            }}
-          >
-            <div
-              className="text-3xl font-bold mb-2"
-              style={{ color: "#1F2853", fontFamily: "Manrope, sans-serif" }}
-            >
-              24H
-            </div>
-            <p
-              className="text-gray-600"
-              style={{ fontFamily: "Poppins, sans-serif" }}
-            >
-              Voting Updates
-            </p>
-          </div>
+          ))}
         </div>
       </div>
     </section>

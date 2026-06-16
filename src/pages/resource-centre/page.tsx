@@ -4,8 +4,17 @@ import { useParams, useNavigate } from 'react-router-dom';
 import BlogCard from '../../components/feature/BlogCard';
 import Header from '../../components/feature/Header';
 import Footer from '../../components/feature/Footer';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../lib/api';
+
+const RC_FALLBACK_TITLE = 'Resource Centre';
 
 const ResourceCentrePage = () => {
+    const { data: rcSection } = useQuery({
+        queryKey: ['page-section', 'resource-centre', 'hero'],
+        queryFn: () => siteContentApi.section('resource-centre', 'hero'),
+    });
+    const rcTitle = rcSection?.title ?? RC_FALLBACK_TITLE;
     const { tab } = useParams<{ tab: string }>();
     const navigate = useNavigate();
     const activeTab = tab || 'blogs';
@@ -310,7 +319,7 @@ const ResourceCentrePage = () => {
 
                     {/* Header Section */}
                     <header className="mb-12">
-                        <h1 className="text-4xl font-bold mb-3 tracking-tight text-gray-900">Resource Centre</h1>
+                        <h1 className="text-4xl font-bold mb-3 tracking-tight text-gray-900">{rcTitle}</h1>
                         <p className="text-gray-500 text-sm max-w-xl leading-relaxed mb-8">
                             Discover the best in resource centre. {currentTabInfo.description}
                         </p>

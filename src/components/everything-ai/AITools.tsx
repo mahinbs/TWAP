@@ -1,4 +1,8 @@
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../lib/api';
+
+const AIT_FALLBACK_TITLE = 'Featured AI Tools';
 
 const tools = [
     {
@@ -68,6 +72,11 @@ const tools = [
 ];
 
 const AITools = () => {
+    const { data: section } = useQuery({
+        queryKey: ['page-section', 'everything-ai', 'tools'],
+        queryFn: () => siteContentApi.section('everything-ai', 'tools'),
+    });
+    const sTitle = section?.title ?? AIT_FALLBACK_TITLE;
 
     const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
         const target = e.currentTarget;
@@ -88,7 +97,7 @@ const AITools = () => {
                             Handpicked
                         </span>
                         <h2 className="text-4xl md:text-5xl font-bold text-brand-dark mb-4">
-                            Featured AI Tools
+                            {sTitle}
                         </h2>
                         <p className="text-gray-500 max-w-2xl mx-auto text-lg mb-8">
                             Tried and tested solutions to upscale your workflow

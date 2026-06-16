@@ -3,6 +3,19 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Navigation } from 'swiper/modules';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../lib/api';
+
+const MP_FALLBACK = {
+    rank_line1: 'How Do We',
+    rank_line2: 'Rank Solutions?',
+    test_line1: 'How Do We Test',
+    test_line2: 'and Review Digital Products?',
+    standards_line1: "The Web App Pro's",
+    standards_line2: 'Editorial Standards',
+    editors_line1: 'The Web App Pro',
+    editors_line2: 'Editors',
+};
 
 import 'swiper/css';
 import 'swiper/css/navigation';
@@ -48,6 +61,19 @@ const rankingSteps = [
 ];
 
 const MethodologyProcess = () => {
+    const { data: section } = useQuery({
+        queryKey: ['page-section', 'methodology', 'process'],
+        queryFn: () => siteContentApi.section('methodology', 'process'),
+    });
+    const c = (section?.content ?? {}) as Record<string, string>;
+    const rL1 = c.rank_line1 ?? MP_FALLBACK.rank_line1;
+    const rL2 = c.rank_line2 ?? MP_FALLBACK.rank_line2;
+    const tL1 = c.test_line1 ?? MP_FALLBACK.test_line1;
+    const tL2 = c.test_line2 ?? MP_FALLBACK.test_line2;
+    const sL1 = c.standards_line1 ?? MP_FALLBACK.standards_line1;
+    const sL2 = c.standards_line2 ?? MP_FALLBACK.standards_line2;
+    const eL1 = c.editors_line1 ?? MP_FALLBACK.editors_line1;
+    const eL2 = c.editors_line2 ?? MP_FALLBACK.editors_line2;
     const [activeRankIndex, setActiveRankIndex] = useState(0);
     const containerRef = useRef<HTMLDivElement>(null);
     const prevRef = useRef<HTMLDivElement>(null);
@@ -115,7 +141,7 @@ const MethodologyProcess = () => {
                     <div className="text-xl font-bold tracking-widest border-t-2 border-brand-orange/50 pt-4 text-brand-orange mb-12 relative z-10 w-fit">01</div>
 
                     <h2 className="c1-title text-5xl md:text-7xl font-bold leading-tight mb-8 relative z-10 text-white">
-                        How Do We<br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-orange to-brand-orange">Rank Solutions?</span>
+                        {rL1}<br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-orange to-brand-orange">{rL2}</span>
                     </h2>
 
                     <p className="chapter-1-text text-gray-400 text-lg leading-relaxed max-w-md mb-12 relative z-10">
@@ -306,7 +332,7 @@ const MethodologyProcess = () => {
                 <div className="w-full md:w-1/2 p-10 md:p-20 bg-brand-lime text-brand-dark flex flex-col justify-between md:sticky md:top-0 md:h-screen z-10">
                     <div className="text-xl font-bold tracking-widest border-t border-brand-dark/30 pt-4">02</div>
                     <h2 className="text-5xl md:text-7xl font-bold leading-tight mt-10">
-                        How Do We Test<br />and Review Digital Products?
+                        {tL1}<br />{tL2}
                     </h2>
                     <div className="mt-10 border-t border-brand-dark/30 pt-4 w-20"></div>
                 </div>
@@ -468,7 +494,7 @@ const MethodologyProcess = () => {
                     <div className="text-xl font-bold tracking-widest border-t border-white/30 pt-4">03</div>
                     <div className="mt-10">
                         <h2 className="text-5xl md:text-7xl font-bold leading-tight relative">
-                            The Web App Pro's<br />Editorial Standards
+                            {sL1}<br />{sL2}
                             {/* Decorative Diamond Pattern */}
                             <div className="hidden xl:block absolute -right-32 top-1/2 -translate-y-1/2 w-40 h-80 opacity-20 pointer-events-none">
                                 <div className="w-full h-1/2 bg-white transform -skew-y-12 mb-4"></div>
@@ -572,7 +598,7 @@ const MethodologyProcess = () => {
 
                     <div className="text-xl font-bold tracking-widest border-t border-brand-dark/30 pt-4 relative z-10">04</div>
                     <h2 className="text-5xl md:text-7xl font-bold leading-tight mt-10 relative z-10">
-                        The Web App Pro<br />Editors
+                        {eL1}<br />{eL2}
                     </h2>
                     <div className="mt-10 border-t border-brand-dark/30 pt-4 w-20 relative z-10"></div>
                 </div>

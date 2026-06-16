@@ -4,6 +4,10 @@ import { Autoplay, Navigation } from 'swiper/modules';
 import { ChevronLeft, ChevronRight, Star } from 'lucide-react';
 import 'swiper/css';
 import 'swiper/css/navigation';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../lib/api';
+
+const PRS_FALLBACK_TITLE = 'Product Review';
 
 const reviews = [
     {
@@ -40,12 +44,18 @@ export default function ProductReviewsSlider() {
     const [prevEl, setPrevEl] = useState<HTMLElement | null>(null);
     const [nextEl, setNextEl] = useState<HTMLElement | null>(null);
 
+    const { data: section } = useQuery({
+        queryKey: ['page-section', 'home', 'product_review_slider'],
+        queryFn: () => siteContentApi.section('home', 'product_review_slider'),
+    });
+    const sTitle = section?.title ?? PRS_FALLBACK_TITLE;
+
     return (
         <section className="py-16 bg-[#fffbf5]"> {/* Creamy background as per image */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-end mb-8">
                     <h2 className="text-3xl font-bold text-black font-['Manrope']">
-                        Product Review
+                        {sTitle}
                     </h2>
                     <a href="#" className="text-[#f25a1a] font-bold hover:underline flex items-center gap-1 text-sm md:text-base">
                         Explore More Products Review <i className="ri-arrow-right-up-line"></i>

@@ -1,10 +1,26 @@
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../../lib/api';
+
+const FALLBACK_STATS = [
+  { number: '2,847',  label: 'Apps Reviewed',   icon: 'ri-apps-2-line' },
+  { number: '45,892', label: 'User Reviews',    icon: 'ri-user-star-line' },
+  { number: '156',    label: 'Expert Reviews',  icon: 'ri-shield-star-line' },
+  { number: '4.7',    label: 'Average Rating',  icon: 'ri-star-line' },
+];
+
 export default function ReviewStats() {
-  const stats = [
-    { number: '2,847', label: 'Apps Reviewed', icon: 'ri-apps-2-line' },
-    { number: '45,892', label: 'User Reviews', icon: 'ri-user-star-line' },
-    { number: '156', label: 'Expert Reviews', icon: 'ri-shield-star-line' },
-    { number: '4.7', label: 'Average Rating', icon: 'ri-star-line' }
-  ];
+  const { data: dbStats = [] } = useQuery({
+    queryKey: ['site-stats', 'reviews'],
+    queryFn: () => siteContentApi.stats('reviews'),
+  });
+
+  const stats = dbStats.length > 0
+    ? dbStats.slice(0, 4).map((s, i) => ({
+        number: s.value,
+        label: s.label,
+        icon: s.icon ?? FALLBACK_STATS[i]?.icon ?? 'ri-star-line',
+      }))
+    : FALLBACK_STATS;
 
   return (
     <section className="py-16 bg-gray-50">

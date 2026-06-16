@@ -1,4 +1,8 @@
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../../lib/api';
+
+const EL_FALLBACK_TITLE = 'TheWebApp Pro Reviews';
 
 interface ExpertReview {
   rank: number;
@@ -71,6 +75,12 @@ export default function ExpertLeaderboard() {
   const [showAll, setShowAll] = useState(false);
   const displayedReviews = showAll ? expertReviews : expertReviews.slice(0, 3);
 
+  const { data: section } = useQuery({
+    queryKey: ['page-section', 'reviews', 'expert_leaderboard'],
+    queryFn: () => siteContentApi.section('reviews', 'expert_leaderboard'),
+  });
+  const sTitle = section?.title ?? EL_FALLBACK_TITLE;
+
   const renderStars = (rating: number) => {
     const fullStars = Math.floor(rating);
     const hasHalfStar = rating % 1 !== 0;
@@ -105,7 +115,7 @@ export default function ExpertLeaderboard() {
         </div>
         <div>
           <h2 className="text-2xl font-bold text-[#1F2853]" style={{ fontFamily: 'Manrope, sans-serif' }}>
-            TheWebApp Pro Reviews
+            {sTitle}
           </h2>
           <p className="text-gray-600 text-sm" style={{ fontFamily: 'Poppins, sans-serif' }}>
             Expert analysis & testing

@@ -1,4 +1,14 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { siteContentApi } from "../../lib/api";
+import { supabase } from "../../lib/supabase";
+
+const FALLBACK = {
+  title_prefix: "How",
+  title_highlight: "AI Automation",
+  title_suffix: "is reshaping business solutions",
+  description: "From advanced automation to cutting-edge AI, intelligent automation is driving a new era of efficiency, reliability, and scalability.",
+};
 
 export default function AIAutomationServices() {
   const [formData, setFormData] = useState({
@@ -22,27 +32,15 @@ export default function AIAutomationServices() {
     setSubmitStatus("");
 
     try {
-      const response = await fetch(
-        "https://readdy.ai/api/form/d49d77h7bl57tkq9h3pg",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-          body: new URLSearchParams({
-            name: formData.name,
-            email: formData.email,
-          }),
-        }
-      );
-
-      if (response.ok) {
-        setSubmitStatus("Thank you! We will contact you soon.");
-        setFormData({ name: "", email: "" });
-      } else {
-        setSubmitStatus("Something went wrong. Please try again.");
-      }
-    } catch (error) {
+      const { error } = await supabase.from("form_submissions").insert({
+        form_type: "ai_automation_consultation",
+        source_page: "home",
+        payload: { name: formData.name, email: formData.email },
+      });
+      if (error) throw error;
+      setSubmitStatus("Thank you! We will contact you soon.");
+      setFormData({ name: "", email: "" });
+    } catch {
       setSubmitStatus("Something went wrong. Please try again.");
     } finally {
       setIsSubmitting(false);
@@ -50,6 +48,16 @@ export default function AIAutomationServices() {
   };
 
   const [selectedConcept, setSelectedConcept] = useState("Automation");
+
+  const { data: section } = useQuery({
+    queryKey: ["page-section", "home", "ai_automation_services"],
+    queryFn: () => siteContentApi.section("home", "ai_automation_services"),
+  });
+  const c = (section?.content ?? {}) as Record<string, string>;
+  const titlePrefix    = c.title_prefix    ?? FALLBACK.title_prefix;
+  const titleHighlight = c.title_highlight ?? FALLBACK.title_highlight;
+  const titleSuffix    = c.title_suffix    ?? FALLBACK.title_suffix;
+  const description    = section?.description ?? FALLBACK.description;
 
   return (
     <section className="bg-[#f7f5ef] py-16">
@@ -62,18 +70,15 @@ export default function AIAutomationServices() {
                 className="text-3xl lg:text-4xl font-bold mb-6"
                 style={{ fontFamily: "Manrope, sans-serif" }}
               >
-                <span className="text-gray-400">How</span>{" "}
-                <span className="text-[#1F2853]">AI Automation</span> is
-                reshaping business solutions
+                <span className="text-gray-400">{titlePrefix}</span>{" "}
+                <span className="text-[#1F2853]">{titleHighlight}</span>{" "}{titleSuffix}
               </h2>
 
               <p
                 className="text-lg text-gray-700 mb-8 leading-relaxed"
                 style={{ fontFamily: "Poppins, sans-serif" }}
               >
-                From advanced automation to cutting-edge AI, intelligent
-                automation is driving a new era of efficiency, reliability, and
-                scalability.
+                {description}
               </p>
 
               {/* Pill-shaped Tags */}

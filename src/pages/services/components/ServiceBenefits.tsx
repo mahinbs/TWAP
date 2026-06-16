@@ -1,6 +1,19 @@
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../../lib/api';
+
+const SBF_FALLBACK = {
+    badge: 'Why Choose Us?',
+    title: 'Why Choose Us for Your Digital Evolution?',
+};
 
 const ServiceBenefits: React.FC = () => {
+    const { data: section } = useQuery({
+        queryKey: ['page-section', 'services', 'service_benefits'],
+        queryFn: () => siteContentApi.section('services', 'service_benefits'),
+    });
+    const sBadge = section?.badge_text ?? SBF_FALLBACK.badge;
+    const sTitle = section?.title       ?? SBF_FALLBACK.title;
     const benefits = [
         {
             icon: "ri-trophy-line",
@@ -33,10 +46,10 @@ const ServiceBenefits: React.FC = () => {
                     <div className="relative">
                         <div className="mb-8">
                             <span className="inline-block py-1 px-3 rounded-full bg-brand-lime text-[#1F2853] text-xs font-bold tracking-wider mb-4 uppercase">
-                                Why Choose Us?
+                                {sBadge}
                             </span>
                             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-[#1F2853] font-manrope leading-tight">
-                                Why Choose Us for Your Digital Evolution?
+                                {sTitle}
                             </h2>
                         </div>
 

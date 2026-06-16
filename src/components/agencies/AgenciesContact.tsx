@@ -1,6 +1,19 @@
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../lib/api';
+
+const AC_FALLBACK = {
+    title: "Let's Connect",
+    description: 'Connect with our experts for a free consultation and tailored solutions.',
+};
 
 export default function AgenciesContact() {
+    const { data: section } = useQuery({
+        queryKey: ['page-section', 'agencies', 'contact'],
+        queryFn: () => siteContentApi.section('agencies', 'contact'),
+    });
+    const sTitle = section?.title       ?? AC_FALLBACK.title;
+    const sDesc  = section?.description ?? AC_FALLBACK.description;
     return (
         <section className="bg-white pt-10 pb-24">
             <div className="max-w-7xl mx-auto px-6 lg:px-8">
@@ -10,8 +23,8 @@ export default function AgenciesContact() {
                         <span className="inline-block px-4 py-1.5 rounded-full bg-[#f25a1a]/10 text-xs font-bold text-[#f25a1a] mb-6 uppercase tracking-wider">
                             Schedule Consultation
                         </span>
-                        <h2 className="text-4xl font-bold text-[#1A1B20] mb-4">Let's Connect</h2>
-                        <p className="text-gray-500 mb-10">Connect with our experts for a free consultation and tailored solutions.</p>
+                        <h2 className="text-4xl font-bold text-[#1A1B20] mb-4">{sTitle}</h2>
+                        <p className="text-gray-500 mb-10">{sDesc}</p>
 
                         <form className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

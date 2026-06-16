@@ -1,15 +1,31 @@
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../lib/api';
+
+const AGR_FALLBACK = {
+    badge: 'Collaborations',
+    title_prefix: 'Partnerships that',
+    title_highlight: 'Inspired Growth',
+};
 
 export default function AgenciesGrid() {
+    const { data: section } = useQuery({
+        queryKey: ['page-section', 'agencies', 'grid'],
+        queryFn: () => siteContentApi.section('agencies', 'grid'),
+    });
+    const c = (section?.content ?? {}) as Record<string, string>;
+    const sBadge = section?.badge_text   ?? AGR_FALLBACK.badge;
+    const tPre   = c.title_prefix        ?? AGR_FALLBACK.title_prefix;
+    const tHi    = c.title_highlight     ?? AGR_FALLBACK.title_highlight;
     return (
         <section className="bg-white px-6 lg:px-8 py-24">
             <div className="max-w-7xl mx-auto">
                 <div className="mb-12 text-center md:text-left">
                     <span className="inline-block px-4 py-1.5 rounded-full bg-[#f25a1a]/10 border border-[#f25a1a]/20 text-sm font-bold text-[#f25a1a] mb-4 uppercase tracking-wider">
-                        Collaborations
+                        {sBadge}
                     </span>
                     <h2 className="text-4xl lg:text-5xl font-bold text-[#1A1B20]">
-                        Partnerships that <span className="text-[#f25a1a]">Inspired Growth</span>
+                        {tPre} <span className="text-[#f25a1a]">{tHi}</span>
                     </h2>
                 </div>
 

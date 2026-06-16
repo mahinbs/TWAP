@@ -1,5 +1,9 @@
 
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi, blogsApi } from '../../lib/api';
+
+const FALLBACK_TITLE = 'Latest in AI & App Development';
 
 interface NewsArticle {
   id: number;
@@ -16,8 +20,18 @@ interface NewsArticle {
 export default function NewsSection() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  
-  const [articles] = useState<NewsArticle[]>([
+
+  const { data: section } = useQuery({
+    queryKey: ['page-section', 'home', 'news'],
+    queryFn: () => siteContentApi.section('home', 'news'),
+  });
+  const { data: blogPosts = [] } = useQuery({
+    queryKey: ['blogs', 'home-news'],
+    queryFn: () => blogsApi.list({ limit: 6 }),
+  });
+  const sTitle = section?.title ?? FALLBACK_TITLE;
+
+  const [fallbackArticles] = useState<NewsArticle[]>([
     {
       id: 1,
       title: "UX Pilot AI Releases GPT-5: What This Means for Developers",
@@ -86,7 +100,21 @@ export default function NewsSection() {
     }
   ]);
 
-  const featuredArticle = articles[currentIndex];
+  const articles: NewsArticle[] = blogPosts.length > 0
+    ? blogPosts.slice(0, 6).map((p, i) => ({
+        id: i + 1,
+        title: p.title,
+        date: p.published_date ? new Date(p.published_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : '',
+        author: p.author?.name ?? 'TWAP',
+        excerpt: p.excerpt ?? '',
+        fullContent: p.excerpt ?? '',
+        image: p.hero_image_url ?? '',
+        category: p.category ?? 'AI',
+        readTime: p.read_time_minutes ? `${p.read_time_minutes} min read` : '5 min read',
+      }))
+    : fallbackArticles;
+
+  const featuredArticle = articles[currentIndex] ?? articles[0];
   const sideArticles = articles.slice(currentIndex + 1, currentIndex + 3).concat(
     articles.slice(0, Math.max(0, (currentIndex + 3) - articles.length))
   );
@@ -125,7 +153,7 @@ export default function NewsSection() {
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
         <div className="text-center mb-8">
           <h2 className="text-3xl md:text-4xl font-bold text-[#1F2853] mb-4" style={{ fontFamily: 'Manrope, sans-serif' }}>
-            Latest in AI & App Development
+            {sTitle}
           </h2>
         </div>
 

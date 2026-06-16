@@ -1,6 +1,20 @@
 // import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../lib/api';
+
+const IS_FALLBACK = {
+    title_prefix: 'Epic Conversations,',
+    title_highlight: 'Exclusive Insights.',
+};
 
 const InterviewsSection = () => {
+    const { data: section } = useQuery({
+        queryKey: ['page-section', 'success-stories', 'interviews'],
+        queryFn: () => siteContentApi.section('success-stories', 'interviews'),
+    });
+    const c = (section?.content ?? {}) as Record<string, string>;
+    const tPre = c.title_prefix    ?? IS_FALLBACK.title_prefix;
+    const tHi  = c.title_highlight ?? IS_FALLBACK.title_highlight;
     return (
         <section id="interviews" className="py-24 bg-brand-dark text-white relative overflow-hidden">
 
@@ -49,9 +63,9 @@ const InterviewsSection = () => {
                         </div>
 
                         <h2 className="text-4xl md:text-5xl font-bold mb-6 !leading-tight">
-                            Epic Conversations, <br />
+                            {tPre} <br />
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-lime to-brand-lime">
-                                Always Fresh.
+                                {tHi}
                             </span>
                         </h2>
 

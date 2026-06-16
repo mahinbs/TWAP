@@ -1,4 +1,24 @@
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../../lib/api';
+
+const SBG_FALLBACK = {
+    badge: 'Our Expertise',
+    title_line1: 'Why innovators choose',
+    title_line2: 'The Web App Pro',
+    description: 'Exceptional digital services and unparalleled engineering that set the standard for the future of technology.',
+};
+
 const ServicesBentoGrid = () => {
+    const { data: section } = useQuery({
+        queryKey: ['page-section', 'services', 'bento_grid'],
+        queryFn: () => siteContentApi.section('services', 'bento_grid'),
+    });
+    const c = (section?.content ?? {}) as Record<string, string>;
+    const badge       = section?.badge_text ?? SBG_FALLBACK.badge;
+    const titleLine1  = c.title_line1 ?? SBG_FALLBACK.title_line1;
+    const titleLine2  = c.title_line2 ?? SBG_FALLBACK.title_line2;
+    const description = section?.description ?? SBG_FALLBACK.description;
+
     return (
 
         <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
@@ -6,14 +26,13 @@ const ServicesBentoGrid = () => {
                 {/* Header Section */}
                 <div className="text-center mb-16 reveal-fade-up">
                     <span className="inline-block py-1 px-3 rounded-full bg-brand-lime text-[#1F2853] text-xs font-bold tracking-wider mb-6 uppercase">
-                        Our Expertise
+                        {badge}
                     </span>
                     <h1 className="text-4xl md:text-5xl lg:text-6xl font-medium text-[#1F2853] mb-6 tracking-tight font-manrope">
-                        Why innovators choose <br /> The Web App Pro
+                        {titleLine1} <br /> {titleLine2}
                     </h1>
                     <p className="text-lg text-gray-600 max-w-2xl mx-auto font-poppins">
-                        Exceptional digital services and unparalleled engineering that
-                        set the standard for the future of technology.
+                        {description}
                     </p>
                 </div>
 

@@ -4,6 +4,13 @@ import { Pagination, Autoplay } from 'swiper/modules';
 // Import Swiper styles
 import 'swiper/css';
 import 'swiper/css/pagination';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../lib/api';
+
+const SN_FALLBACK = {
+    title_prefix: 'Shine Bright, Speak Loud:',
+    title_highlight: 'Success Notes Take Flight',
+};
 
 const notes = [
     {
@@ -33,6 +40,13 @@ const notes = [
 ];
 
 const SuccessNotes = () => {
+    const { data: section } = useQuery({
+        queryKey: ['page-section', 'success-stories', 'notes'],
+        queryFn: () => siteContentApi.section('success-stories', 'notes'),
+    });
+    const c = (section?.content ?? {}) as Record<string, string>;
+    const tPre = c.title_prefix    ?? SN_FALLBACK.title_prefix;
+    const tHi  = c.title_highlight ?? SN_FALLBACK.title_highlight;
     return (
         <section id="success-notes" className="py-24 bg-gray-50 relative overflow-hidden">
             <div className="max-w-7xl mx-auto px-6 lg:px-8">
@@ -40,8 +54,8 @@ const SuccessNotes = () => {
                 <div className="text-center mb-16 px-4">
                     <span className="text-brand-orange font-bold text-xs tracking-widest uppercase mb-4 block">Proven Strategies</span>
                     <h2 className="text-4xl md:text-5xl font-bold text-brand-dark mb-4 !leading-tight">
-                        Shine Bright, Speak Loud:<br />
-                        <span className="bg-gradient-to-r from-brand-orange to-brand-orange text-transparent bg-clip-text">Success Notes Take Flight</span>
+                        {tPre}<br />
+                        <span className="bg-gradient-to-r from-brand-orange to-brand-orange text-transparent bg-clip-text">{tHi}</span>
                     </h2>
                     <p className="text-gray-500 max-w-2xl mx-auto text-lg">
                         Real feedback, real results. See what industry leaders are saying about our success methodologies.

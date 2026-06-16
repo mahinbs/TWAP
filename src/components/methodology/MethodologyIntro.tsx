@@ -2,10 +2,19 @@
 import { useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../lib/api';
 
 gsap.registerPlugin(ScrollTrigger);
 
+const MI_FALLBACK_CTA = "Let's Have a Look";
+
 const MethodologyIntro = () => {
+    const { data: section } = useQuery({
+        queryKey: ['page-section', 'methodology', 'intro'],
+        queryFn: () => siteContentApi.section('methodology', 'intro'),
+    });
+    const ctaText = section?.cta_text ?? MI_FALLBACK_CTA;
     const sectionRef = useRef(null);
     const textRefs = useRef([]);
     const buttonRef = useRef(null);
@@ -109,7 +118,7 @@ const MethodologyIntro = () => {
                 <div className="mt-24 flex flex-col items-end">
 
                     <button ref={buttonRef} className="group relative inline-flex items-center gap-4 px-10 py-5 bg-black text-white rounded-full overflow-hidden transition-all hover:bg-brand-orange hover:shadow-2xl hover:shadow-brand-orange/30 hover:-translate-y-1">
-                        <span className="relative z-10 font-bold tracking-[0.2em] text-sm uppercase">Let's Have a Look</span>
+                        <span className="relative z-10 font-bold tracking-[0.2em] text-sm uppercase">{ctaText}</span>
                         <span className="relative z-10 flex items-center justify-center w-8 h-8 bg-white/20 rounded-full group-hover:bg-white/30 transition-colors">
                             <i className="ri-arrow-down-line text-lg group-hover:translate-y-1 transition-transform"></i>
                         </span>

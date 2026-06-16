@@ -1,7 +1,24 @@
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../../lib/api';
+
+const TSG_FALLBACK = {
+    badge: 'Our Expertise',
+    title_line1: 'Tailored Services to Grow &',
+    title_line2: 'Protect Your Business',
+};
 
 const TailoredServicesGrid: React.FC = () => {
     const [activeIndex, setActiveIndex] = useState<number | null>(1); // Default to 2nd item active
+
+    const { data: section } = useQuery({
+        queryKey: ['page-section', 'services', 'tailored_grid'],
+        queryFn: () => siteContentApi.section('services', 'tailored_grid'),
+    });
+    const c = (section?.content ?? {}) as Record<string, string>;
+    const sBadge = section?.badge_text ?? TSG_FALLBACK.badge;
+    const tLine1 = c.title_line1 ?? TSG_FALLBACK.title_line1;
+    const tLine2 = c.title_line2 ?? TSG_FALLBACK.title_line2;
 
     const services = [
         {
@@ -60,10 +77,10 @@ const TailoredServicesGrid: React.FC = () => {
 
                 <div className="text-center mb-20">
                     <span className="inline-block py-1.5 px-4 rounded-full bg-brand-lime text-[#1F2853] text-xs font-bold tracking-wider mb-6 uppercase">
-                        Our Expertise
+                        {sBadge}
                     </span>
                     <h2 className="text-4xl md:text-5xl lg:text-6xl font-medium text-[#1F2853] font-manrope leading-tight">
-                        Tailored Services to Grow & <br className="hidden md:block" /> Protect Your Business
+                        {tLine1} <br className="hidden md:block" /> {tLine2}
                     </h2>
                 </div>
 

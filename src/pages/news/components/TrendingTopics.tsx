@@ -1,5 +1,21 @@
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../../lib/api';
+
+const TT_FALLBACK = {
+  title: 'Trending Topics',
+  description: "What's hot in the tech world right now",
+  browse_title: 'Browse by Category',
+};
 
 export default function TrendingTopics() {
+  const { data: section } = useQuery({
+    queryKey: ['page-section', 'news', 'trending'],
+    queryFn: () => siteContentApi.section('news', 'trending'),
+  });
+  const c = (section?.content ?? {}) as Record<string, string>;
+  const sTitle = section?.title ?? TT_FALLBACK.title;
+  const sDesc  = section?.description ?? TT_FALLBACK.description;
+  const browseTitle = c.browse_title ?? TT_FALLBACK.browse_title;
   const trendingTopics = [
     { name: "GPT-5", count: 45, trend: "up" },
     { name: "AI Automation", count: 38, trend: "up" },
@@ -27,10 +43,10 @@ export default function TrendingTopics() {
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-[#1F2853] mb-4" style={{ fontFamily: 'Manrope, sans-serif' }}>
-            Trending Topics
+            {sTitle}
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto" style={{ fontFamily: 'Poppins, sans-serif' }}>
-            What's hot in the tech world right now
+            {sDesc}
           </p>
         </div>
 
@@ -68,7 +84,7 @@ export default function TrendingTopics() {
         {/* Quick Categories */}
         <div className="mt-12 text-center">
           <h3 className="text-xl font-bold text-[#1F2853] mb-6" style={{ fontFamily: 'Manrope, sans-serif' }}>
-            Browse by Category
+            {browseTitle}
           </h3>
           <div className="flex flex-wrap justify-center gap-3">
             {['AI & Machine Learning', 'App Development', 'Blockchain', 'Cloud Computing', 'Cybersecurity', 'Mobile Technology', 'Web Development', 'Startups'].map((category, index) => (

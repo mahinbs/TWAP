@@ -1,4 +1,11 @@
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../lib/api';
+
+const AIA_FALLBACK = {
+    title_prefix: 'See AI in',
+    title_highlight: 'Action',
+};
 
 // Using random tech/AI related shorts/videos for demo
 const videos = [
@@ -29,6 +36,13 @@ const videos = [
 ];
 
 const AIAction = () => {
+    const { data: section } = useQuery({
+        queryKey: ['page-section', 'everything-ai', 'action'],
+        queryFn: () => siteContentApi.section('everything-ai', 'action'),
+    });
+    const c = (section?.content ?? {}) as Record<string, string>;
+    const tPre = c.title_prefix    ?? AIA_FALLBACK.title_prefix;
+    const tHi  = c.title_highlight ?? AIA_FALLBACK.title_highlight;
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(0); // Default open first on desktop
     const [isMuted, setIsMuted] = useState(true);
 
@@ -43,7 +57,7 @@ const AIAction = () => {
                 <div className="flex flex-col md:flex-row justify-between items-end mb-12">
                     <div>
                         <h2 className="text-4xl md:text-5xl font-bold mb-4 text-brand-dark leading-tight">
-                            See AI in <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-orange to-brand-lime">Action</span>
+                            {tPre} <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-orange to-brand-lime">{tHi}</span>
                         </h2>
                         <p className="text-gray-500 max-w-xl text-lg">
                             Short, sharp, and smart reviews of the latest AI tools you need to know.

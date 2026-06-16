@@ -1,4 +1,11 @@
 // import { useRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../lib/api';
+
+const AID_FALLBACK = {
+    title_line1: 'Verified AI Service',
+    title_highlight: 'Providers Directory',
+};
 
 const refinedDirectories = [
     {
@@ -40,6 +47,13 @@ const refinedDirectories = [
 ];
 
 const AIDirectories = () => {
+    const { data: section } = useQuery({
+        queryKey: ['page-section', 'everything-ai', 'directories'],
+        queryFn: () => siteContentApi.section('everything-ai', 'directories'),
+    });
+    const c = (section?.content ?? {}) as Record<string, string>;
+    const tLine1 = c.title_line1 ?? AID_FALLBACK.title_line1;
+    const tHi    = c.title_highlight ?? AID_FALLBACK.title_highlight;
 
     const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
         const card = e.currentTarget;
@@ -73,8 +87,8 @@ const AIDirectories = () => {
                             <span className="text-sm font-bold tracking-[0.2em] uppercase text-brand-dark">Exclusive Intel</span>
                         </div>
                         <h2 className="text-4xl md:text-5xl font-bold text-brand-dark leading-tight">
-                            Verified AI Service <br />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-orange to-brand-burgundy">Providers Directory</span>
+                            {tLine1} <br />
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-orange to-brand-burgundy">{tHi}</span>
                         </h2>
                     </div>
 

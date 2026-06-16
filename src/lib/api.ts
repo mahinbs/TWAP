@@ -117,6 +117,7 @@ export interface NavItem {
   id: string;
   label: string;
   url: string;
+  icon?: string;
   location: string;
   sort_order: number;
   open_in_new?: boolean;

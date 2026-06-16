@@ -1,4 +1,13 @@
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../../lib/api';
+import { supabase } from '../../../lib/supabase';
+
+const FALLBACK = {
+  badge: 'AI Automation Services',
+  title: 'Transform Your Business with AI Automation',
+  description: 'Partner with our team of AI specialists to discover practical automation solutions tailored to your business needs. We help companies reduce operational costs by up to 60% while improving efficiency and accuracy across all departments.',
+};
 
 const AIAutomationSection: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -12,6 +21,14 @@ const AIAutomationSection: React.FC = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
+  const { data: section } = useQuery({
+    queryKey: ['page-section', 'services', 'ai_automation'],
+    queryFn: () => siteContentApi.section('services', 'ai_automation'),
+  });
+  const sBadge = section?.badge_text ?? FALLBACK.badge;
+  const sTitle = section?.title       ?? FALLBACK.title;
+  const sDesc  = section?.description ?? FALLBACK.description;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({
@@ -31,15 +48,12 @@ const AIAutomationSection: React.FC = () => {
         formBody.append(key, value);
       });
 
-      const response = await fetch('https://readdy.ai/api/form/d49i93n43pgcqhvcq3d0', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: formBody.toString()
+      const { error } = await supabase.from('form_submissions').insert({
+        form_type: 'ai_automation_consultation',
+        source_page: 'services',
+        payload: Object.fromEntries(formBody.entries()),
       });
-
-      if (response.ok) {
+      if (!error) {
         setSubmitStatus('success');
         setFormData({
           fullName: '',
@@ -261,15 +275,15 @@ const AIAutomationSection: React.FC = () => {
           {/* Right Side - Content */}
           <div className="order-1 lg:order-2">
             <div className="inline-block px-4 py-2 bg-[#b9ed2a]/20 rounded-full mb-6">
-              <span className="text-[#1F2853] font-semibold text-sm">AI Automation Services</span>
+              <span className="text-[#1F2853] font-semibold text-sm">{sBadge}</span>
             </div>
-            
+
             <h2 className="text-4xl md:text-5xl font-bold text-[#1F2853] mb-6 font-['Poppins']">
-              Transform Your Business with AI Automation
+              {sTitle}
             </h2>
-            
+
             <p className="text-lg text-gray-600 mb-8 leading-relaxed font-['Manrope']">
-              Partner with our team of AI specialists to discover practical automation solutions tailored to your business needs. We help companies reduce operational costs by up to 60% while improving efficiency and accuracy across all departments.
+              {sDesc}
             </p>
 
             <div 

@@ -4,8 +4,21 @@ import { Search, Twitter, Youtube, ArrowRight } from 'lucide-react';
 import BlogCard from '../../components/feature/BlogCard';
 import Header from '../../components/feature/Header';
 import Footer from '../../components/feature/Footer';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../lib/api';
+
+const BLOGS_FALLBACK = {
+    title: 'Discover Nice Articles Here',
+    description: 'All The Articles And Contents Of The Site Have Been Updated Today And You Can Find Your Articles And Contents Quickly And Without Any Problems.',
+};
 
 const BlogsPage = () => {
+    const { data: section } = useQuery({
+        queryKey: ['page-section', 'blogs', 'hero'],
+        queryFn: () => siteContentApi.section('blogs', 'hero'),
+    });
+    const blogsTitle = section?.title       ?? BLOGS_FALLBACK.title;
+    const blogsDesc  = section?.description ?? BLOGS_FALLBACK.description;
     const [activeCategory, setActiveCategory] = useState("Technology");
 
     const categories = [
@@ -54,9 +67,9 @@ const BlogsPage = () => {
                     <header className="mb-16">
                         <div className="flex justify-between items-start mb-8">
                             <div>
-                                <h1 className="text-4xl font-bold mb-3 tracking-tight text-gray-900">Discover Nice Articles Here</h1>
+                                <h1 className="text-4xl font-bold mb-3 tracking-tight text-gray-900">{blogsTitle}</h1>
                                 <p className="text-gray-500 text-sm max-w-xl leading-relaxed">
-                                    All The Articles And Contents Of The Site Have Been <span className="text-blue-600 font-semibold">Updated Today</span> And You Can Find Your <span className="text-blue-600 font-semibold">Articles And Contents</span> Quickly And Without Any Problems.
+                                    {blogsDesc}
                                 </p>
                             </div>
                             <div className="flex gap-3">

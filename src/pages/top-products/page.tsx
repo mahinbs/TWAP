@@ -4,6 +4,10 @@ import TopProductsGrid from "../../components/feature/TopProductsGrid";
 import ProductReviewSection from "../../components/feature/ProductReviewSection";
 import ReadyToStartCta from "../../components/feature/ReadyToStartCta";
 import StatsSection from "../../components/feature/StatsSection";
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../lib/api';
+
+const TP_HERO_FALLBACK_TITLE = 'Top Products';
 
 // Mock Data
 const topCategories = [
@@ -35,6 +39,11 @@ const topCategories = [
 ];
 
 export default function TopProductsPage() {
+    const { data: heroSection } = useQuery({
+        queryKey: ['page-section', 'top-products', 'hero'],
+        queryFn: () => siteContentApi.section('top-products', 'hero'),
+    });
+    const heroTitle = heroSection?.title ?? TP_HERO_FALLBACK_TITLE;
     return (
         <div className="min-h-screen bg-white font-['Manrope']">
             <Header />
@@ -46,7 +55,7 @@ export default function TopProductsPage() {
 
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
                         <h1 className="text-5xl md:text-7xl font-bold text-[#1F2853] mb-20 tracking-tight">
-                            Top Products
+                            {heroTitle}
                         </h1>
 
                         {/* Embedded 3-Category Highlight */}

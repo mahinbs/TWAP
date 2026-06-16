@@ -1,6 +1,19 @@
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../../lib/api';
+
+const SB_FALLBACK = {
+  title: 'Why Choose Our Services?',
+  description: 'We provide comprehensive solutions to help your business thrive in the digital landscape',
+};
 
 const ServicesBenefits: React.FC = () => {
+  const { data: section } = useQuery({
+    queryKey: ['page-section', 'services', 'benefits'],
+    queryFn: () => siteContentApi.section('services', 'benefits'),
+  });
+  const sTitle = section?.title ?? SB_FALLBACK.title;
+  const sDesc  = section?.description ?? SB_FALLBACK.description;
   const benefits = [
     {
       icon: 'ri-line-chart-line',
@@ -29,10 +42,10 @@ const ServicesBenefits: React.FC = () => {
       <div className="container mx-auto px-6">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold text-[#1F2853] mb-4 font-['Poppins']">
-            Why Choose Our Services?
+            {sTitle}
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto font-['Manrope']">
-            We provide comprehensive solutions to help your business thrive in the digital landscape
+            {sDesc}
           </p>
         </div>
 

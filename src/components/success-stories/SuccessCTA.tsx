@@ -1,6 +1,20 @@
 // import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../lib/api';
+
+const SCTA_FALLBACK = {
+    title_prefix: 'What Do You Want to Hear Today?',
+    title_highlight: 'Subscribe For The Latest Updates.',
+};
 
 const SuccessCTA = () => {
+    const { data: section } = useQuery({
+        queryKey: ['page-section', 'success-stories', 'cta'],
+        queryFn: () => siteContentApi.section('success-stories', 'cta'),
+    });
+    const c = (section?.content ?? {}) as Record<string, string>;
+    const tPre = c.title_prefix    ?? SCTA_FALLBACK.title_prefix;
+    const tHi  = c.title_highlight ?? SCTA_FALLBACK.title_highlight;
     return (
         <section className="py-20 px-6">
             <div className="max-w-7xl mx-auto rounded-[3rem] bg-black relative overflow-hidden text-white p-12 md:p-20 flex flex-col md:flex-row items-center justify-between gap-12">
@@ -13,8 +27,8 @@ const SuccessCTA = () => {
                 {/* Left Content */}
                 <div className="relative z-10 max-w-2xl">
                     <h2 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
-                        What Do You Want to Hear Today? <br />
-                        <span className="text-brand-orange">Subscribe For The Latest Updates.</span>
+                        {tPre} <br />
+                        <span className="text-brand-orange">{tHi}</span>
                     </h2>
                     <p className="text-gray-400 text-lg mb-8">
                         Get exclusive access to our success playbooks, interviews, and strategic notes delivered straight to your inbox.

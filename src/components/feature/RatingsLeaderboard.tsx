@@ -1,5 +1,9 @@
 
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../lib/api';
+
+const RL_FALLBACK_TITLE = 'The Web App Pro Ratings Leaderboard';
 
 interface AppRating {
   rank: number;
@@ -245,6 +249,12 @@ export default function RatingsLeaderboard() {
   const [showAll, setShowAll] = useState(false);
   const displayedRatings = showAll ? mockRatings : mockRatings.slice(0, 3);
 
+  const { data: section } = useQuery({
+    queryKey: ['page-section', 'home', 'ratings_leaderboard'],
+    queryFn: () => siteContentApi.section('home', 'ratings_leaderboard'),
+  });
+  const sTitle = section?.title ?? RL_FALLBACK_TITLE;
+
   const renderStars = (rating: number) => {
     const fullStars = Math.floor(rating);
     const hasHalfStar = rating % 1 !== 0;
@@ -272,7 +282,7 @@ export default function RatingsLeaderboard() {
           <div className="lg:col-span-2 reveal-slide-right">
             <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6 lg:p-8 h-full">
               <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8 font-manrope">
-                The Web App Pro Ratings Leaderboard
+                {sTitle}
               </h2>
 
               <div className="space-y-4 sm:space-y-6">

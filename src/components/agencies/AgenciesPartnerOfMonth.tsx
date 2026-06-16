@@ -1,14 +1,27 @@
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../lib/api';
+
+const APOM_FALLBACK = {
+    badge: 'Spotlight',
+    title: 'Partner of The Month',
+};
 
 export default function AgenciesPartnerOfMonth() {
+    const { data: section } = useQuery({
+        queryKey: ['page-section', 'agencies', 'partner_of_month'],
+        queryFn: () => siteContentApi.section('agencies', 'partner_of_month'),
+    });
+    const sBadge = section?.badge_text ?? APOM_FALLBACK.badge;
+    const sTitle = section?.title      ?? APOM_FALLBACK.title;
     return (
         <section className="pb-16 bg-white">
             <div className="max-w-7xl mx-auto px-6 lg:px-8">
                 <div className="text-center mb-12">
                     <span className="inline-block px-4 py-1.5 rounded-full bg-[#f25a1a]/10 border border-[#f25a1a]/20 text-sm font-bold text-[#f25a1a] mb-4 uppercase tracking-wider">
-                        Spotlight
+                        {sBadge}
                     </span>
-                    <h2 className="text-4xl lg:text-5xl font-bold text-[#1A1B20]">Partner of The Month</h2>
+                    <h2 className="text-4xl lg:text-5xl font-bold text-[#1A1B20]">{sTitle}</h2>
                 </div>
 
                 <div className="relative">

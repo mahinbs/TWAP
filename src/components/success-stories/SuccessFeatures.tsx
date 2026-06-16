@@ -1,4 +1,12 @@
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../lib/api';
+
+const SF_FALLBACK = {
+    title_line1: 'Why Settle?',
+    title_line2_prefix: 'Join the',
+    title_highlight: 'Growth Masters',
+};
 
 const features = [
     {
@@ -16,6 +24,14 @@ const features = [
 ];
 
 const SuccessFeatures = () => {
+    const { data: section } = useQuery({
+        queryKey: ['page-section', 'success-stories', 'features'],
+        queryFn: () => siteContentApi.section('success-stories', 'features'),
+    });
+    const c = (section?.content ?? {}) as Record<string, string>;
+    const tLine1 = c.title_line1        ?? SF_FALLBACK.title_line1;
+    const tPre   = c.title_line2_prefix ?? SF_FALLBACK.title_line2_prefix;
+    const tHi    = c.title_highlight    ?? SF_FALLBACK.title_highlight;
     const [activeIndex, setActiveIndex] = useState(0);
 
     return (
@@ -27,8 +43,8 @@ const SuccessFeatures = () => {
                     <div className="lg:col-span-4">
                         <span className="text-brand-orange font-bold text-xs tracking-widest uppercase mb-4 block">Why Listen?</span>
                         <h2 className="text-4xl font-bold text-brand-dark mb-6 leading-tight">
-                            Why Settle? <br />
-                            Join the <span className="text-brand-orange">Growth Masters</span>
+                            {tLine1} <br />
+                            {tPre} <span className="text-brand-orange">{tHi}</span>
                         </h2>
                         <p className="text-gray-500 mb-8 leading-relaxed">
                             Embark on a journey with us as we host industry titans, visionaries, and disruptors. Discover why our podcast is a must-listen for over four million leaders globally.
