@@ -254,6 +254,20 @@ export const appsApi = {
   featured: (limit = 8) =>
     appsApi.list({ featured: true, sort: 'rating', limit }),
 
+  /** Fetch published apps by id (preserves caller order via re-sort) */
+  byIds: async (ids: string[]): Promise<App[]> => {
+    const unique = [...new Set(ids.filter(Boolean))];
+    if (unique.length === 0) return [];
+    const { data, error } = await supabase
+      .from('apps')
+      .select('id,name,slug,tagline,category,rating,review_count,pricing,featured,editors_choice,logo_url,tags,website_url,badges,downloads_ios,downloads_android')
+      .in('id', unique)
+      .eq('status', 'published');
+    if (error) throw error;
+    const byId = new Map((data ?? []).map(a => [a.id, a as App]));
+    return unique.map(id => byId.get(id)).filter((a): a is App => Boolean(a));
+  },
+
   /** Get top-rated apps */
   topRated: (limit = 12) =>
     appsApi.list({ sort: 'rating', limit }),

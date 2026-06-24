@@ -244,6 +244,11 @@ const getAllApps = (): AppRating[] => {
 
 const mockRatings: AppRating[] = getAllApps();
 
+interface LeaderboardSpot {
+  rank: number;
+  app_id: string;
+}
+
 export default function RatingsLeaderboard() {
   const [showAll, setShowAll] = useState(false);
 
@@ -252,12 +257,37 @@ export default function RatingsLeaderboard() {
     queryFn: () => siteContentApi.section('home', 'ratings_leaderboard'),
   });
 
+  const content = (section?.content ?? {}) as Record<string, unknown>;
+  const curatedSpots = (Array.isArray(content.leaderboard_spots) ? content.leaderboard_spots : []) as LeaderboardSpot[];
+  const spotIds = curatedSpots
+    .filter(s => s.app_id)
+    .sort((a, b) => a.rank - b.rank)
+    .map(s => s.app_id);
+
+  const { data: curatedApps = [] } = useQuery({
+    queryKey: ['apps', 'leaderboard-spots', spotIds],
+    queryFn: () => appsApi.byIds(spotIds),
+    enabled: spotIds.length > 0,
+  });
+
   const { data: dbApps = [] } = useQuery({
     queryKey: ['apps', 'featured-leaderboard'],
     queryFn: () => appsApi.featured(12),
+    enabled: spotIds.length === 0,
   });
 
   const ratings = useMemo(() => {
+    if (curatedApps.length > 0) {
+      return curatedApps.map((app, i) => ({
+        rank: curatedSpots[i]?.rank ?? i + 1,
+        name: app.name,
+        shortDescription: app.tagline ?? '',
+        rating: app.rating ?? 0,
+        category: app.category ?? '',
+        logo: app.logo_url ?? '',
+        slug: app.slug,
+      }));
+    }
     if (dbApps.length > 0) {
       return dbApps.map((app, i) => ({
         rank: i + 1,
@@ -266,13 +296,16 @@ export default function RatingsLeaderboard() {
         rating: app.rating ?? 0,
         category: app.category ?? '',
         logo: app.logo_url ?? '',
+        slug: app.slug,
       }));
     }
     return mockRatings;
-  }, [dbApps]);
+  }, [curatedApps, curatedSpots, dbApps]);
 
   const displayedRatings = showAll ? ratings : ratings.slice(0, 3);
   const sTitle = section?.title ?? RL_FALLBACK_TITLE;
+  const viewAllLabel = String(content.button_view_all ?? 'View All App Ratings');
+  const showLessLabel = String(content.button_show_less ?? 'Show Less');
 
   const renderStars = (rating: number) => {
     const fullStars = Math.floor(rating);
@@ -335,7 +368,7 @@ export default function RatingsLeaderboard() {
                   onClick={() => setShowAll(!showAll)}
                   className="px-5 sm:px-6 py-2.5 sm:py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors whitespace-nowrap font-poppins text-sm sm:text-base"
                 >
-                  {showAll ? 'Show Less' : 'View All App Ratings'}
+                  {showAll ? showLessLabel : viewAllLabel}
                 </button>
               </div>
             </div>
