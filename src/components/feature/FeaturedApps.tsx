@@ -219,9 +219,33 @@ export default function FeaturedApps() {
   const ctaUrl  = section?.cta_url  ?? FALLBACK_CTA.url;
   const viewDetailsText = (c.view_details_text as string) ?? FALLBACK_VIEW_DETAILS;
   const featuredBadge   = (c.featured_badge as string)    ?? FALLBACK_FEATURED_BADGE;
-  const categories = Array.isArray(c.categories) && (c.categories as { id: string; name: string }[]).length > 0
-    ? (c.categories as { id: string; name: string }[])
-    : FALLBACK_CATEGORIES;
+
+  const MAX_CATEGORIES   = 6;
+  const MAX_APPS_PER_CAT = 5;
+
+  // 1) CMS categories take priority. 2) Otherwise auto-derive distinct
+  //    categories from the featured apps (in admin-controlled sort order),
+  //    capped at MAX_CATEGORIES. 3) Otherwise the a8569b5 fallback list.
+  const categories = useMemo(() => {
+    if (Array.isArray(c.categories) && (c.categories as { id: string; name: string }[]).length > 0) {
+      return (c.categories as { id: string; name: string }[]).slice(0, MAX_CATEGORIES);
+    }
+    if (dbFeatured.length > 0) {
+      const seen = new Set<string>();
+      const out: { id: string; name: string }[] = [];
+      for (const app of dbFeatured) {
+        const name = (app.category ?? '').trim();
+        if (!name) continue;
+        const id = name.toLowerCase().replace(/\s+/g, '-');
+        if (seen.has(id)) continue;
+        seen.add(id);
+        out.push({ id, name });
+        if (out.length >= MAX_CATEGORIES) break;
+      }
+      if (out.length > 0) return out;
+    }
+    return FALLBACK_CATEGORIES;
+  }, [c.categories, dbFeatured]);
 
   const cmsHasApps = Boolean(
     c.apps &&
@@ -231,17 +255,29 @@ export default function FeaturedApps() {
   );
 
   const allApps = useMemo(() => {
-    if (cmsHasApps) return c.apps as Record<string, AppCardData[]>;
+    if (cmsHasApps) {
+      // Cap each CMS category to MAX_APPS_PER_CAT
+      const capped: Record<string, AppCardData[]> = {};
+      for (const [k, v] of Object.entries(c.apps as Record<string, AppCardData[]>)) {
+        capped[k] = (Array.isArray(v) ? v : []).slice(0, MAX_APPS_PER_CAT);
+      }
+      return capped;
+    }
 
     if (dbFeatured.length > 0) {
       const grouped: Record<string, AppCardData[]> = {};
       for (const cat of categories) grouped[cat.id] = [];
       for (const app of dbFeatured) {
-        const catId =
-          categories.find((c) => c.name.toLowerCase() === (app.category ?? '').toLowerCase())?.id ??
-          categories[0]?.id ??
-          'marketing';
-        if (!grouped[catId]) grouped[catId] = [];
+        const catName = (app.category ?? '').trim();
+        const catId = catName
+          ? catName.toLowerCase().replace(/\s+/g, '-')
+          : (categories[0]?.id ?? 'marketing');
+        if (!grouped[catId]) {
+          // app belongs to a category not in the visible set → skip
+          if (!categories.some(c => c.id === catId)) continue;
+          grouped[catId] = [];
+        }
+        if (grouped[catId].length >= MAX_APPS_PER_CAT) continue; // cap at 5
         grouped[catId].push({
           name: app.name,
           category: app.category ?? '',
