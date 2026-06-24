@@ -7,6 +7,7 @@ import "swiper/css";
 import "swiper/css/navigation";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { agenciesApi } from "../../lib/api";
 import { siteContentApi } from "../../lib/api";
 
 interface Agency {
@@ -79,14 +80,33 @@ export default function TopAgency() {
     queryFn: () => siteContentApi.section("home", "top_agency"),
   });
 
+  const { data: dbAgencies = [] } = useQuery({
+    queryKey: ["agencies", "featured"],
+    queryFn: () => agenciesApi.featured(8),
+  });
+
   const c = (section?.content ?? {}) as Record<string, unknown>;
   const title = section?.title ?? FALLBACK_TITLE;
   const badgeText = section?.badge_text ?? FALLBACK_BADGE;
   const ctaText = section?.cta_text ?? FALLBACK_CTA.text;
   const ctaUrl  = section?.cta_url  ?? FALLBACK_CTA.url;
-  const agencies: Agency[] = Array.isArray(c.agencies) && (c.agencies as Agency[]).length > 0
-    ? (c.agencies as Agency[])
-    : FALLBACK_AGENCIES;
+  const agencies: Agency[] =
+    // CMS content wins
+    Array.isArray(c.agencies) && (c.agencies as Agency[]).length > 0
+      ? (c.agencies as Agency[])
+      // …then DB-featured agencies
+      : dbAgencies.length > 0
+        ? dbAgencies.map((a, i) => ({
+            id: i + 1,
+            name: a.name,
+            location: (a as { location?: string }).location ?? a.category ?? '',
+            image: a.cover_url ?? a.avatar_url ?? '',
+            rating: Math.round(a.rating ?? 5),
+            title: a.tagline ?? '',
+            description: a.description ?? a.tagline ?? '',
+            url: `/agencies/${a.slug}`,
+          }))
+        : FALLBACK_AGENCIES;
 
   useEffect(() => {
     if (swiperRef.current) {

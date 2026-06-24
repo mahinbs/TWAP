@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { siteContentApi } from '../../lib/api';
+import { siteContentApi, successStoriesApi } from '../../lib/api';
 
 const SF_FALLBACK = {
     title_line1: 'Why Settle?',
@@ -24,6 +24,16 @@ const features = [
 ];
 
 const SuccessFeatures = () => {
+    const { data: dbFeatures = [] } = useQuery({
+        queryKey: ['ss-items', 'features'],
+        queryFn: () => successStoriesApi.items('features' as any),
+    });
+    const featureList = dbFeatures.length > 0
+      ? dbFeatures.map((it: any) => ({
+          title: it.title,
+          content: it.description ?? '',
+        }))
+      : features;
     const { data: section } = useQuery({
         queryKey: ['page-section', 'success-stories', 'features'],
         queryFn: () => siteContentApi.section('success-stories', 'features'),
@@ -66,7 +76,7 @@ const SuccessFeatures = () => {
 
                     {/* Right: Accordion */}
                     <div className="lg:col-span-4 space-y-4">
-                        {features.map((feature, index) => (
+                        {featureList.map((feature, index) => (
                             <div
                                 key={index}
                                 className={`rounded-xl border transition-all duration-300 overflow-hidden ${activeIndex === index ? 'bg-white border-brand-orange shadow-lg' : 'bg-transparent border-gray-200 hover:bg-white hover:border-gray-300'}`}

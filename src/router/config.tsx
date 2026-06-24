@@ -2,7 +2,7 @@ import type { RouteObject } from 'react-router';
 import { Navigate } from 'react-router-dom';
 import HomePage from '../pages/home/page';
 import NotFound from '../pages/NotFound';
-import { StaticRedirect, ProductReviewRedirect } from '../components/routing/LegacyRedirect';
+import { StaticRedirect } from '../components/routing/LegacyRedirect';
 import DirectoryPage from '../pages/directory/page';
 import ServicesPage from '../pages/services/page';
 import TopProductsPage from '../pages/top-products/page';
@@ -58,11 +58,11 @@ const routes: RouteObject[] = [
   { path: '/promote',                   element: <PromotePage /> },
   { path: '/promote/:category',         element: <PromoteCategoryPage /> },
   { path: '/product-review',            element: <ProductReviewPage /> },
+  { path: '/product-review/:slug',      element: <ProductReviewPage /> },
   { path: '/top-10-project-management-software-2026', element: <BestProjectManagementSoftwarePage /> },
   { path: '/showcase',                  element: <StaticRedirect from="/showcase" /> },
   { path: '/products',                  element: <StaticRedirect from="/products" /> },
   { path: '/best-project-management-software', element: <StaticRedirect from="/best-project-management-software" /> },
-  { path: '/product-review/:slug',      element: <ProductReviewRedirect /> },
   { path: '/resource-centre',           element: <Navigate to="/resource-centre/blogs" replace /> },
   { path: '*',                          element: <NotFound /> },
 ];

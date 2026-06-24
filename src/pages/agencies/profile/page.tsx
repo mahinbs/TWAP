@@ -5,6 +5,9 @@ import 'swiper/css';
 import 'swiper/css/navigation'; // Optional styles
 import Header from '../../../components/feature/Header';
 import Footer from '../../../components/feature/Footer';
+import { useParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { agenciesApi } from '../../../lib/api';
 
 // Mock Data
 const agencyData = {
@@ -93,6 +96,48 @@ const AgencyProfilePage: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [swiperInstance, setSwiperInstance] = useState<any>(null);
 
+    const { slug } = useParams<{ slug: string }>();
+    const { data: dbAgency } = useQuery({
+        queryKey: ['agency', slug],
+        queryFn: () => slug && slug !== 'profile' ? agenciesApi.bySlug(slug) : Promise.resolve(null),
+        enabled: !!slug,
+    });
+
+    // Merge DB row (when present) over the a8569b5 hardcoded mock — UI stays identical for unknown slugs
+    const a = dbAgency as any;
+    const agency = a ? {
+        name: a.name ?? agencyData.name,
+        tagline: a.tagline ?? '',
+        category: a.category ?? agencyData.category,
+        description: a.description ?? '',
+        rating: a.rating ?? agencyData.rating,
+        reviews: a.review_count ?? agencyData.reviews,
+        yearsExp: a.years_experience ?? agencyData.yearsExp,
+        avatar: a.avatar_url || agencyData.avatar,
+        cover: a.cover_url || agencyData.cover,
+        websiteUrl: a.website_url ?? '',
+        responseTime: a.response_time ?? '2 hrs',
+        projectCompletion: a.project_completion_rate != null ? `${a.project_completion_rate}%` : '98%',
+        industryFocus: a.industry_focus ?? 'Advertising & Marketing',
+        clientSizeFocus: a.client_size_focus ?? 'Small Business (<$10M)',
+        verified: Boolean(a.verified),
+        flagshipService: a.flagship_service ?? agencyData.flagshipService,
+    } : {
+        ...agencyData,
+        tagline: '',
+        description: '',
+        websiteUrl: '',
+        responseTime: '2 hrs',
+        projectCompletion: '98%',
+        industryFocus: 'Advertising & Marketing',
+        clientSizeFocus: 'Small Business (<$10M)',
+        verified: false,
+    };
+
+    const websiteLabel = agency.websiteUrl
+        ? agency.websiteUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')
+        : 'virtuteams.com';
+
     // Focus Area Mock Data
     const focusOptions = [
         { label: 'No Code Development', pc: 100, tool: 'Webflow', color: '#06b6d4' },
@@ -134,19 +179,23 @@ const AgencyProfilePage: React.FC = () => {
                         <div className="bg-gradient-to-br from-brand-lime/40 to-brand-orange/40 rounded-[2.5rem] p-8 text-white relative overflow-hidden shadow-2xl min-h-[600px] flex flex-col items-center text-center">
                             {/* Decorative Background */}
                             <div className="absolute top-0 right-0 w-64 h-64 bg-brand-lime/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-                            <img src={agencyData.cover} alt={agencyData.name} className="w-full h-full object-cover absolute top-0 left-0 z-0 brightness-[20%]" />
+                            <img src={agency.cover} alt={agency.name} className="w-full h-full object-cover absolute top-0 left-0 z-0 brightness-[20%]" />
 
                             {/* Avatar */}
                             <div className="w-32 h-32 rounded-full p-1 bg-white/10 backdrop-blur-sm border border-white/20 mb-6 relative z-10">
-                                <img src={agencyData.avatar} alt={agencyData.name} className="w-fukll h-full rounded-full object-cover" />
+                                <img src={agency.avatar} alt={agency.name} className="w-fukll h-full rounded-full object-cover" />
                             </div>
 
-                            <h1 className="text-3xl font-bold font-manrope mb-2">{agencyData.name}</h1>
+                            <h1 className="text-3xl font-bold font-manrope mb-2">{agency.name}</h1>
+                            {agency.tagline && (
+                                <p className="text-white/80 text-sm mb-3 relative z-10 max-w-xs mx-auto">{agency.tagline}</p>
+                            )}
                             <div className="inline-block bg-white/10 px-4 py-1.5 rounded-full text-xs font-bold text-brand-lime uppercase tracking-wider mb-8">
-                                #{agencyData.category.replace(/\s/g, '')}
+                                #{agency.category.replace(/\s/g, '')}
                             </div>
 
-                            {/* Trust Badge (Static) */}
+                            {/* Trust Badge */}
+                            {agency.verified && (
                             <div className="bg-white/5 backdrop-blur-md rounded-2xl p-4 w-full flex items-center gap-4 mb-8 border border-white/10">
                                 <div className="w-12 h-12 rounded-full bg-brand-lime/20 flex items-center justify-center text-brand-lime shrink-0 border border-brand-lime/20">
                                     <i className="ri-shield-check-fill text-xl"></i>
@@ -159,15 +208,16 @@ const AgencyProfilePage: React.FC = () => {
                                     <div className="text-white/70 text-xs text-start">Identity & Portfolio Vetted</div>
                                 </div>
                             </div>
+                            )}
 
                             {/* Stats Grid: A+ / 24 */}
                             <div className="grid grid-cols-2 w-full gap-8 border-t border-white/10 pt-8 mb-auto relative z-10">
                                 <div>
-                                    <div className="text-4xl font-bold mb-1">4.9</div>
+                                    <div className="text-4xl font-bold mb-1">{agency.rating}</div>
                                     <div className="text-xs text-gray-300 uppercase">Rating</div>
                                 </div>
                                 <div>
-                                    <div className="text-4xl font-bold mb-1">{agencyData.yearsExp}</div>
+                                    <div className="text-4xl font-bold mb-1">{agency.yearsExp}</div>
                                     <div className="text-xs text-gray-300 uppercase">Years Exp</div>
                                 </div>
                             </div>
@@ -229,20 +279,26 @@ const AgencyProfilePage: React.FC = () => {
                                     ))}
                                 </div>
 
+                                {agency.description && (
+                                    <div className="mt-6 pt-6 border-t border-gray-100">
+                                        <p className="text-gray-600 text-sm leading-relaxed">{agency.description}</p>
+                                    </div>
+                                )}
+
                                 <div className="mt-8 pt-6 border-t border-gray-100">
                                     <div className="flex items-center justify-between mb-2">
                                         <div className="flex items-center gap-2">
                                             <div className="w-2 h-2 rounded-full bg-brand-lime"></div>
                                             <span className="font-bold text-[#1F2853] text-sm">Response Time</span>
                                         </div>
-                                        <span className="font-bold text-[#1F2853] text-sm">2 hrs</span>
+                                        <span className="font-bold text-[#1F2853] text-sm">{agency.responseTime}</span>
                                     </div>
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2">
                                             <div className="w-2 h-2 rounded-full bg-blue-500"></div>
                                             <span className="font-bold text-[#1F2853] text-sm">Project Completion</span>
                                         </div>
-                                        <span className="font-bold text-[#1F2853] text-sm">98%</span>
+                                        <span className="font-bold text-[#1F2853] text-sm">{agency.projectCompletion}</span>
                                     </div>
                                 </div>
                             </div>
@@ -270,12 +326,12 @@ const AgencyProfilePage: React.FC = () => {
 
                                     {/* CTA Button */}
                                     <a
-                                        href="#"
+                                        href={agency.websiteUrl || '#'}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="relative z-10 w-full bg-white hover:bg-brand-lime text-[#1F2853] font-bold py-4 px-6 rounded-xl flex items-center justify-between group/btn transition-all duration-300 shadow-lg mt-auto"
                                     >
-                                        <span className="text-base font-bold truncate mr-2">virtuteams.com</span>
+                                        <span className="text-base font-bold truncate mr-2">{websiteLabel}</span>
                                         <div className="w-8 h-8 rounded-full bg-gray-100 group-hover:bg-white/50 flex items-center justify-center transition-colors shrink-0">
                                             <i className="ri-arrow-right-up-line text-lg group-hover/btn:rotate-45 transition-transform duration-300"></i>
                                         </div>
@@ -294,10 +350,10 @@ const AgencyProfilePage: React.FC = () => {
                                     Flagship Service
                                 </span>
                                 <h3 className="text-3xl font-bold text-[#1F2853] mb-3 font-manrope leading-tight">
-                                    {agencyData.flagshipService.title}
+                                    {agency.flagshipService.title}
                                 </h3>
                                 <p className="text-[#1F2853]/70 text-lg leading-relaxed mb-0">
-                                    {agencyData.flagshipService.description}
+                                    {agency.flagshipService.description}
                                 </p>
                             </div>
 
@@ -313,7 +369,7 @@ const AgencyProfilePage: React.FC = () => {
                                 {/* Central Hub */}
                                 <div className="relative z-10 w-28 h-28 bg-gradient-to-b from-white/40 to-white/10 backdrop-blur-xl rounded-[2rem] border border-white/80 shadow-2xl flex items-center justify-center transform rotate-3 hover:rotate-0 transition-transform duration-500">
                                     <div className="w-20 h-20 bg-white rounded-2xl shadow-lg border border-white flex items-center justify-center overflow-hidden">
-                                        <img src={agencyData.avatar} alt={agencyData.name} className='w-full h-full object-cover' />
+                                        <img src={agency.avatar} alt={agency.name} className='w-full h-full object-cover' />
                                     </div>
                                     {/* Shine effect */}
                                     <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-tr from-white/40 to-transparent rounded-[2rem] pointer-events-none"></div>
@@ -675,7 +731,7 @@ const AgencyProfilePage: React.FC = () => {
                                     </div>
                                     <div className="flex items-center gap-2 text-sm font-medium">
                                         <div className="w-3 h-3 bg-[#0ea5e9] rounded-sm"></div>
-                                        <span className="text-gray-500">Advertising & Marketing</span>
+                                        <span className="text-gray-500">{agency.industryFocus}</span>
                                         <span className="ml-auto text-[#1F2853] font-bold">: 70%</span>
                                     </div>
                                 </div>
@@ -690,7 +746,7 @@ const AgencyProfilePage: React.FC = () => {
                                     </div>
                                     <div className="flex items-center gap-2 text-sm font-medium">
                                         <div className="w-3 h-3 bg-[#0ea5e9] rounded-sm"></div>
-                                        <span className="text-gray-500">Small Business {'(<$10M)'}</span>
+                                        <span className="text-gray-500">{agency.clientSizeFocus}</span>
                                         <span className="ml-auto text-[#1F2853] font-bold">: 95%</span>
                                     </div>
                                 </div>

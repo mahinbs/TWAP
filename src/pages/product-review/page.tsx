@@ -1,8 +1,18 @@
 import Header from '../../components/feature/Header';
 import Footer from '../../components/feature/Footer';
+import { useParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { appsApi } from '../../lib/api';
 
 export default function ProductReviewPage() {
-  const product = {
+  const { slug } = useParams<{ slug: string }>();
+  const { data: dbApp } = useQuery({
+    queryKey: ['product-review-app', slug],
+    queryFn: () => slug ? appsApi.bySlug(slug) : Promise.resolve(null),
+    enabled: !!slug,
+  });
+
+  const fallbackProduct = {
     name: "Seat Maker",
     category: "Lifestyle",
     type: "app", // 'app' | 'website'
@@ -42,6 +52,22 @@ export default function ProductReviewPage() {
       }
     ]
   };
+
+  // Merge DB app over the a8569b5 hardcoded mock when a known slug is requested
+  const ax = dbApp as any;
+  const product = ax ? {
+    ...fallbackProduct,
+    name: ax.name ?? fallbackProduct.name,
+    category: ax.category ?? fallbackProduct.category,
+    rating: ax.rating ?? fallbackProduct.rating,
+    icon: ax.logo_url ?? fallbackProduct.icon,
+    image: ax.hero_image_url ?? ax.logo_url ?? fallbackProduct.image,
+    reviewTitle: ax.review_title ?? `${ax.name} Review | ${fallbackProduct.reviewTitle.split('|')[1] ?? ''}`,
+    content: Array.isArray(ax.review_paragraphs) && ax.review_paragraphs.length > 0
+      ? ax.review_paragraphs
+      : (ax.description ? [ax.description] : fallbackProduct.content),
+    pros: Array.isArray(ax.pros) && ax.pros.length > 0 ? ax.pros : fallbackProduct.pros,
+  } : fallbackProduct;
 
   return (
     <div className="min-h-screen bg-[#fffdfb] font-['Poppins']">

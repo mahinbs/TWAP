@@ -1,7 +1,6 @@
-
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { siteContentApi } from '../../lib/api';
+import { appsApi, siteContentApi } from '../../lib/api';
 
 const RL_FALLBACK_TITLE = 'The Web App Pro Ratings Leaderboard';
 
@@ -247,12 +246,32 @@ const mockRatings: AppRating[] = getAllApps();
 
 export default function RatingsLeaderboard() {
   const [showAll, setShowAll] = useState(false);
-  const displayedRatings = showAll ? mockRatings : mockRatings.slice(0, 3);
 
   const { data: section } = useQuery({
     queryKey: ['page-section', 'home', 'ratings_leaderboard'],
     queryFn: () => siteContentApi.section('home', 'ratings_leaderboard'),
   });
+
+  const { data: dbApps = [] } = useQuery({
+    queryKey: ['apps', 'featured-leaderboard'],
+    queryFn: () => appsApi.featured(12),
+  });
+
+  const ratings = useMemo(() => {
+    if (dbApps.length > 0) {
+      return dbApps.map((app, i) => ({
+        rank: i + 1,
+        name: app.name,
+        shortDescription: app.tagline ?? '',
+        rating: app.rating ?? 0,
+        category: app.category ?? '',
+        logo: app.logo_url ?? '',
+      }));
+    }
+    return mockRatings;
+  }, [dbApps]);
+
+  const displayedRatings = showAll ? ratings : ratings.slice(0, 3);
   const sTitle = section?.title ?? RL_FALLBACK_TITLE;
 
   const renderStars = (rating: number) => {

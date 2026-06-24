@@ -273,6 +273,7 @@ export const blogsApi = {
     search?: string;
     limit?: number;
     offset?: number;
+    featured?: boolean;
   }): Promise<BlogPost[]> => {
     let q = supabase
       .from('blog_posts')
@@ -288,23 +289,51 @@ export const blogsApi = {
     if (opts?.resourceTab) q = q.eq('resource_tab', opts.resourceTab);
     if (opts?.tag)      q = q.contains('tags', [opts.tag]);
     if (opts?.search)   q = q.or(`title.ilike.%${opts.search}%,excerpt.ilike.%${opts.search}%`);
+    if (opts?.featured) q = q.eq('featured', true);
     if (opts?.limit)    q = q.limit(opts.limit);
     if (opts?.offset)   q = q.range(opts.offset, (opts.offset ?? 0) + (opts.limit ?? 20) - 1);
 
     const { data, error } = await q;
-    if (error) throw error;
+    if (error) {
+      // Fallback when authors join fails — re-run without embed
+      let q2 = supabase
+        .from('blog_posts')
+        .select('id, slug, title, excerpt, hero_image_url, category, resource_tab, tags, published_date, read_time_minutes, views, author_id')
+        .eq('status', 'published')
+        .order('published_date', { ascending: false });
+      if (opts?.category) q2 = q2.eq('category', opts.category);
+      if (opts?.resourceTab) q2 = q2.eq('resource_tab', opts.resourceTab);
+      if (opts?.featured) q2 = q2.eq('featured', true);
+      if (opts?.tag)      q2 = q2.contains('tags', [opts.tag]);
+      if (opts?.search)   q2 = q2.or(`title.ilike.%${opts.search}%,excerpt.ilike.%${opts.search}%`);
+      if (opts?.limit)    q2 = q2.limit(opts.limit);
+      if (opts?.offset)   q2 = q2.range(opts.offset, (opts.offset ?? 0) + (opts.limit ?? 20) - 1);
+      const fb = await q2;
+      if (fb.error) return [];
+      return (fb.data ?? []).map((post: any) => ({ ...post, author: null })) as BlogPost[];
+    }
     return (data ?? []).map((post: any) => ({ ...post, author: post.authors })) as BlogPost[];
   },
 
   bySlug: async (slug: string): Promise<BlogPost | null> => {
-    const { data, error } = await supabase
+    const withJoin = await supabase
       .from('blog_posts')
       .select('*, authors!author_id(id, name, avatar_url, bio)')
       .eq('slug', slug)
       .eq('status', 'published')
       .single();
-    if (error || !data) return null;
-    return { ...data, author: data.authors } as BlogPost;
+    if (!withJoin.error && withJoin.data) {
+      return { ...withJoin.data, author: withJoin.data.authors } as BlogPost;
+    }
+    // Schema cache missing FK → fetch without the embed
+    const plain = await supabase
+      .from('blog_posts')
+      .select('*')
+      .eq('slug', slug)
+      .eq('status', 'published')
+      .single();
+    if (plain.error || !plain.data) return null;
+    return { ...plain.data, author: undefined } as BlogPost;
   },
 
   recent: (limit = 6) => blogsApi.list({ limit }),

@@ -1,7 +1,7 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { siteContentApi } from '../../lib/api';
+import { agenciesApi, siteContentApi } from '../../lib/api';
 
 const HOF_FALLBACK = {
     title: 'Our Hall of Fame',
@@ -11,6 +11,7 @@ const HOF_FALLBACK = {
 const agencies = [
     {
         name: 'DataArt',
+        slug: '',
         verified: true,
         logo: 'https://images.unsplash.com/photo-1549923746-c502d488b3ea?auto=format&fit=crop&q=80&w=200',
         description: 'Since its inception in 1997, DataArt has delivered a range of innovative solutions to businesses of all sizes and industries.',
@@ -54,8 +55,26 @@ export default function AgenciesHallOfFame() {
         queryKey: ['page-section', 'agencies', 'hall_of_fame'],
         queryFn: () => siteContentApi.section('agencies', 'hall_of_fame'),
     });
+    const { data: dbAgencies = [] } = useQuery({
+        queryKey: ['agencies', 'hall-of-fame'],
+        queryFn: () => agenciesApi.list({ limit: 12 }),
+    });
     const sTitle = section?.title       ?? HOF_FALLBACK.title;
     const sDesc  = section?.description ?? HOF_FALLBACK.description;
+
+    const displayAgencies = useMemo(() => {
+        if (dbAgencies.length > 0) {
+            return dbAgencies.map((a) => ({
+                name: a.name,
+                slug: a.slug,
+                verified: a.verified,
+                logo: a.avatar_url || 'https://images.unsplash.com/photo-1549923746-c502d488b3ea?auto=format&fit=crop&q=80&w=200',
+                description: a.tagline ?? a.category ?? '',
+                tag: a.category ?? '',
+            }));
+        }
+        return agencies;
+    }, [dbAgencies]);
 
     // Auto-scroll logic
     useEffect(() => {
@@ -132,8 +151,8 @@ export default function AgenciesHallOfFame() {
                     className="flex overflow-x-hidden no-scrollbar w-full"
                 >
                     {/* Triple the list to allow for a significant seamless scroll area */}
-                    {[...agencies, ...agencies, ...agencies].map((agency, index) => (
-                        <div key={index} className="w-[350px] mx-4 flex-shrink-0">
+                    {[...displayAgencies, ...displayAgencies, ...displayAgencies].map((agency, index) => (
+                        <div key={`${agency.slug || agency.name}-${index}`} className="w-[350px] mx-4 flex-shrink-0">
                             <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 h-full flex flex-col group">
                                 <div className="flex items-center gap-4 mb-4">
                                     <div className="w-12 h-12 rounded-lg bg-gray-50 overflow-hidden flex-shrink-0">
@@ -159,7 +178,7 @@ export default function AgenciesHallOfFame() {
                                     <span className="inline-block px-3 py-1 rounded-md border border-gray-200 text-xs text-gray-500 mb-4">
                                         {agency.tag}
                                     </span>
-                                    <Link to="/agencies/profile" className="w-full bg-brand-lime hover:bg-brand-orange text-black py-3 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2 group-hover:scale-[1.02] transform duration-300">
+                                    <Link to={agency.slug ? `/agencies/${agency.slug}` : '/agencies/profile'} className="w-full bg-brand-lime hover:bg-brand-orange text-black py-3 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2 group-hover:scale-[1.02] transform duration-300">
                                         <i className="ri-global-line"></i>
                                         Visit Profile
                                     </Link>

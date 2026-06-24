@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { siteContentApi } from '../../lib/api';
+import { appsApi, siteContentApi } from '../../lib/api';
 
 const FALLBACK_TITLE = 'Top App Reviews – Handpicked for You';
 const FALLBACK_DESCRIPTION = 'Discover the most popular and highly-rated AI applications';
@@ -195,7 +195,7 @@ const FALLBACK_APPS = {
   ]
 };
 
-interface AppCardData { name: string; category: string; rating: number; description: string; logo: string }
+interface AppCardData { name: string; category: string; rating: number; description: string; logo: string; slug?: string }
 
 export default function FeaturedApps() {
   const [activeCategory, setActiveCategory] = useState('marketing');
@@ -205,6 +205,11 @@ export default function FeaturedApps() {
   const { data: section } = useQuery({
     queryKey: ['page-section', 'home', 'featured_apps'],
     queryFn: () => siteContentApi.section('home', 'featured_apps'),
+  });
+
+  const { data: dbFeatured = [] } = useQuery({
+    queryKey: ['apps', 'featured'],
+    queryFn: () => appsApi.featured(24),
   });
 
   const c = (section?.content ?? {}) as Record<string, unknown>;
@@ -217,9 +222,51 @@ export default function FeaturedApps() {
   const categories = Array.isArray(c.categories) && (c.categories as { id: string; name: string }[]).length > 0
     ? (c.categories as { id: string; name: string }[])
     : FALLBACK_CATEGORIES;
-  const allApps = (c.apps && typeof c.apps === 'object' && !Array.isArray(c.apps))
-    ? (c.apps as Record<string, AppCardData[]>)
-    : FALLBACK_APPS;
+
+  const cmsHasApps = Boolean(
+    c.apps &&
+    typeof c.apps === 'object' &&
+    !Array.isArray(c.apps) &&
+    Object.values(c.apps as Record<string, AppCardData[]>).some((arr) => Array.isArray(arr) && arr.length > 0)
+  );
+
+  const allApps = useMemo(() => {
+    if (cmsHasApps) return c.apps as Record<string, AppCardData[]>;
+
+    if (dbFeatured.length > 0) {
+      const grouped: Record<string, AppCardData[]> = {};
+      for (const cat of categories) grouped[cat.id] = [];
+      for (const app of dbFeatured) {
+        const catId =
+          categories.find((c) => c.name.toLowerCase() === (app.category ?? '').toLowerCase())?.id ??
+          categories[0]?.id ??
+          'marketing';
+        if (!grouped[catId]) grouped[catId] = [];
+        grouped[catId].push({
+          name: app.name,
+          category: app.category ?? '',
+          rating: app.rating ?? 0,
+          description: app.tagline ?? '',
+          logo: app.logo_url ?? '',
+          slug: app.slug,
+        });
+      }
+      return grouped;
+    }
+
+    return FALLBACK_APPS;
+  }, [cmsHasApps, c.apps, dbFeatured, categories]);
+
+  const effectiveCategory = categories.some((c) => c.id === activeCategory)
+    ? activeCategory
+    : (categories[0]?.id ?? 'marketing');
+
+  useEffect(() => {
+    if (categories.length > 0 && !categories.some((c) => c.id === activeCategory)) {
+      setActiveCategory(categories[0].id);
+      setCurrentIndex(0);
+    }
+  }, [categories, activeCategory]);
 
   // Determine cards per view responsively
   useEffect(() => {
@@ -235,7 +282,11 @@ export default function FeaturedApps() {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  const currentApps: AppCardData[] = (allApps as Record<string, AppCardData[]>)[activeCategory] ?? [];
+  const currentApps: AppCardData[] =
+    allApps[effectiveCategory as keyof typeof allApps] ??
+    allApps[categories[0]?.id as keyof typeof allApps] ??
+    FALLBACK_APPS.marketing ??
+    [];
   const totalSlides = Math.max(1, Math.ceil(currentApps.length / cardsPerView));
 
   const nextSlide = () => {
@@ -273,7 +324,7 @@ export default function FeaturedApps() {
             <button
               key={category.id}
               onClick={() => handleCategoryChange(category.id)}
-              className={`px-6 py-3 rounded-lg font-medium transition-all cursor-pointer whitespace-nowrap ${activeCategory === category.id
+              className={`px-6 py-3 rounded-lg font-medium transition-all cursor-pointer whitespace-nowrap ${effectiveCategory === category.id
                   ? 'bg-[#f25a1a] text-white shadow-md'
                   : 'bg-[#f7f5ef] text-[#1F2853] hover:bg-[#f25a1a] hover:text-white'
                 }`}
@@ -362,10 +413,13 @@ export default function FeaturedApps() {
                             {app.description}
                           </p>
 
-                          {/* View Details Button */}
-                          <button className="w-full bg-[#b9ed2a] hover:bg-[#a5d426] text-[#1F2853] py-2.5 md:py-3 px-4 rounded-lg font-medium transition-colors cursor-pointer whitespace-nowrap">
+                          {/* View Details Button → product detail */}
+                          <Link
+                            to={app.slug ? `/products/${app.slug}` : `/product-review/${(app.name ?? '').toLowerCase().replace(/\s+/g, '-')}`}
+                            className="block w-full bg-[#b9ed2a] hover:bg-[#a5d426] text-[#1F2853] py-2.5 md:py-3 px-4 rounded-lg font-medium transition-colors cursor-pointer whitespace-nowrap text-center"
+                          >
                             {viewDetailsText}
-                          </button>
+                          </Link>
                         </div>
                       ))}
                   </div>

@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import Header from '../../components/feature/Header';
 import Footer from '../../components/feature/Footer';
+import { useQuery } from '@tanstack/react-query';
+import { siteContentApi } from '../../lib/api';
 
 // App Card Component to handle individual state
 const AppCard = ({ app, rank, id }: { app: any; rank: number; id?: string }) => {
@@ -148,6 +150,16 @@ export default function BestProjectManagementSoftwarePage() {
     const [currentPage, setCurrentPage] = useState(1);
     const [isTOCOpen, setIsTOCOpen] = useState(false);
     const itemsPerPage = 5;
+
+    const { data: heroSection } = useQuery({
+        queryKey: ['page-section', 'top-10-project-management-software-2026', 'hero'],
+        queryFn: () => siteContentApi.section('top-10-project-management-software-2026', 'hero'),
+    });
+    const lc = (heroSection?.content ?? {}) as Record<string, string>;
+    const listicleTitlePrefix     = lc.title_prefix    ?? 'The best';
+    const listicleTitleHighlight  = lc.title_highlight ?? 'project management';
+    const listicleTitleSuffix     = lc.title_suffix    ?? 'softwares of 2026';
+    const listicleDescription     = heroSection?.description ?? 'Project management software helps teams and individuals plan, organize, and track projects efficiently. It provides a centralized platform for managing tasks, resources, timelines, and communication within a project.';
 
     const logos = [
         { name: "ClickUp", image: "https://images.pexels.com/photos/1181354/pexels-photo-1181354.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1", style: { top: "10%", left: "70%" }, animation: "animate-float-random-3", delay: "animation-delay-500" },
@@ -396,10 +408,10 @@ export default function BestProjectManagementSoftwarePage() {
                         {/* Left Column: Text */}
                         <div className="space-y-4 sm:space-y-6 order-2 lg:order-1">
                             <h1 className="text-3xl sm:text-4xl lg:text-6xl font-semibold text-white font-['Manrope'] !leading-tight tracking-tight">
-                                The best <span className="relative inline-block">project management </span> softwares of 2026
+                                {listicleTitlePrefix} <span className="relative inline-block">{listicleTitleHighlight} </span> {listicleTitleSuffix}
                             </h1>
                             <p className="text-base sm:text-lg text-white/80 font-medium leading-relaxed max-w-xl">
-                                Project management software helps teams and individuals plan, organize, and track projects efficiently. It provides a centralized platform for managing tasks, resources, timelines, and communication within a project.
+                                {listicleDescription}
                             </p>
                         </div>
 

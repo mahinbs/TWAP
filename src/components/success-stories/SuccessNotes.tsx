@@ -5,7 +5,7 @@ import { Pagination, Autoplay } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/pagination';
 import { useQuery } from '@tanstack/react-query';
-import { siteContentApi } from '../../lib/api';
+import { siteContentApi, successStoriesApi } from '../../lib/api';
 
 const SN_FALLBACK = {
     title_prefix: 'Shine Bright, Speak Loud:',
@@ -40,6 +40,18 @@ const notes = [
 ];
 
 const SuccessNotes = () => {
+    const { data: dbNotes = [] } = useQuery({
+        queryKey: ['ss-items', 'notes'],
+        queryFn: () => successStoriesApi.items('notes' as any),
+    });
+    const items = dbNotes.length > 0
+      ? dbNotes.map((it: any) => ({
+          quote: it.description ?? '',
+          author: it.title ?? '',
+          role: it.subtitle ?? '',
+          image: it.image_url ?? '',
+        }))
+      : notes;
     const { data: section } = useQuery({
         queryKey: ['page-section', 'success-stories', 'notes'],
         queryFn: () => siteContentApi.section('success-stories', 'notes'),
@@ -95,7 +107,7 @@ const SuccessNotes = () => {
                         }}
                         className="pb-12"
                     >
-                        {notes.concat(notes).map((note, index) => (
+                        {items.concat(items).map((note, index) => (
                             <SwiperSlide key={index} className="h-auto mb-10">
                                 <div className="bg-white p-8 rounded-[2rem] shadow-xl shadow-gray-100 transition-all duration-300 border border-gray-100 group cursor-pointer hover:border-brand-orange/30 h-full flex flex-col hover:-translate-y-1 !min-h-[22rem]">
 

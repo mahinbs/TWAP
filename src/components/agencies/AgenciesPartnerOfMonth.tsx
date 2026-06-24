@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { siteContentApi } from '../../lib/api';
+import { agenciesApi, siteContentApi } from '../../lib/api';
 
 const APOM_FALLBACK = {
     badge: 'Spotlight',
@@ -12,8 +12,19 @@ export default function AgenciesPartnerOfMonth() {
         queryKey: ['page-section', 'agencies', 'partner_of_month'],
         queryFn: () => siteContentApi.section('agencies', 'partner_of_month'),
     });
+    const { data: featuredAgencies = [] } = useQuery({
+        queryKey: ['agencies', 'partner-of-month'],
+        queryFn: () => agenciesApi.featured(1),
+    });
+    const partner = featuredAgencies[0];
     const sBadge = section?.badge_text ?? APOM_FALLBACK.badge;
     const sTitle = section?.title      ?? APOM_FALLBACK.title;
+    const partnerName = partner?.name ?? 'Crebos International';
+    const partnerTagline = partner?.tagline ?? partner?.category ?? 'UX/UI | AI Agents & Web/App Development';
+    const partnerDesc = partner?.description ?? partner?.tagline ?? "We're Crebos International, a strategy-led custom software and design partner. We help ambitious companies design, build, and scale digital products that define categories.";
+    const partnerSlug = partner?.slug;
+    const partnerWebsite = partner?.website_url;
+    const profileLink = partnerSlug ? `/agencies/${partnerSlug}` : '/agencies/profile';
     return (
         <section className="pb-16 bg-white">
             <div className="max-w-7xl mx-auto px-6 lg:px-8">
@@ -33,44 +44,52 @@ export default function AgenciesPartnerOfMonth() {
                         {/* Partner Profile Section */}
                         <div className="flex-1 p-6 md:p-10">
                             <div className="flex flex-col md:flex-row gap-6 items-start mb-6">
-                                <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-[#1A1B20] to-black flex items-center justify-center flex-shrink-0 shadow-lg shadow-gray-200">
-                                    {/* Placeholder Logo */}
-                                    <span className="text-white font-bold text-xs">Crebos</span>
+                                <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-[#1A1B20] to-black flex items-center justify-center flex-shrink-0 shadow-lg shadow-gray-200 overflow-hidden">
+                                    {partner?.avatar_url ? (
+                                        <img src={partner.avatar_url} alt={partnerName} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <span className="text-white font-bold text-xs">{partnerName.slice(0, 6)}</span>
+                                    )}
                                 </div>
                                 <div>
                                     <div className="flex items-center gap-2 mb-2 flex-wrap">
-                                        <h3 className="text-2xl font-bold text-[#1A1B20]">Crebos International</h3>
-                                        <i className="ri-checkbox-circle-fill text-[#f25a1a] text-xl"></i>
+                                        <h3 className="text-2xl font-bold text-[#1A1B20]">{partnerName}</h3>
+                                        {partner?.verified && <i className="ri-checkbox-circle-fill text-[#f25a1a] text-xl"></i>}
                                     </div>
                                     <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">
-                                        UX/UI | AI Agents & Web/App Development
+                                        {partnerTagline}
                                     </p>
                                 </div>
                             </div>
 
                             <p className="text-gray-600 leading-relaxed mb-8 text-lg">
-                                We're Crebos International, a strategy-led custom software and design partner.
-                                We help ambitious companies design, build, and scale digital products that define categories.
+                                {partnerDesc}
                             </p>
 
                             <div className="flex flex-wrap gap-4 items-center mb-8">
+                                {partner?.category && (
                                 <span className="px-4 py-2 rounded-lg bg-white/50 text-gray-600 text-sm font-medium border border-gray-100 backdrop-blur-sm">
-                                    Custom Software Development
+                                    {partner.category}
                                 </span>
-                                <span className="px-4 py-2 rounded-lg bg-white/50 text-gray-600 text-sm font-medium border border-gray-100 backdrop-blur-sm">
-                                    Product Design
-                                </span>
+                                )}
                             </div>
 
                             <div className="flex flex-wrap gap-4">
-                                <Link to="/agencies/profile" className="px-8 py-3 rounded-xl border border-[#f25a1a]/30 text-[#f25a1a] font-bold hover:bg-[#f25a1a] hover:text-white transition-all duration-300 flex items-center gap-2 hover:shadow-lg hover:shadow-orange-500/20 bg-white/50 backdrop-blur-sm">
+                                <Link to={profileLink} className="px-8 py-3 rounded-xl border border-[#f25a1a]/30 text-[#f25a1a] font-bold hover:bg-[#f25a1a] hover:text-white transition-all duration-300 flex items-center gap-2 hover:shadow-lg hover:shadow-orange-500/20 bg-white/50 backdrop-blur-sm">
                                     <i className="ri-user-smile-line"></i>
                                     View Profile
                                 </Link>
+                                {partnerWebsite ? (
+                                <a href={partnerWebsite} target="_blank" rel="noopener noreferrer" className="px-8 py-3 rounded-xl bg-gradient-to-r from-[#f25a1a] to-[#d14815] text-white font-bold hover:shadow-lg hover:shadow-orange-500/30 transition-all duration-300 flex items-center gap-2">
+                                    <i className="ri-global-line"></i>
+                                    Visit Website
+                                </a>
+                                ) : (
                                 <button className="px-8 py-3 rounded-xl bg-gradient-to-r from-[#f25a1a] to-[#d14815] text-white font-bold hover:shadow-lg hover:shadow-orange-500/30 transition-all duration-300 flex items-center gap-2">
                                     <i className="ri-global-line"></i>
                                     Visit Website
                                 </button>
+                                )}
                             </div>
                         </div>
                     </div>

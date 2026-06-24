@@ -27,7 +27,12 @@ export default function NewsSection() {
   });
   const { data: blogPosts = [] } = useQuery({
     queryKey: ['blogs', 'home-news'],
-    queryFn: () => blogsApi.list({ limit: 6 }),
+    // Prefer featured; if none flagged, the component still shows latest 6 as before
+    queryFn: async () => {
+      const featured = await blogsApi.list({ limit: 6, featured: true });
+      if (featured.length > 0) return featured;
+      return blogsApi.list({ limit: 6 });
+    },
   });
   const sTitle = section?.title ?? FALLBACK_TITLE;
 

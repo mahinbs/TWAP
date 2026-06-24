@@ -1,6 +1,6 @@
 // import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { siteContentApi } from '../../lib/api';
+import { siteContentApi, successStoriesApi } from '../../lib/api';
 
 const SG_FALLBACK = {
     title_prefix: 'Success Stories that',
@@ -43,9 +43,23 @@ const StoriesGrid = () => {
         queryKey: ['page-section', 'success-stories', 'grid'],
         queryFn: () => siteContentApi.section('success-stories', 'grid'),
     });
+    const { data: dbStories = [] } = useQuery({
+        queryKey: ['success-stories', 'stories'],
+        queryFn: () => successStoriesApi.items('stories'),
+    });
     const c = (section?.content ?? {}) as Record<string, string>;
     const tPre = c.title_prefix    ?? SG_FALLBACK.title_prefix;
     const tHi  = c.title_highlight ?? SG_FALLBACK.title_highlight;
+
+    const displayStories = dbStories.length > 0
+        ? dbStories.map((item) => ({
+            title: item.title,
+            category: item.subtitle ?? item.guest_company ?? '',
+            image: item.image_url ?? '',
+            stats: (item.extras as Record<string, string> | undefined)?.stats ?? '',
+            color: 'bg-brand-orange',
+        }))
+        : stories;
     return (
         <section id="success-stories" className="py-24 bg-white relative overflow-hidden">
             <div className="max-w-7xl mx-auto px-6 lg:px-8">
@@ -65,7 +79,7 @@ const StoriesGrid = () => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                    {stories.map((story, index) => (
+                    {displayStories.map((story, index) => (
                         <div key={index} className="group relative rounded-3xl overflow-hidden cursor-pointer bg-gray-50 hover:-translate-y-2 transition-transform duration-500 shadow-lg">
 
                             {/* Image Container */}

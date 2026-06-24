@@ -1,24 +1,32 @@
 import { useState } from 'react';
 import { Search, ArrowRight, Layout, MessageSquare, Briefcase, Cpu } from 'lucide-react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import BlogCard from '../../components/feature/BlogCard';
 import Header from '../../components/feature/Header';
 import Footer from '../../components/feature/Footer';
 import { useQuery } from '@tanstack/react-query';
-import { siteContentApi } from '../../lib/api';
+import { blogsApi, siteContentApi } from '../../lib/api';
 
 const RC_FALLBACK_TITLE = 'Resource Centre';
 
 const ResourceCentrePage = () => {
     const { data: rcSection } = useQuery({
-        queryKey: ['page-section', 'resource-centre', 'hero'],
-        queryFn: () => siteContentApi.section('resource-centre', 'hero'),
+        queryKey: ['page-section', 'resource-centre', 'header'],
+        queryFn: async () => {
+            const header = await siteContentApi.section('resource_centre', 'header');
+            return header ?? siteContentApi.section('resource-centre', 'hero');
+        },
     });
     const rcTitle = rcSection?.title ?? RC_FALLBACK_TITLE;
     const { tab } = useParams<{ tab: string }>();
     const navigate = useNavigate();
     const activeTab = tab || 'blogs';
     const [searchTerm, setSearchTerm] = useState('');
+
+    const { data: dbPosts = [] } = useQuery({
+        queryKey: ['resource-centre-posts', activeTab],
+        queryFn: () => blogsApi.byResourceTab(activeTab, { limit: 50 }),
+    });
 
     const tabs = [
         { id: 'blogs', label: 'Blogs', icon: Layout, description: 'Latest insights and trends in the tech world.' },
@@ -260,7 +268,22 @@ const ResourceCentrePage = () => {
         ]
     };
 
-    const currentArticles = allArticles[activeTab as keyof typeof allArticles] || allArticles.blogs;
+    const currentArticles = dbPosts.length > 0
+        ? dbPosts.map((post) => ({
+            id: post.id,
+            slug: post.slug,
+            image: post.hero_image_url ?? '',
+            authorImage: post.author?.avatar_url ?? '',
+            authorName: post.author?.name ?? 'Author',
+            title: post.title,
+            description: post.excerpt ?? '',
+            date: post.published_date
+                ? new Date(post.published_date).toLocaleDateString('en-CA').replace(/-/g, '/')
+                : '',
+            views: post.views ?? 0,
+            category: post.category ?? currentTabInfo.label,
+        }))
+        : (allArticles[activeTab as keyof typeof allArticles] || allArticles.blogs);
 
     const filteredArticles = currentArticles.filter(article =>
         article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -309,7 +332,18 @@ const ResourceCentrePage = () => {
         }
     };
 
-    const currentFeatured = featuredContent[activeTab as keyof typeof featuredContent] || featuredContent.blogs;
+    const currentFeatured = dbPosts.length > 0 && dbPosts[0]
+        ? {
+            image: dbPosts[0].hero_image_url ?? featuredContent.blogs.image,
+            authorImage: dbPosts[0].author?.avatar_url ?? '',
+            authorName: dbPosts[0].author?.name ?? 'Author',
+            title: dbPosts[0].title,
+            description: dbPosts[0].excerpt ?? '',
+            highlight: '',
+            buttonText: 'Read Article',
+            slug: dbPosts[0].slug,
+        }
+        : (featuredContent[activeTab as keyof typeof featuredContent] || featuredContent.blogs);
 
     return (
         <>
@@ -384,14 +418,27 @@ const ResourceCentrePage = () => {
                                 </h2>
 
                                 <p className="text-gray-200 font-medium text-sm md:text-lg max-w-2xl mx-auto leading-relaxed mb-6">
-                                    {currentFeatured.description.split(currentFeatured.highlight)[0]}
-                                    <span className="text-[#ff7043] font-bold">{currentFeatured.highlight}</span>
-                                    {currentFeatured.description.split(currentFeatured.highlight)[1]}
+                                    {currentFeatured.highlight
+                                        ? <>
+                                            {currentFeatured.description.split(currentFeatured.highlight)[0]}
+                                            <span className="text-[#ff7043] font-bold">{currentFeatured.highlight}</span>
+                                            {currentFeatured.description.split(currentFeatured.highlight)[1]}
+                                          </>
+                                        : currentFeatured.description}
                                 </p>
 
+                                {'slug' in currentFeatured && currentFeatured.slug ? (
+                                    <Link
+                                        to={`/blog/${currentFeatured.slug}`}
+                                        className="bg-[#f25a1a] hover:bg-[#d94e16] text-white px-8 py-3 rounded-full font-bold transition-all shadow-lg hover:shadow-[#f25a1a]/50 flex items-center gap-2 mx-auto w-fit"
+                                    >
+                                        {currentFeatured.buttonText} <ArrowRight className="w-4 h-4" />
+                                    </Link>
+                                ) : (
                                 <button className="bg-[#f25a1a] hover:bg-[#d94e16] text-white px-8 py-3 rounded-full font-bold transition-all shadow-lg hover:shadow-[#f25a1a]/50 flex items-center gap-2 mx-auto">
                                     {currentFeatured.buttonText} <ArrowRight className="w-4 h-4" />
                                 </button>
+                                )}
                             </div>
                         </div>
                     </section>

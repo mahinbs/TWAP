@@ -2,6 +2,10 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { siteContentApi } from "../../lib/api";
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation, Autoplay } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/navigation';
 
 const FALLBACK = {
   badge: "Full-Scale Visibility Platform",
@@ -16,7 +20,8 @@ const FALLBACK = {
 };
 
 interface Founder {
-  id: number;
+  id: number | string;
+  slug?: string;
   name: string;
   title: string;
   company: string;
@@ -95,7 +100,8 @@ export default function FounderStories() {
 
   const founders: Founder[] = dbFounders.length > 0
     ? dbFounders.map((f, i) => ({
-        id: i + 1,
+        id: f.id ?? i + 1,
+        slug: f.slug,
         name: f.name,
         title: f.title ?? '',
         company: f.company ?? '',
@@ -164,14 +170,25 @@ export default function FounderStories() {
           </p>
         </div>
 
-        {/* New founder grid inspired by reference */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mb-12">
+        {/* Founder carousel */}
+        <Swiper
+          modules={[Navigation, Autoplay]}
+          spaceBetween={24}
+          slidesPerView={1}
+          navigation
+          autoplay={{ delay: 5000, disableOnInteraction: false }}
+          loop={founders.length > 3}
+          breakpoints={{
+            640: { slidesPerView: 2 },
+            1024: { slidesPerView: 3 },
+          }}
+          className="mb-12 founder-swiper"
+        >
           {founders.map((founder, index) => {
             const theme = cardThemes[index % cardThemes.length];
-            return (
+            const card = (
               <div
-                key={founder.id}
-                className="rounded-[36px] p-6 sm:p-7 flex flex-col justify-between shadow-lg border border-white/60"
+                className="rounded-[36px] p-6 sm:p-7 flex flex-col justify-between shadow-lg border border-white/60 h-full"
                 style={{ background: theme.background }}
               >
                 <div className="flex items-center justify-between mb-6">
@@ -242,8 +259,19 @@ export default function FounderStories() {
                 </div>
               </div>
             );
+            return (
+              <SwiperSlide key={founder.id} className="h-auto">
+                {founder.slug ? (
+                  <Link to={`/founders/${founder.slug}`} className="block h-full hover:scale-[1.02] transition-transform">
+                    {card}
+                  </Link>
+                ) : (
+                  <div>{card}</div>
+                )}
+              </SwiperSlide>
+            );
           })}
-        </div>
+        </Swiper>
 
         {/* CTA Section */}
         <div

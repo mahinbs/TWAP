@@ -1,6 +1,10 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { siteContentApi } from "../../lib/api";
+import { appsApi, siteContentApi } from "../../lib/api";
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Autoplay } from 'swiper/modules';
+import 'swiper/css';
 
 interface LovedApp {
   rank: number;
@@ -10,6 +14,7 @@ interface LovedApp {
   category: string;
   weeklyGrowth: number;
   badge?: string;
+  slug?: string;
 }
 
 const FALLBACK_TITLE = "Most Loved Apps This Week";
@@ -84,14 +89,33 @@ export default function MostLovedApps() {
     queryFn: () => siteContentApi.section("home", "most_loved"),
   });
 
+  const { data: dbApps = [] } = useQuery({
+    queryKey: ["apps", "most-loved"],
+    queryFn: () => appsApi.list({ sort: "review_count", limit: 12 }),
+  });
+
   const c = (section?.content ?? {}) as Record<string, unknown>;
   const title       = section?.title       ?? FALLBACK_TITLE;
   const description = section?.description ?? FALLBACK_DESCRIPTION;
   const btnMore = (c.button_view_all as string) ?? FALLBACK_BTN_MORE;
   const btnLess = (c.button_show_less as string) ?? FALLBACK_BTN_LESS;
-  const apps: LovedApp[] = Array.isArray(c.apps) && (c.apps as LovedApp[]).length > 0
-    ? (c.apps as LovedApp[])
-    : mockLovedApps;
+  const apps: LovedApp[] = useMemo(() => {
+    if (Array.isArray(c.apps) && (c.apps as LovedApp[]).length > 0) {
+      return c.apps as LovedApp[];
+    }
+    if (dbApps.length > 0) {
+      return dbApps.map((app, i) => ({
+        rank: i + 1,
+        name: app.name,
+        description: app.tagline ?? "",
+        votes: app.review_count ?? 0,
+        category: app.category ?? "",
+        weeklyGrowth: 0,
+        slug: app.slug,
+      }));
+    }
+    return mockLovedApps;
+  }, [c.apps, dbApps]);
   const bottomStats = Array.isArray(c.bottom_stats) && (c.bottom_stats as { value: string; label: string }[]).length > 0
     ? (c.bottom_stats as { value: string; label: string }[])
     : FALLBACK_BOTTOM_STATS;
@@ -162,10 +186,21 @@ export default function MostLovedApps() {
             ></div>
 
             <div className="relative z-10">
-              <div className="space-y-6 reveal-stagger">
+              <Swiper
+                modules={[Autoplay]}
+                direction="vertical"
+                spaceBetween={24}
+                slidesPerView={Math.min(4, displayedApps.length || 1)}
+                autoplay={displayedApps.length > 4 ? { delay: 3500, disableOnInteraction: false, pauseOnMouseEnter: true } : false}
+                loop={displayedApps.length > 4}
+                allowTouchMove
+                className="reveal-stagger most-loved-swiper"
+                style={{ height: '600px' }}
+              >
                 {displayedApps.map((app, index) => (
-                  <div
-                    key={app.rank}
+                  <SwiperSlide key={app.rank}>
+                  <Link
+                    to={app.slug ? `/products/${app.slug}` : `/product-review/${(app.name ?? '').toLowerCase().replace(/\s+/g, '-')}`}
                     className="flex flex-col gap-5 md:gap-6 md:flex-row md:items-center p-5 sm:p-6 rounded-2xl transition-all duration-300 cursor-pointer hover:scale-[1.02] relative group/item overflow-hidden reveal-child"
                     style={{
                       background: "rgba(13, 16, 32, 0.55)",
@@ -274,9 +309,10 @@ export default function MostLovedApps() {
                         </p>
                       </div>
                     </div>
-                  </div>
+                  </Link>
+                  </SwiperSlide>
                 ))}
-              </div>
+              </Swiper>
 
               {/* Show More Button */}
               <div className="mt-8 text-center">

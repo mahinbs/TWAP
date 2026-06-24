@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { appsApi, blogsApi } from '../../lib/api';
 
-const menuCategories = [
+const FALLBACK_MENU = [
     {
         id: 'trending',
         label: 'Trending Apps',
@@ -48,6 +50,57 @@ interface RichMenuProps {
 }
 
 export default function RichMenu({ isOpen, onClose }: RichMenuProps) {
+    // DB-backed content for trending apps, top AI tools, interviews
+    const { data: featuredApps = [] } = useQuery({
+        queryKey: ['apps', 'rich-menu-featured'],
+        queryFn: () => appsApi.list({ featured: true, sort: 'rating', limit: 6 }),
+    });
+    const { data: topRated = [] } = useQuery({
+        queryKey: ['apps', 'rich-menu-top'],
+        queryFn: () => appsApi.list({ sort: 'rating', limit: 6 }),
+    });
+    const { data: featuredBlogs = [] } = useQuery({
+        queryKey: ['blogs', 'rich-menu-stories'],
+        queryFn: () => blogsApi.list({ featured: true, limit: 4 }),
+    });
+
+    const menuCategories = [
+        {
+            id: 'trending',
+            label: 'Trending Apps',
+            content: (featuredApps.length > 0 ? featuredApps : []).map(a => ({
+                title: a.name,
+                desc: a.tagline ?? '',
+                image: a.logo_url ?? '',
+                link: `/products/${a.slug}`,
+            })).slice(0, 6),
+        },
+        {
+            id: 'top-ai',
+            label: 'Top AI Tools & Apps',
+            content: (topRated.length > 0 ? topRated : []).map(a => ({
+                title: a.name,
+                desc: a.tagline ?? '',
+                image: a.logo_url ?? '',
+                link: `/products/${a.slug}`,
+            })).slice(0, 6),
+        },
+        {
+            id: 'stories',
+            label: 'Interviews & Success Stories',
+            link: '/interviews-success-stories',
+            content: (featuredBlogs.length > 0 ? featuredBlogs : []).map(b => ({
+                title: b.title,
+                desc: b.excerpt ?? '',
+                image: b.hero_image_url ?? '',
+                link: `/blog/${b.slug}`,
+            })),
+        },
+        FALLBACK_MENU[3], // Agency Feature
+        FALLBACK_MENU[4], // Resource Centre
+    ].map((cat, idx) => (cat.content && cat.content.length === 0 && FALLBACK_MENU[idx]?.content?.length)
+        ? { ...cat, content: FALLBACK_MENU[idx].content }
+        : cat);
     const [activeCategory, setActiveCategory] = useState('trending');
 
     if (!isOpen) return null;

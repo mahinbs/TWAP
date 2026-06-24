@@ -1,7 +1,7 @@
 import { useKeenSlider } from "keen-slider/react";
 import "keen-slider/keen-slider.min.css";
 import { useQuery } from '@tanstack/react-query';
-import { siteContentApi } from '../../lib/api';
+import { siteContentApi, successStoriesApi } from '../../lib/api';
 
 const ST_FALLBACK = {
     title_prefix: 'Tap into Trending Topics:',
@@ -48,9 +48,20 @@ const SuccessTopics = () => {
         queryKey: ['page-section', 'success-stories', 'topics'],
         queryFn: () => siteContentApi.section('success-stories', 'topics'),
     });
+    const { data: dbTopics = [] } = useQuery({
+        queryKey: ['ss-items', 'topics'],
+        queryFn: () => successStoriesApi.items('topics' as any),
+    });
     const c = (section?.content ?? {}) as Record<string, string>;
     const tPre = c.title_prefix    ?? ST_FALLBACK.title_prefix;
     const tHi  = c.title_highlight ?? ST_FALLBACK.title_highlight;
+    const items = dbTopics.length > 0
+      ? dbTopics.map((it: any) => ({
+          title: it.title,
+          image: it.image_url ?? '',
+          type: (it.extras?.type ?? it.subtitle ?? 'Article'),
+        }))
+      : topics;
     const [sliderRef, internalSlider] = useKeenSlider<HTMLDivElement>({
         loop: true,
         renderMode: "performance",
@@ -114,7 +125,7 @@ const SuccessTopics = () => {
                 onMouseLeave={handleMouseLeave}
             >
                 <div ref={sliderRef} className="keen-slider">
-                    {topics.map((topic, index) => (
+                    {items.map((topic, index) => (
                         <div key={index} className="keen-slider__slide">
                             <div className="group relative rounded-[2.5rem] overflow-hidden aspect-[4/5] cursor-pointer shadow-lg hover:shadow-2xl hover:shadow-brand-orange/20 transition-all duration-500 mx-2">
                                 {/* Image Background */}

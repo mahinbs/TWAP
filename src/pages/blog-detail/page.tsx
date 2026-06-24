@@ -2,6 +2,8 @@ import { useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import Header from "../../components/feature/Header";
 import Footer from "../../components/feature/Footer";
+import { useQuery } from "@tanstack/react-query";
+import { blogsApi } from "../../lib/api";
 
 interface LearningPoint {
   title: string;
@@ -106,8 +108,29 @@ export default function BlogDetailPage() {
   const { slug } = useParams<{ slug: string }>();
   const carouselRef = useRef<HTMLDivElement>(null);
 
-  const post =
-    slug && blogPosts[slug] ? blogPosts[slug] : Object.values(blogPosts)[0];
+  const { data: dbPost, isLoading } = useQuery({
+    queryKey: ["blog-post", slug],
+    queryFn: () => slug ? blogsApi.bySlug(slug) : Promise.resolve(null),
+    enabled: !!slug,
+  });
+
+  // DB → component shape (with hardcoded fallback for unknown slugs)
+  const d = dbPost as any;
+  const post: BlogPost | undefined = dbPost
+    ? {
+        slug: d.slug,
+        date: d.published_date
+          ? new Date(d.published_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+          : '',
+        title: d.title,
+        excerpt: d.excerpt ?? '',
+        heroImage: d.hero_image_url ?? '',
+        subheading: d.subheading ?? d.title,
+        introParagraph: d.intro_paragraph ?? d.content ?? d.excerpt ?? '',
+        whatYouLearn: d.what_you_learn ?? [],
+        conclusion: d.conclusion ?? '',
+      }
+    : (slug && blogPosts[slug] ? blogPosts[slug] : Object.values(blogPosts)[0]);
 
   const scrollCarousel = (direction: "left" | "right") => {
     if (!carouselRef.current) return;
@@ -118,6 +141,18 @@ export default function BlogDetailPage() {
     const newScroll = container.scrollLeft + scrollAmount;
     container.scrollTo({ left: Math.max(0, newScroll), behavior: "smooth" });
   };
+
+  if (isLoading) {
+    return (
+      <>
+        <Header />
+        <main className="min-h-screen bg-[#F6F6F6] pt-28 pb-16 flex items-center justify-center">
+          <p className="text-gray-600">Loading…</p>
+        </main>
+        <Footer />
+      </>
+    );
+  }
 
   if (!post) {
     return (
