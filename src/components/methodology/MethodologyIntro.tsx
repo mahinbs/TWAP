@@ -15,6 +15,18 @@ const MethodologyIntro = () => {
         queryFn: () => siteContentApi.section('methodology', 'intro'),
     });
     const ctaText = section?.cta_text ?? MI_FALLBACK_CTA;
+
+    // Body paragraphs — admin-editable via page_sections.methodology.intro.content.paragraphs[]
+    const FALLBACK_PARAGRAPHS = [
+        "Our mission at The Web App Pro is to engineer scalable, future-proof digital ecosystems that empower your business to dominate its market. We don't just build software; we craft intelligent web applications that drive growth, streamline operations, and deliver unparalleled user experiences.",
+        "Precision is our hallmark. From initial concept to final deployment, we adhere to rigorous coding standards and architectural best practices. This ensures every enterprise solution we deliver is robust, secure, and optimized for peak performance.",
+        "But we go beyond standard development. Our cutting-edge expertise in AI Integration, Cloud Native Tech, and Real-time Systems defines the new standard for digital excellence.",
+        "Now, let's explore how our methodology transforms complex challenges into elegant, high-impact solutions.",
+    ];
+    const c = (section?.content ?? {}) as Record<string, unknown>;
+    const paragraphs: string[] = Array.isArray(c.paragraphs) && (c.paragraphs as string[]).length > 0
+        ? (c.paragraphs as string[])
+        : FALLBACK_PARAGRAPHS;
     const sectionRef = useRef(null);
     const textRefs = useRef([]);
     const buttonRef = useRef(null);
@@ -97,21 +109,11 @@ const MethodologyIntro = () => {
 
                 {/* Mission Text */}
                 <div className="space-y-16 text-lg lg:text-2xl leading-relaxed text-gray-600 font-normal">
-                    <p ref={addToRefs} className="relative">
-                        Our mission at <strong className="text-black font-bold highlight-text bg-gradient-to-r from-brand-orange/20 to-brand-orange/20 bg-no-repeat bg-left-bottom pb-1" style={{ backgroundSize: '0% 100%' }}>The Web App Pro</strong> is to engineer scalable, future-proof digital ecosystems that empower your business to dominate its market. We don't just build software; we craft intelligent web applications that drive growth, streamline operations, and deliver unparalleled user experiences.
-                    </p>
-
-                    <p ref={addToRefs}>
-                        Precision is our hallmark. From initial concept to final deployment, we adhere to rigorous coding standards and architectural best practices. This ensures every <span className="text-black font-medium">enterprise solution</span> we deliver is robust, secure, and optimized for peak performance.
-                    </p>
-
-                    <p ref={addToRefs}>
-                        But we go beyond standard development. Our <span className="highlight-text bg-gradient-to-r from-brand-orange/20 to-brand-orange/20 bg-no-repeat bg-left-bottom pb-1 text-black font-medium">cutting-edge expertise</span> in <span className="highlight-text bg-gradient-to-r from-brand-orange/20 to-brand-orange/20 bg-no-repeat bg-left-bottom pb-1 text-black font-medium">AI Integration</span>, <span className="highlight-text bg-gradient-to-r from-brand-orange/20 to-brand-orange/20 bg-no-repeat bg-left-bottom pb-1 text-black font-medium">Cloud Native Tech</span>, and <span className="highlight-text bg-gradient-to-r from-brand-orange/20 to-brand-orange/20 bg-no-repeat bg-left-bottom pb-1 text-black font-medium">Real-time Systems</span> defines the new standard for digital excellence.
-                    </p>
-
-                    <p ref={addToRefs}>
-                        Now, let's explore how our methodology transforms complex challenges into elegant, high-impact solutions.
-                    </p>
+                    {paragraphs.map((p, i) => (
+                        <p key={i} ref={addToRefs} className={i === 0 ? 'relative' : undefined}>
+                            {p}
+                        </p>
+                    ))}
                 </div>
 
                 {/* CTA Button and Line */}

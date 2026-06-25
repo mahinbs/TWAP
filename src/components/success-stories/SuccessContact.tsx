@@ -1,6 +1,25 @@
-// import React from 'react';
+import React, { useState } from 'react';
+import { supabase } from '../../lib/supabase';
 
 const SuccessContact = () => {
+    const [form, setForm] = useState({ name: '', email: '', phone: '', subject: '', message: '' });
+    const [status, setStatus] = useState<'idle' | 'sending' | 'ok' | 'err'>('idle');
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+        setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!form.name || !form.email) { setStatus('err'); return; }
+        setStatus('sending');
+        try {
+            await supabase.from('form_submissions').insert({
+                form_type: 'success_stories_contact',
+                source_page: 'interviews-success-stories',
+                payload: form,
+            });
+            setStatus('ok');
+            setForm({ name: '', email: '', phone: '', subject: '', message: '' });
+        } catch { setStatus('err'); }
+    };
     return (
         <section className="py-24 bg-white relative">
             <div className="max-w-7xl mx-auto px-6 lg:px-8">
@@ -63,38 +82,40 @@ const SuccessContact = () => {
                     {/* Right Form */}
                     <div className="bg-gray-50 rounded-[2rem] p-8 md:p-12 border border-gray-100 shadow-xl shadow-gray-100/50">
                         <h3 className="text-2xl font-bold text-brand-dark mb-6">Send Message</h3>
-                        <form className="space-y-6">
+                        <form className="space-y-6" onSubmit={handleSubmit}>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Name</label>
-                                    <input type="text" className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-brand-orange transition-colors" placeholder="John Doe" />
+                                    <input name="name" type="text" value={form.name} onChange={handleChange} required className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-brand-orange transition-colors" placeholder="John Doe" />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Email</label>
-                                    <input type="email" className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-brand-orange transition-colors" placeholder="john@example.com" />
+                                    <input name="email" type="email" value={form.email} onChange={handleChange} required className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-brand-orange transition-colors" placeholder="john@example.com" />
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Phone</label>
-                                    <input type="tel" className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-brand-orange transition-colors" placeholder="+1 (555) 000-0000" />
+                                    <input name="phone" type="tel" value={form.phone} onChange={handleChange} className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-brand-orange transition-colors" placeholder="+1 (555) 000-0000" />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Subject</label>
-                                    <input type="text" className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-brand-orange transition-colors" placeholder="Interview Request" />
+                                    <input name="subject" type="text" value={form.subject} onChange={handleChange} className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-brand-orange transition-colors" placeholder="Interview Request" />
                                 </div>
                             </div>
 
                             <div className="space-y-2">
                                 <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Message</label>
-                                <textarea className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 h-32 focus:outline-none focus:border-brand-orange transition-colors resize-none" placeholder="Tell us about your story..."></textarea>
+                                <textarea name="message" value={form.message} onChange={handleChange} className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 h-32 focus:outline-none focus:border-brand-orange transition-colors resize-none" placeholder="Tell us about your story..."></textarea>
                             </div>
 
-                            <button className="w-full bg-brand-dark text-white font-bold py-4 rounded-xl hover:bg-brand-orange transition-colors shadow-lg shadow-brand-dark/20 flex items-center justify-center gap-2 group">
-                                Send Message
+                            <button type="submit" disabled={status === 'sending'} className="w-full bg-brand-dark text-white font-bold py-4 rounded-xl hover:bg-brand-orange transition-colors shadow-lg shadow-brand-dark/20 flex items-center justify-center gap-2 group disabled:opacity-60">
+                                {status === 'sending' ? 'Sending…' : 'Send Message'}
                                 <i className="ri-send-plane-fill group-hover:translate-x-1 transition-transform"></i>
                             </button>
+                            {status === 'ok' && <p className="text-green-600 text-sm">Thanks — we'll be in touch!</p>}
+                            {status === 'err' && <p className="text-red-600 text-sm">Couldn't send. Try again.</p>}
                         </form>
                     </div>
 

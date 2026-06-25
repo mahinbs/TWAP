@@ -5,6 +5,16 @@ import type { PromoteCategoryTheme } from '../components/promote/PromoteCategory
 const SLUGS = ['web-mobile-apps', 'ai-tools', 'agencies-service-providers'] as const;
 export type PromoteCategorySlug = (typeof SLUGS)[number];
 
+const DEFAULT_PREVIEW_CARD = {
+  icon: 'ri-smartphone-line',
+  iconBg: '#efe9e4',
+  iconColor: '#8b6b4a',
+  name: 'Your App',
+  meta: 'Category · Platforms',
+  badge: '✓ TWAP Certified',
+  badgeColor: '#ef4d0a',
+};
+
 function sectionContent(page: string, section: string) {
   return {
     queryKey: ['page-section', page, section] as const,
@@ -155,6 +165,7 @@ export function usePromoteCategory(slug: string) {
       price: String(ex.price ?? '0'),
       features: (ex.features as string[]) ?? [],
       ctaText: String(ex.ctaText ?? 'Get Started'),
+      ctaUrl: String(ex.ctaUrl ?? ex.cta_url ?? '#promote-submit-form'),
       highlighted: Boolean(ex.highlighted),
       badgeText: ex.badgeText as string | undefined,
     };
@@ -202,7 +213,10 @@ export function usePromoteCategory(slug: string) {
       firstCardDescription: String(benefitsContent.first_card_description ?? benefitsContent.firstCardDescription ?? ''),
       secondCardTitle: String(benefitsContent.second_card_title ?? benefitsContent.secondCardTitle ?? ''),
       secondCardDescription: String(benefitsContent.second_card_description ?? benefitsContent.secondCardDescription ?? ''),
-      previewCard: (benefitsContent.preview_card ?? benefitsContent.previewCard) as Record<string, string>,
+      previewCard: {
+        ...DEFAULT_PREVIEW_CARD,
+        ...((benefitsContent.preview_card ?? benefitsContent.previewCard) as Record<string, string> | undefined),
+      },
       directoryBenefits,
       reviewBenefits,
     } : null,
@@ -221,6 +235,7 @@ export function usePromoteCategory(slug: string) {
       ctaTitle: String(addons.content.cta_title ?? addons.content.ctaTitle ?? ''),
       ctaDescription: String(addons.content.cta_description ?? addons.content.ctaDescription ?? ''),
       ctaButtonText: String(addons.content.cta_button_text ?? addons.content.ctaButtonText ?? ''),
+      ctaButtonUrl: String(addons.content.cta_button_url ?? addons.content.ctaButtonUrl ?? '#promote-submit-form'),
     } : null,
     form: form ? {
       accentColor: form.accentColor,

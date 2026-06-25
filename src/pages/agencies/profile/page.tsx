@@ -8,6 +8,7 @@ import Footer from '../../../components/feature/Footer';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { agenciesApi } from '../../../lib/api';
+import { supabase } from '../../../lib/supabase';
 
 // Mock Data
 const agencyData = {
@@ -58,8 +59,24 @@ const navigationItems = [
     { name: "Recognition", icon: "ri-award-line", color: "text-teal-600", id: "recognition" },
 ];
 
-const LeadCaptureModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
+const LeadCaptureModal = ({ isOpen, onClose, agencySlug }: { isOpen: boolean; onClose: () => void; agencySlug?: string }) => {
+    const [lead, setLead] = useState({ name: '', email: '', phone: '' });
+    const [busy, setBusy] = useState(false);
     if (!isOpen) return null;
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!lead.name || !lead.email) return;
+        setBusy(true);
+        try {
+            await supabase.from('form_submissions').insert({
+                form_type: 'agency_profile_download',
+                source_page: agencySlug ? `agencies/${agencySlug}` : 'agencies/profile',
+                payload: lead,
+            });
+        } catch { /* ignore */ }
+        setBusy(false);
+        onClose();
+    };
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
             <div className="bg-white rounded-2xl p-8 w-full max-w-md shadow-2xl relative animate-fadeIn">
@@ -69,21 +86,21 @@ const LeadCaptureModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
                 <h3 className="text-2xl font-bold font-manrope text-[#1F2853] mb-2">Download Profile</h3>
                 <p className="text-gray-600 mb-6 text-sm">Please provide your details to access the full agency credentials.</p>
 
-                <form className="space-y-4">
+                <form className="space-y-4" onSubmit={handleSubmit}>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                        <input type="text" className="w-full border border-gray-200 rounded-lg px-4 py-3 focus:ring-2 focus:ring-brand-lime focus:border-transparent outline-none transition-all" placeholder="John Doe" />
+                        <input type="text" required value={lead.name} onChange={e => setLead({ ...lead, name: e.target.value })} className="w-full border border-gray-200 rounded-lg px-4 py-3 focus:ring-2 focus:ring-brand-lime focus:border-transparent outline-none transition-all" placeholder="John Doe" />
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                        <input type="email" className="w-full border border-gray-200 rounded-lg px-4 py-3 focus:ring-2 focus:ring-brand-lime focus:border-transparent outline-none transition-all" placeholder="john@company.com" />
+                        <input type="email" required value={lead.email} onChange={e => setLead({ ...lead, email: e.target.value })} className="w-full border border-gray-200 rounded-lg px-4 py-3 focus:ring-2 focus:ring-brand-lime focus:border-transparent outline-none transition-all" placeholder="john@company.com" />
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
-                        <input type="tel" className="w-full border border-gray-200 rounded-lg px-4 py-3 focus:ring-2 focus:ring-brand-lime focus:border-transparent outline-none transition-all" placeholder="+1 (555) 000-0000" />
+                        <input type="tel" value={lead.phone} onChange={e => setLead({ ...lead, phone: e.target.value })} className="w-full border border-gray-200 rounded-lg px-4 py-3 focus:ring-2 focus:ring-brand-lime focus:border-transparent outline-none transition-all" placeholder="+1 (555) 000-0000" />
                     </div>
-                    <button type="button" onClick={() => { alert('Downloading...'); onClose(); }} className="w-full bg-brand-lime hover:bg-brand-orange text-[#1F2853] font-bold py-3.5 rounded-xl transition-all duration-300 mt-2">
-                        Download Now
+                    <button type="submit" disabled={busy} className="w-full bg-brand-lime hover:bg-brand-orange text-[#1F2853] font-bold py-3.5 rounded-xl transition-all duration-300 mt-2 disabled:opacity-60">
+                        {busy ? 'Submitting…' : 'Download Now'}
                     </button>
                 </form>
             </div>
@@ -138,8 +155,8 @@ const AgencyProfilePage: React.FC = () => {
         ? agency.websiteUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')
         : 'virtuteams.com';
 
-    // Focus Area Mock Data
-    const focusOptions = [
+    // Focus Areas — from agencies.focus_areas JSONB (admin-editable) with fallback
+    const FALLBACK_FOCUS = [
         { label: 'No Code Development', pc: 100, tool: 'Webflow', color: '#06b6d4' },
         { label: 'Application Platforms', pc: 85, tool: 'Flutter', color: '#3B82F6' },
         { label: 'User Experience Focus', pc: 90, tool: 'Figma', color: '#F97316' },
@@ -150,11 +167,14 @@ const AgencyProfilePage: React.FC = () => {
         { label: 'Social Media Focus', pc: 70, tool: 'Instagram', color: '#EC4899' },
         { label: 'Mobile Focus', pc: 92, tool: 'React Native', color: '#6366F1' },
     ];
+    const focusOptions = (Array.isArray((a as any)?.focus_areas) && (a as any).focus_areas.length > 0)
+        ? (a as any).focus_areas as typeof FALLBACK_FOCUS
+        : FALLBACK_FOCUS;
     const [selectedFocus, setSelectedFocus] = useState(focusOptions[0]);
     const [isFocusDropdownOpen, setIsFocusDropdownOpen] = useState(false);
 
-    // Service Lines Data (Mock)
-    const serviceLines = [
+    // Service Lines — from agencies.service_lines JSONB (admin-editable) with fallback
+    const FALLBACK_SERVICE_LINES = [
         { label: 'Mobile & App Marketing', pc: 10, color: '#3B82F6' },
         { label: 'Digital Marketing', pc: 8, color: '#1F2853' },
         { label: 'Web Development', pc: 10, color: '#14a800' },
@@ -165,7 +185,22 @@ const AgencyProfilePage: React.FC = () => {
         { label: 'Data Analytics', pc: 10, color: '#EC4899' },
         { label: 'Consulting', pc: 22, color: '#0ea5e9' },
     ];
+    const serviceLines = (Array.isArray((a as any)?.service_lines) && (a as any).service_lines.length > 0)
+        ? (a as any).service_lines as typeof FALLBACK_SERVICE_LINES
+        : FALLBACK_SERVICE_LINES;
     const [hoveredServiceLine, setHoveredServiceLine] = useState(serviceLines[0]);
+
+    // Portfolio items — from agency_portfolio_items table via agenciesApi.bySlug (admin-editable)
+    const dbPortfolio = (a as any)?.portfolio as { title: string; category?: string; year?: string; image_url?: string; color?: string }[] | undefined;
+    const portfolioRender = (dbPortfolio && dbPortfolio.length > 0)
+        ? dbPortfolio.map(p => ({
+            title: p.title,
+            category: p.category ?? '',
+            year: p.year ?? '',
+            image: p.image_url ?? '',
+            color: p.color ?? 'bg-[#0B1F12]',
+          }))
+        : portfolioItems;
 
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
@@ -473,7 +508,7 @@ const AgencyProfilePage: React.FC = () => {
                         onSwiper={(swiper) => setSwiperInstance(swiper)}
                         className="w-full !overflow-visible"
                     >
-                        {portfolioItems.map((item, idx) => (
+                        {portfolioRender.map((item, idx) => (
                             <SwiperSlide key={idx} className="!w-[90vw] !md:w-[800px]">
                                 <div className={`relative w-full h-[500px] md:h-[600px] rounded-[3rem] overflow-hidden group cursor-grab active:cursor-grabbing ${item.color} transition-transform duration-500`}>
                                     {/* Content */}
@@ -865,7 +900,7 @@ const AgencyProfilePage: React.FC = () => {
                 </div>
             </section>
 
-            <LeadCaptureModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+            <LeadCaptureModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} agencySlug={slug} />
             <Footer />
         </div>
     );

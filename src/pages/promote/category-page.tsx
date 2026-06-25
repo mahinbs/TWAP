@@ -1,7 +1,7 @@
 import { Link, useParams } from 'react-router-dom';
 import Header from '../../components/feature/Header';
 import Footer from '../../components/feature/Footer';
-import PromoteCategoryHero, { type PromoteCategoryTheme } from '../../components/promote/PromoteCategoryHero';
+import PromoteCategoryHero from '../../components/promote/PromoteCategoryHero';
 import PromoteBenefitsSection from '../../components/promote/PromoteBenefitsSection';
 import PromoteDistributionChannelsSection from '../../components/promote/PromoteDistributionChannelsSection';
 import PromoteHowItWorksSection from '../../components/promote/PromoteHowItWorksSection';
@@ -12,300 +12,229 @@ import PromoteAddOnsSection from '../../components/promote/PromoteAddOnsSection'
 import PromoteSubmitFormSection from '../../components/promote/PromoteSubmitFormSection';
 import PromoteFaqSection from '../../components/promote/PromoteFaqSection';
 import PromoteFinalCtaSection from '../../components/promote/PromoteFinalCtaSection';
-import promoteCategoryContent from './category-content.json';
-
-const categoryThemes = promoteCategoryContent.categoryThemes as Record<string, PromoteCategoryTheme>;
-const metrics = promoteCategoryContent.metrics;
-const directoryBenefits = promoteCategoryContent.directoryBenefits;
-const reviewBenefits = promoteCategoryContent.reviewBenefits;
-const benefitSections = promoteCategoryContent.benefitSections as Record<string, {
-  accentColor: string;
-  eyebrow: string;
-  headingHtml: string;
-  introText: string;
-  firstCardTitle: string;
-  firstCardDescription: string;
-  secondCardTitle: string;
-  secondCardDescription: string;
-  previewCard: {
-    icon: string;
-    iconBg: string;
-    iconColor: string;
-    name: string;
-    meta: string;
-    badge: string;
-    badgeColor: string;
-  };
-}>;
-const distributionSections = promoteCategoryContent.distributionSections as Record<string, {
-  accentColor: string;
-  eyebrow: string;
-  headingHtml: string;
-  introText: string;
-  cards: Array<{
-    number: string;
-    icon: string;
-    title: string;
-    description: string;
-    tags: string[];
-    metricLabel: string;
-    metricValue: string;
-    featured?: boolean;
-  }>;
-}>;
-const howItWorksSections = promoteCategoryContent.howItWorksSections as Record<string, {
-  accentColor: string;
-  eyebrow: string;
-  headingHtml: string;
-  introText: string;
-  steps: Array<{
-    number: string;
-    title: string;
-    description: string;
-  }>;
-}>;
-const pricingSections = promoteCategoryContent.pricingSections as Record<string, {
-  accentColor: string;
-  eyebrow: string;
-  headingHtml: string;
-  introText: string;
-  plans: Array<{
-    name: string;
-    subtitle: string;
-    price: string;
-    features: string[];
-    ctaText: string;
-    highlighted?: boolean;
-    badgeText?: string;
-  }>;
-}>;
-const comparisonSections = promoteCategoryContent.comparisonSections as Record<string, {
-  accentColor: string;
-  eyebrow: string;
-  headingHtml: string;
-  introText: string;
-  columns: {
-    feature: string;
-    twap: string;
-    directory: string;
-    editorial: string;
-    social: string;
-    ceo: string;
-  };
-  rows: Array<{
-    feature: string;
-    twap: string;
-    directory: string;
-    editorial: string;
-    social: string;
-    ceo: string;
-  }>;
-}>;
-const successStoriesSections = promoteCategoryContent.successStoriesSections as Record<string, {
-  accentColor: string;
-  eyebrow: string;
-  headingHtml: string;
-  introText: string;
-  slides: Array<{
-    appName: string;
-    appType: string;
-    quote: string;
-    metrics: Array<{ value: string; label: string }>;
-    mockBg: string;
-    mockCard: string;
-    icon: string;
-  }>;
-}>;
-const addOnsSections = promoteCategoryContent.addOnsSections as Record<string, {
-  accentColor: string;
-  eyebrow: string;
-  headingHtml: string;
-  introText: string;
-  items: Array<{
-    icon: string;
-    title: string;
-    description: string;
-    price: string;
-    unit: string;
-  }>;
-  ctaTitle: string;
-  ctaDescription: string;
-  ctaButtonText: string;
-}>;
-const formSections = promoteCategoryContent.formSections as Record<string, {
-  accentColor: string;
-  eyebrow: string;
-  headingHtml: string;
-  introText: string;
-  plans: Array<{ name: string; price: string }>;
-  defaultPlan?: string;
-  leftColumnFields: Array<{ label: string; placeholder: string; required?: boolean; type?: 'text' | 'email'; options?: string[] }>;
-  rightColumnFields: Array<{ label: string; placeholder: string; required?: boolean; type?: 'text' | 'email'; options?: string[] }>;
-  textAreaLabel: string;
-  textAreaPlaceholder: string;
-  bottomLeftField: { label: string; placeholder: string; required?: boolean; type?: 'text' | 'email'; options?: string[] };
-  bottomRightField: { label: string; placeholder: string; required?: boolean; type?: 'text' | 'email'; options?: string[] };
-  submitButtonText: string;
-  disclaimer: string;
-}>;
-const faqSections = (promoteCategoryContent as { faqSections: unknown }).faqSections as Record<string, {
-  accentColor: string;
-  eyebrow: string;
-  headingPrefix: string;
-  headingHighlight: string;
-  items: Array<{
-    question: string;
-    answer: string;
-  }>;
-}>;
-const finalCtaSections = (promoteCategoryContent as { finalCtaSections: unknown }).finalCtaSections as Record<string, {
-  accentColor: string;
-  eyebrow: string;
-  headingPrefix: string;
-  headingHighlight: string;
-  description: string;
-  buttonText: string;
-  points: string[];
-}>;
+import { usePromoteCategory, isValidPromoteCategory } from '../../hooks/usePromoteCategory';
+import { Navigate } from 'react-router-dom';
 
 export default function PromoteCategoryPage() {
   const { category } = useParams<{ category: string }>();
-  const theme = (category && categoryThemes[category]) || categoryThemes['web-mobile-apps'];
-  const activeSection = theme.key ? benefitSections[theme.key] : undefined;
-  const activeDistributionSection = theme.key ? distributionSections[theme.key] : undefined;
-  const activeHowItWorksSection = theme.key ? howItWorksSections[theme.key] : undefined;
-  const activePricingSection = theme.key ? pricingSections[theme.key] : undefined;
-  const activeComparisonSection = theme.key ? comparisonSections[theme.key] : undefined;
-  const activeSuccessStoriesSection = theme.key ? successStoriesSections[theme.key] : undefined;
-  const activeAddOnsSection = theme.key ? addOnsSections[theme.key] : undefined;
-  const activeFormSection = theme.key ? formSections[theme.key] : undefined;
-  const activeFaqSection = theme.key ? faqSections[theme.key] : undefined;
-  const activeFinalCtaSection = theme.key ? finalCtaSections[theme.key] : undefined;
+  const slug = category ?? '';
+
+  if (!isValidPromoteCategory(slug)) {
+    return <Navigate to="/promote" replace />;
+  }
+
+  const {
+    theme,
+    metrics,
+    benefits,
+    distribution,
+    howItWorks,
+    pricing,
+    comparison,
+    successStories,
+    addons,
+    form,
+    faq,
+    finalCta,
+  } = usePromoteCategory(slug);
 
   return (
     <div className="min-h-screen bg-[#050608] text-white overflow-x-hidden">
       <Header />
-      
+
       <div
         className="fixed top-[5.2rem] sm:top-[5.5rem] w-full py-2.5 px-4 text-center text-[11px] sm:text-xs font-semibold tracking-wide z-20"
         style={{ backgroundColor: theme.topBarBg }}
       >
-        <span className="text-white/80 mr-2">You&apos;re viewing:</span>
+        <span className="text-white/80 mr-2">{theme.viewingPrefix ?? "You're viewing:"}</span>
         <span className="text-white">{theme.viewingLabel}</span>
         <Link to="/promote" className="ml-4 underline decoration-white/40 hover:decoration-white text-white/90">
-          Switch Category
+          {theme.switchCategoryText ?? 'Switch Category'}
         </Link>
       </div>
+
       <PromoteCategoryHero theme={theme} metrics={metrics} />
-      {activeSection && (
-        <PromoteBenefitsSection
-          accentColor={activeSection.accentColor}
-          eyebrow={activeSection.eyebrow}
-          headingHtml={activeSection.headingHtml}
-          introText={activeSection.introText}
-          firstCardTitle={activeSection.firstCardTitle}
-          firstCardDescription={activeSection.firstCardDescription}
-          secondCardTitle={activeSection.secondCardTitle}
-          secondCardDescription={activeSection.secondCardDescription}
-          previewCard={activeSection.previewCard}
-          directoryBenefits={directoryBenefits}
-          reviewBenefits={reviewBenefits}
-        />
+
+      {benefits && (
+        <div id="promote-benefits">
+          <PromoteBenefitsSection
+            accentColor={benefits.accentColor}
+            eyebrow={benefits.eyebrow}
+            headingHtml={benefits.headingHtml}
+            introText={benefits.introText}
+            firstCardTitle={benefits.firstCardTitle}
+            firstCardDescription={benefits.firstCardDescription}
+            secondCardTitle={benefits.secondCardTitle}
+            secondCardDescription={benefits.secondCardDescription}
+            previewCard={benefits.previewCard as {
+              icon: string;
+              iconBg: string;
+              iconColor: string;
+              name: string;
+              meta: string;
+              badge: string;
+              badgeColor: string;
+            }}
+            directoryBenefits={benefits.directoryBenefits}
+            reviewBenefits={benefits.reviewBenefits}
+          />
+        </div>
       )}
-      {activeDistributionSection && (
+
+      {distribution && (
         <PromoteDistributionChannelsSection
-          accentColor={activeDistributionSection.accentColor}
-          eyebrow={activeDistributionSection.eyebrow}
-          headingHtml={activeDistributionSection.headingHtml}
-          introText={activeDistributionSection.introText}
-          cards={activeDistributionSection.cards}
+          accentColor={distribution.accentColor}
+          eyebrow={distribution.eyebrow}
+          headingHtml={distribution.headingHtml}
+          introText={distribution.introText}
+          cards={distribution.cards as Array<{
+            number: string;
+            icon: string;
+            title: string;
+            description: string;
+            tags: string[];
+            metricLabel: string;
+            metricValue: string;
+            featured?: boolean;
+          }>}
         />
       )}
-      {activeHowItWorksSection && (
+
+      {howItWorks && (
         <PromoteHowItWorksSection
-          accentColor={activeHowItWorksSection.accentColor}
-          eyebrow={activeHowItWorksSection.eyebrow}
-          headingHtml={activeHowItWorksSection.headingHtml}
-          introText={activeHowItWorksSection.introText}
-          steps={activeHowItWorksSection.steps}
+          accentColor={howItWorks.accentColor}
+          eyebrow={howItWorks.eyebrow}
+          headingHtml={howItWorks.headingHtml}
+          introText={howItWorks.introText}
+          steps={howItWorks.steps}
         />
       )}
-      {activePricingSection && (
+
+      {pricing && (
         <PromotePricingSection
-          accentColor={activePricingSection.accentColor}
-          eyebrow={activePricingSection.eyebrow}
-          headingHtml={activePricingSection.headingHtml}
-          introText={activePricingSection.introText}
-          plans={activePricingSection.plans}
+          accentColor={pricing.accentColor}
+          eyebrow={pricing.eyebrow}
+          headingHtml={pricing.headingHtml}
+          introText={pricing.introText}
+          plans={pricing.plans}
         />
       )}
-      {activeComparisonSection && (
+
+      {comparison && comparison.columns && (
         <PromoteComparisonSection
-          accentColor={activeComparisonSection.accentColor}
-          eyebrow={activeComparisonSection.eyebrow}
-          headingHtml={activeComparisonSection.headingHtml}
-          introText={activeComparisonSection.introText}
-          columns={activeComparisonSection.columns}
-          rows={activeComparisonSection.rows}
+          accentColor={comparison.accentColor}
+          eyebrow={comparison.eyebrow}
+          headingHtml={comparison.headingHtml}
+          introText={comparison.introText}
+          columns={comparison.columns as {
+            feature: string;
+            twap: string;
+            directory: string;
+            editorial: string;
+            social: string;
+            ceo: string;
+          }}
+          rows={comparison.rows as Array<Record<string, string>>}
         />
       )}
-      {activeSuccessStoriesSection && (
+
+      {successStories && (
         <PromoteSuccessStoriesCarousel
-          accentColor={activeSuccessStoriesSection.accentColor}
-          eyebrow={activeSuccessStoriesSection.eyebrow}
-          headingHtml={activeSuccessStoriesSection.headingHtml}
-          introText={activeSuccessStoriesSection.introText}
-          slides={activeSuccessStoriesSection.slides}
+          accentColor={successStories.accentColor}
+          eyebrow={successStories.eyebrow}
+          headingHtml={successStories.headingHtml}
+          introText={successStories.introText}
+          slides={successStories.slides as Array<{
+            appName: string;
+            appType: string;
+            quote: string;
+            metrics: Array<{ value: string; label: string }>;
+            mockBg: string;
+            mockCard: string;
+            icon: string;
+            imageUrl?: string;
+          }>}
         />
       )}
-      {activeAddOnsSection && (
+
+      {addons && (
         <PromoteAddOnsSection
-          accentColor={activeAddOnsSection.accentColor}
-          eyebrow={activeAddOnsSection.eyebrow}
-          headingHtml={activeAddOnsSection.headingHtml}
-          introText={activeAddOnsSection.introText}
-          items={activeAddOnsSection.items}
-          ctaTitle={activeAddOnsSection.ctaTitle}
-          ctaDescription={activeAddOnsSection.ctaDescription}
-          ctaButtonText={activeAddOnsSection.ctaButtonText}
+          accentColor={addons.accentColor}
+          eyebrow={addons.eyebrow}
+          headingHtml={addons.headingHtml}
+          introText={addons.introText}
+          items={addons.items}
+          ctaTitle={addons.ctaTitle}
+          ctaDescription={addons.ctaDescription}
+          ctaButtonText={addons.ctaButtonText}
+          ctaButtonUrl={addons.ctaButtonUrl}
         />
       )}
-      {activeFormSection && (
-        <PromoteSubmitFormSection
-          accentColor={activeFormSection.accentColor}
-          eyebrow={activeFormSection.eyebrow}
-          headingHtml={activeFormSection.headingHtml}
-          introText={activeFormSection.introText}
-          plans={activeFormSection.plans}
-          defaultPlan={activeFormSection.defaultPlan}
-          leftColumnFields={activeFormSection.leftColumnFields}
-          rightColumnFields={activeFormSection.rightColumnFields}
-          textAreaLabel={activeFormSection.textAreaLabel}
-          textAreaPlaceholder={activeFormSection.textAreaPlaceholder}
-          bottomLeftField={activeFormSection.bottomLeftField}
-          bottomRightField={activeFormSection.bottomRightField}
-          submitButtonText={activeFormSection.submitButtonText}
-          disclaimer={activeFormSection.disclaimer}
-        />
+
+      {form && (
+        <div id="promote-submit-form">
+          <PromoteSubmitFormSection
+            accentColor={form.accentColor}
+            eyebrow={form.eyebrow}
+            headingHtml={form.headingHtml}
+            introText={form.introText}
+            plans={form.plans}
+            defaultPlan={form.defaultPlan}
+            leftColumnFields={form.leftColumnFields as Array<{
+              label: string;
+              placeholder: string;
+              required?: boolean;
+              type?: 'text' | 'email';
+              options?: string[];
+            }>}
+            rightColumnFields={form.rightColumnFields as Array<{
+              label: string;
+              placeholder: string;
+              required?: boolean;
+              type?: 'text' | 'email';
+              options?: string[];
+            }>}
+            textAreaLabel={form.textAreaLabel}
+            textAreaPlaceholder={form.textAreaPlaceholder}
+            bottomLeftField={form.bottomLeftField as {
+              label: string;
+              placeholder: string;
+              required?: boolean;
+              type?: 'text' | 'email';
+              options?: string[];
+            }}
+            bottomRightField={form.bottomRightField as {
+              label: string;
+              placeholder: string;
+              required?: boolean;
+              type?: 'text' | 'email';
+              options?: string[];
+            }}
+            submitButtonText={form.submitButtonText}
+            disclaimer={form.disclaimer}
+          />
+        </div>
       )}
-      {activeFaqSection && (
+
+      {faq && (
         <PromoteFaqSection
-          accentColor={activeFaqSection.accentColor}
-          eyebrow={activeFaqSection.eyebrow}
-          headingPrefix={activeFaqSection.headingPrefix}
-          headingHighlight={activeFaqSection.headingHighlight}
-          items={activeFaqSection.items}
+          accentColor={faq.accentColor}
+          eyebrow={faq.eyebrow}
+          headingPrefix={faq.headingPrefix}
+          headingHighlight={faq.headingHighlight}
+          items={faq.items}
         />
       )}
-      {activeFinalCtaSection && (
+
+      {finalCta && (
         <PromoteFinalCtaSection
-          accentColor={activeFinalCtaSection.accentColor}
-          eyebrow={activeFinalCtaSection.eyebrow}
-          headingPrefix={activeFinalCtaSection.headingPrefix}
-          headingHighlight={activeFinalCtaSection.headingHighlight}
-          description={activeFinalCtaSection.description}
-          buttonText={activeFinalCtaSection.buttonText}
-          points={activeFinalCtaSection.points}
+          accentColor={finalCta.accentColor}
+          eyebrow={finalCta.eyebrow}
+          headingPrefix={finalCta.headingPrefix}
+          headingHighlight={finalCta.headingHighlight}
+          description={finalCta.description}
+          buttonText={finalCta.buttonText}
+          points={finalCta.points}
         />
       )}
 

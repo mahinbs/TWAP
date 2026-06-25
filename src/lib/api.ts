@@ -32,6 +32,10 @@ export interface App {
   featured?: boolean;
   editors_choice?: boolean;
   status?: string;
+  hero_image_url?: string;
+  created_at?: string;
+  updated_at?: string;
+  published_at?: string;
 }
 
 export interface BlogPost {
@@ -207,6 +211,9 @@ export interface EverythingAiItem {
 
 // ─── Apps ────────────────────────────────────────────────────────────────────
 
+const APP_LIST_SELECT =
+  'id,name,slug,tagline,category,rating,review_count,pricing,featured,editors_choice,logo_url,hero_image_url,tags,website_url,badges,downloads_ios,downloads_android,pros,cons,created_at,updated_at,published_at';
+
 export const appsApi = {
   /** List published apps with optional filters */
   list: async (opts?: {
@@ -214,12 +221,12 @@ export const appsApi = {
     pricing?: string;
     featured?: boolean;
     search?: string;
-    sort?: 'rating' | 'review_count' | 'name';
+    sort?: 'rating' | 'review_count' | 'name' | 'recent';
     limit?: number;
   }): Promise<App[]> => {
     let q = supabase
       .from('apps')
-      .select('id,name,slug,tagline,category,rating,review_count,pricing,featured,editors_choice,logo_url,tags,website_url,badges,downloads_ios,downloads_android')
+      .select(APP_LIST_SELECT)
       .eq('status', 'published');
 
     if (opts?.category) q = q.eq('category', opts.category);
@@ -229,6 +236,7 @@ export const appsApi = {
 
     if (opts?.sort === 'review_count') q = q.order('review_count', { ascending: false });
     else if (opts?.sort === 'name')    q = q.order('name');
+    else if (opts?.sort === 'recent')  q = q.order('updated_at', { ascending: false });
     else                               q = q.order('rating', { ascending: false });
 
     if (opts?.limit) q = q.limit(opts.limit);
@@ -260,13 +268,16 @@ export const appsApi = {
     if (unique.length === 0) return [];
     const { data, error } = await supabase
       .from('apps')
-      .select('id,name,slug,tagline,category,rating,review_count,pricing,featured,editors_choice,logo_url,tags,website_url,badges,downloads_ios,downloads_android')
+      .select(APP_LIST_SELECT)
       .in('id', unique)
       .eq('status', 'published');
     if (error) throw error;
     const byId = new Map((data ?? []).map(a => [a.id, a as App]));
     return unique.map(id => byId.get(id)).filter((a): a is App => Boolean(a));
   },
+
+  /** Most recently added or updated published apps */
+  recent: (limit = 6) => appsApi.list({ sort: 'recent', limit }),
 
   /** Get top-rated apps */
   topRated: (limit = 12) =>

@@ -1,12 +1,19 @@
 export type PromoteCategoryTheme = {
   key: string;
   viewingLabel: string;
+  viewingPrefix?: string;
+  switchCategoryText?: string;
   topBarBg: string;
   accent: string;
   accentSoft: string;
   badgeText: string;
   title: string;
   description: string;
+  heroImageUrl?: string | null;
+  primaryCtaText?: string;
+  primaryCtaUrl?: string;
+  secondaryCtaText?: string;
+  secondaryCtaUrl?: string;
 };
 
 type Metric = {
@@ -19,7 +26,38 @@ interface PromoteCategoryHeroProps {
   metrics: Metric[];
 }
 
+function CtaLink({
+  href,
+  className,
+  style,
+  children,
+}: {
+  href: string;
+  className: string;
+  style?: React.CSSProperties;
+  children: React.ReactNode;
+}) {
+  const isHash = href.startsWith('#');
+  if (isHash) {
+    return (
+      <a href={href} className={className} style={style}>
+        {children}
+      </a>
+    );
+  }
+  return (
+    <a href={href} className={className} style={style}>
+      {children}
+    </a>
+  );
+}
+
 export default function PromoteCategoryHero({ theme, metrics }: PromoteCategoryHeroProps) {
+  const primaryText = theme.primaryCtaText ?? 'Submit Your Product';
+  const primaryUrl = theme.primaryCtaUrl ?? '#promote-submit-form';
+  const secondaryText = theme.secondaryCtaText ?? "See What's Included";
+  const secondaryUrl = theme.secondaryCtaUrl ?? '#promote-benefits';
+
   return (
     <main className="pt-[6.5rem] sm:pt-[5.5rem] min-h-screen flex flex-col justify-center relative">
       <div
@@ -58,15 +96,19 @@ export default function PromoteCategoryHero({ theme, metrics }: PromoteCategoryH
           </div>
 
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
-            <button
-              className="w-full sm:w-auto rounded-full px-6 py-3 text-sm font-semibold text-white transition-opacity"
+            <CtaLink
+              href={primaryUrl}
+              className="w-full sm:w-auto rounded-full px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90"
               style={{ backgroundColor: theme.topBarBg }}
             >
-              Submit Your Product <i className="ri-arrow-right-line ml-1"></i>
-            </button>
-            <button className="w-full sm:w-auto rounded-full px-6 py-3 text-sm font-semibold border border-white/20 text-white hover:bg-white/5 transition-colors">
-              See What&apos;s Included
-            </button>
+              {primaryText} <i className="ri-arrow-right-line ml-1"></i>
+            </CtaLink>
+            <CtaLink
+              href={secondaryUrl}
+              className="w-full sm:w-auto rounded-full px-6 py-3 text-sm font-semibold border border-white/20 text-white hover:bg-white/5 transition-colors"
+            >
+              {secondaryText}
+            </CtaLink>
           </div>
         </div>
       </section>

@@ -67,6 +67,7 @@ export default function ProductReviewPage() {
       ? ax.review_paragraphs
       : (ax.description ? [ax.description] : fallbackProduct.content),
     pros: Array.isArray(ax.pros) && ax.pros.length > 0 ? ax.pros : fallbackProduct.pros,
+    cons: Array.isArray(ax.cons) && ax.cons.length > 0 ? ax.cons : fallbackProduct.cons,
   } : fallbackProduct;
 
   return (
@@ -202,7 +203,7 @@ export default function ProductReviewPage() {
                   {/* Download Buttons Stack - Conditionally Rendered */}
                   {product.type === 'app' && (
                     <div className="flex flex-col gap-4">
-                      <a href="#" className="flex-1 bg-white border border-gray-100 rounded-[2.5rem] p-6 flex items-center justify-between group hover:border-brand-dark/10 hover:shadow-lg hover:shadow-brand-dark/5 transition-all relative overflow-hidden">
+                      <a href={(ax?.downloads_ios as string) || (ax?.website_url as string) || '#'} target="_blank" rel="noreferrer" className="flex-1 bg-white border border-gray-100 rounded-[2.5rem] p-6 flex items-center justify-between group hover:border-brand-dark/10 hover:shadow-lg hover:shadow-brand-dark/5 transition-all relative overflow-hidden">
                         <div className="relative z-10 flex items-center gap-4">
                           <div className="w-14 h-14 rounded-2xl bg-brand-dark text-white flex items-center justify-center text-2xl shadow-md group-hover:scale-110 transition-transform duration-500">
                             <i className="ri-apple-fill"></i>
@@ -217,7 +218,7 @@ export default function ProductReviewPage() {
                         </div>
                       </a>
 
-                      <a href="#" className="flex-1 bg-white border border-gray-100 rounded-[2.5rem] p-6 flex items-center justify-between group hover:border-brand-dark/10 hover:shadow-lg hover:shadow-brand-dark/5 transition-all relative overflow-hidden">
+                      <a href={(ax?.downloads_android as string) || (ax?.website_url as string) || '#'} target="_blank" rel="noreferrer" className="flex-1 bg-white border border-gray-100 rounded-[2.5rem] p-6 flex items-center justify-between group hover:border-brand-dark/10 hover:shadow-lg hover:shadow-brand-dark/5 transition-all relative overflow-hidden">
                         <div className="relative z-10 flex items-center gap-4">
                           <div className="w-14 h-14 rounded-2xl bg-brand-dark text-white flex items-center justify-center text-2xl shadow-md group-hover:scale-110 transition-transform duration-500">
                             <i className="ri-google-play-fill"></i>

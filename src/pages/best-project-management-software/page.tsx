@@ -1,10 +1,20 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import Header from '../../components/feature/Header';
 import Footer from '../../components/feature/Footer';
 import { useQuery } from '@tanstack/react-query';
-import { siteContentApi } from '../../lib/api';
+import { appsApi, siteContentApi } from '../../lib/api';
+import { sectionBgStyle } from '../../lib/sectionGradient';
+import { fetchListicleSpots, LISTICLE_PAGE } from '../../lib/listicleSpots';
+import {
+  appToListicleCard,
+  appActivityDate,
+  buildRecentLaunchesIntro,
+  formatTimeAgo,
+} from '../../lib/appDisplay';
 
-// App Card Component to handle individual state
+const LISTICLE_MAX_SPOTS = 12;
+
 const AppCard = ({ app, rank, id }: { app: any; rank: number; id?: string }) => {
     const [isProsConsOpen, setIsProsConsOpen] = useState(false);
 
@@ -29,7 +39,11 @@ const AppCard = ({ app, rank, id }: { app: any; rank: number; id?: string }) => 
 
                     {/* Mobile Only: Name & Tagline Next to Logo */}
                     <div className="md:hidden flex-1 min-w-0">
-                        <h3 className="text-xl font-bold text-[#1A2E35] font-['Manrope'] mb-0.5 truncate">{app.name}</h3>
+                        {app.slug ? (
+                            <Link to={`/product-review/${app.slug}`} className="text-xl font-bold text-[#1A2E35] font-['Manrope'] mb-0.5 truncate block hover:text-brand-orange transition-colors">{app.name}</Link>
+                        ) : (
+                            <h3 className="text-xl font-bold text-[#1A2E35] font-['Manrope'] mb-0.5 truncate">{app.name}</h3>
+                        )}
                         <p className="text-sm text-[#4A5E65] font-medium text-wrap max-w-[12rem] md:max-w-fit">{app.tagline}</p>
                     </div>
                 </div>
@@ -39,7 +53,11 @@ const AppCard = ({ app, rank, id }: { app: any; rank: number; id?: string }) => 
                     {/* Desktop Header: Name, Badge, Tagline */}
                     <div className="hidden md:flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3">
                         <div>
-                            <h3 className="text-2xl font-bold text-[#1A2E35] font-['Manrope'] mb-1 group-hover:text-brand-orange transition-colors cursor-pointer">{app.name}</h3>
+                            {app.slug ? (
+                                <Link to={`/product-review/${app.slug}`} className="text-2xl font-bold text-[#1A2E35] font-['Manrope'] mb-1 hover:text-brand-orange transition-colors block">{app.name}</Link>
+                            ) : (
+                                <h3 className="text-2xl font-bold text-[#1A2E35] font-['Manrope'] mb-1 group-hover:text-brand-orange transition-colors">{app.name}</h3>
+                            )}
                             <p className="text-[#4A5E65] font-medium">{app.tagline}</p>
                         </div>
                     </div>
@@ -152,14 +170,93 @@ export default function BestProjectManagementSoftwarePage() {
     const itemsPerPage = 5;
 
     const { data: heroSection } = useQuery({
-        queryKey: ['page-section', 'top-10-project-management-software-2026', 'hero'],
-        queryFn: () => siteContentApi.section('top-10-project-management-software-2026', 'hero'),
+        queryKey: ['page-section', LISTICLE_PAGE, 'hero'],
+        queryFn: () => siteContentApi.section(LISTICLE_PAGE, 'hero'),
     });
+    const { data: sidebarSection } = useQuery({
+        queryKey: ['page-section', LISTICLE_PAGE, 'sidebar'],
+        queryFn: () => siteContentApi.section(LISTICLE_PAGE, 'sidebar'),
+    });
+    const { data: spotlightSection } = useQuery({
+        queryKey: ['page-section', LISTICLE_PAGE, 'spotlight'],
+        queryFn: () => siteContentApi.section(LISTICLE_PAGE, 'spotlight'),
+    });
+
     const lc = (heroSection?.content ?? {}) as Record<string, string>;
     const listicleTitlePrefix     = lc.title_prefix    ?? 'The best';
     const listicleTitleHighlight  = lc.title_highlight ?? 'project management';
     const listicleTitleSuffix     = lc.title_suffix    ?? 'softwares of 2026';
     const listicleDescription     = heroSection?.description ?? 'Project management software helps teams and individuals plan, organize, and track projects efficiently. It provides a centralized platform for managing tasks, resources, timelines, and communication within a project.';
+    const heroBgStyle = sectionBgStyle(lc, { defaultFrom: '#1B1B36', defaultTo: '#56122D', direction: 'to bottom' });
+
+    const sidebarContent = (sidebarSection?.content ?? {}) as Record<string, unknown>;
+    const previewCount = Number(sidebarContent.preview_count ?? 3);
+    const expandCount = Number(sidebarContent.expand_count ?? 6);
+    const sidebarHeading = sidebarSection?.title ?? 'Recent launches';
+    const seeAllButtonText = sidebarSection?.cta_text ?? 'See all recent launches';
+    const seeAllButtonUrl = sidebarSection?.cta_url ?? '';
+
+    const { data: recentApps = [] } = useQuery({
+        queryKey: ['apps-recent', expandCount],
+        queryFn: () => appsApi.recent(expandCount),
+    });
+
+    const recentLaunches = recentApps.map(app => ({
+        name: app.name,
+        tagline: app.tagline ?? '',
+        time: formatTimeAgo(appActivityDate(app)),
+        logo: app.logo_url ?? '',
+        slug: app.slug,
+    }));
+
+    const sidebarIntro = sidebarSection?.description?.trim()
+        ? sidebarSection.description
+        : buildRecentLaunchesIntro(recentApps);
+
+    const spotlightContent = (spotlightSection?.content ?? {}) as Record<string, string>;
+    const spotlightAppId = spotlightContent.spotlight_app_id ?? '';
+    const { data: spotlightApp } = useQuery({
+        queryKey: ['listicle-spotlight-app', spotlightAppId],
+        queryFn: () => appsApi.byIds([spotlightAppId]).then(rows => rows[0] ?? null),
+        enabled: Boolean(spotlightAppId),
+    });
+
+    const spotlightBadge1 = spotlightContent.badge_line1 ?? 'Product of';
+    const spotlightBadge2 = spotlightContent.badge_line2 ?? 'The Month';
+    const spotlightCtaText = spotlightSection?.cta_text ?? 'Know More';
+    const spotlightImage = spotlightSection?.media_url
+        ?? spotlightApp?.hero_image_url
+        ?? spotlightApp?.logo_url
+        ?? 'https://images.pexels.com/photos/1092644/pexels-photo-1092644.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1';
+    const spotlightCtaUrl = spotlightSection?.cta_url
+        ?? (spotlightApp ? `/product-review/${spotlightApp.slug}` : '/directory');
+
+    const { data: listicleSpots = [] } = useQuery({
+        queryKey: ['listicle-spots'],
+        queryFn: fetchListicleSpots,
+    });
+
+    const spotIds = listicleSpots.map(s => s.app_id);
+
+    const { data: rankedApps = [] } = useQuery({
+        queryKey: ['listicle-ranked-apps', spotIds],
+        queryFn: () => (spotIds.length > 0
+            ? appsApi.byIds(spotIds)
+            : appsApi.topRated(LISTICLE_MAX_SPOTS)),
+    });
+
+    const apps = useMemo(() => {
+        const cards = new Map(rankedApps.map(app => [app.id, appToListicleCard(app)]));
+        if (listicleSpots.length > 0) {
+            return listicleSpots
+                .map(spot => {
+                    const card = cards.get(spot.app_id);
+                    return card ? { ...card, rank: spot.rank } : null;
+                })
+                .filter((app): app is ReturnType<typeof appToListicleCard> & { rank: number } => Boolean(app));
+        }
+        return rankedApps.map((app, index) => ({ ...appToListicleCard(app), rank: index + 1 }));
+    }, [rankedApps, listicleSpots]);
 
     const logos = [
         { name: "ClickUp", image: "https://images.pexels.com/photos/1181354/pexels-photo-1181354.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1", style: { top: "10%", left: "70%" }, animation: "animate-float-random-3", delay: "animation-delay-500" },
@@ -170,227 +267,12 @@ export default function BestProjectManagementSoftwarePage() {
         { name: "Basecamp", image: "https://images.pexels.com/photos/3184360/pexels-photo-3184360.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1", style: { top: "85%", left: "65%" }, animation: "animate-float-random-1", delay: "animation-delay-500" },
     ];
 
-    const apps = [
-        {
-            name: "Notion",
-            tagline: "The all-in-one workspace",
-            rating: 4.8,
-            reviews: "1.3K reviews",
-            tags: ["Note and writing apps", "No-code Platforms", "AI notetakers"],
-            logo: "https://images.pexels.com/photos/270404/pexels-photo-270404.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
-            badges: [
-                { icon: "ri-trophy-fill", tooltip: "#1 Product of the Month", color: "text-yellow-500" },
-                { icon: "ri-medal-fill", tooltip: "Editor's Choice", color: "text-blue-400" }
-            ],
-            downloads: { android: "#", ios: "#" },
-            pros: ["Flexible and customizable", "Great for documentation", "Strong community templates"],
-            cons: ["Steep learning curve", "Mobile app can be slow"],
-
-        },
-        {
-            name: "Monday.com",
-            tagline: "A new way of working",
-            rating: 4.7,
-            reviews: "2.1K reviews",
-            tags: ["Project Management", "Collaboration", "CRM"],
-            logo: "https://images.pexels.com/photos/546819/pexels-photo-546819.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
-            badges: [
-                { icon: "ri-vip-crown-fill", tooltip: "Most Popular", color: "text-amber-500" }
-            ],
-            downloads: { android: "#", ios: "#" },
-            pros: ["Visual and intuitive interface", "Automation features", "Great integrations"],
-            cons: ["Can get expensive", "Limited sub-item features in basic plan"],
-
-        },
-        {
-            name: "Jira",
-            tagline: "The #1 software development tool used by agile teams",
-            rating: 4.6,
-            reviews: "5K+ reviews",
-            tags: ["Issue Tracking", "Agile", "DevOps"],
-            logo: "https://images.pexels.com/photos/1181675/pexels-photo-1181675.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
-            badges: [
-                { icon: "ri-award-fill", tooltip: "Best for Developers", color: "text-purple-500" }
-            ],
-            downloads: { android: "#", ios: "#" },
-            pros: ["Industry standard for Agile", "Powerful reporting", "Extensive ecosystem"],
-            cons: ["Complex configuration", "UI can be cluttered"],
-
-        },
-        {
-            name: "Trello",
-            tagline: "Visual collaboration tool",
-            rating: 4.5,
-            reviews: "3.5K+ reviews",
-            tags: ["Kanban", "Task Management", "Org Charts"],
-            logo: "https://images.pexels.com/photos/3183150/pexels-photo-3183150.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
-            badges: [],
-            downloads: { android: "#", ios: "#" },
-            pros: ["Simple and easy to use", "Free tier is generous", "Visual Kanban boards"],
-            cons: ["Limited functionality for complex projects", "Reporting is basic"],
-
-        },
-        {
-            name: "Asana",
-            tagline: "The easiest way to manage team projects",
-            rating: 4.7,
-            reviews: "4K+ reviews",
-            tags: ["Work Management", "Productivity", "Roadmaps"],
-            logo: "https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
-            badges: [
-                { icon: "ri-star-smile-fill", tooltip: "Best Support", color: "text-green-500" }
-            ],
-            downloads: { android: "#", ios: "#" },
-            pros: ["Beautiful interface", "Multiple project views", "Good for marketing teams"],
-            cons: ["Task assignment limitations", "Pricey for premium features"],
-
-        },
-        {
-            name: "Todoist",
-            tagline: "Organize your life and work",
-            rating: 4.8,
-            reviews: "900+ reviews",
-            tags: ["To-Do Lists", "Personal Productivity", "Task Manager"],
-            logo: "https://images.pexels.com/photos/3182812/pexels-photo-3182812.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
-            badges: [],
-            downloads: { android: "#", ios: "#" },
-            pros: ["Quick add feature", "Cross-platform support", "Natural language parsing"],
-            cons: ["Project features are limited", "No Kanban in free version"],
-
-        },
-        {
-            name: "ClickUp",
-            tagline: "One app to replace them all",
-            rating: 4.7,
-            reviews: "3.2K reviews",
-            tags: ["Project Management", "Docs", "Goals"],
-            logo: "https://images.pexels.com/photos/1181354/pexels-photo-1181354.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
-            badges: [
-                { icon: "ri-rocket-2-fill", tooltip: "Fastest Growing", color: "text-red-500" }
-            ],
-            downloads: { android: "#", ios: "#" },
-            pros: ["Incredibly feature-rich", "Highly customizable", "Generous free plan"],
-            cons: ["Can be overwhelming", "Occasional performance glitches"],
-
-        },
-        {
-            name: "Linear",
-            tagline: "The issue tracking tool you'll enjoy using",
-            rating: 4.9,
-            reviews: "800+ reviews",
-            tags: ["Issue Tracking", "Product Development"],
-            logo: "https://images.pexels.com/photos/1181359/pexels-photo-1181359.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
-            badges: [
-                { icon: "ri-magic-line", tooltip: "Best UX", color: "text-purple-600" }
-            ],
-            downloads: { android: "#", ios: "#" },
-            pros: ["Fast and performant", "Beautiful keyboard-driven interface", "Opinionated workflow"],
-            cons: ["Limited flexibility", "Geared strictly towards software teams"],
-
-        },
-        {
-            name: "Airtable",
-            tagline: "Connect everything. Achieve anything.",
-            rating: 4.6,
-            reviews: "2.5K reviews",
-            tags: ["Low-code", "Database", "Workflows"],
-            logo: "https://images.pexels.com/photos/1181438/pexels-photo-1181438.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
-            badges: [],
-            downloads: { android: "#", ios: "#" },
-            pros: ["Flexible database-spreadsheet hybrid", "Powerful integrations", "Great for data management"],
-            cons: ["Learning curve for advanced features", "Can get expensive quickly"],
-
-        },
-        {
-            name: "Height",
-            tagline: "The all-in-one project management tool",
-            rating: 4.5,
-            reviews: "500+ reviews",
-            tags: ["Project Management", "Tasks", "Chat"],
-            logo: "https://images.pexels.com/photos/1181373/pexels-photo-1181373.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
-            badges: [],
-            downloads: { android: "#", ios: "#" },
-            pros: ["Spreadsheet-like flexibility", "Contextual chat", "Automated workflows"],
-            cons: ["Newer to the market", "Smaller community"],
-
-        },
-        {
-            name: "Basecamp",
-            tagline: "The all-in-one toolkit for working remotely",
-            rating: 4.4,
-            reviews: "4.1K reviews",
-            tags: ["Remote Work", "Project Management"],
-            logo: "https://images.pexels.com/photos/3184360/pexels-photo-3184360.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
-            badges: [],
-            downloads: { android: "#", ios: "#" },
-            pros: ["Flat pricing model", "All-in-one features", "Great for remote teams"],
-            cons: ["Limited customization", "No Gantt charts"],
-
-        },
-        {
-            name: "Wrike",
-            tagline: "Versatile & robust project management",
-            rating: 4.3,
-            reviews: "2K+ reviews",
-            tags: ["Enterprise", "Gantt Charts"],
-            logo: "https://images.pexels.com/photos/3184339/pexels-photo-3184339.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
-            badges: [],
-            downloads: { android: "#", ios: "#" },
-            pros: ["Robust enterprise features", "Excellent Gantt charts", "Proofing tools"],
-            cons: ["Interface can be overwhelming", "Complex pricing"],
-
-        }
-    ];
-
-    const recentLaunches = [
-        {
-            name: "Plane",
-            tagline: "AI-native project management",
-            time: "3mo ago",
-            logo: "https://images.pexels.com/photos/1181671/pexels-photo-1181671.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
-        },
-        {
-            name: "Orchestra",
-            tagline: "A chat-centric workspace for builders and modern teams",
-            time: "3mo ago",
-            logo: "https://images.pexels.com/photos/1181467/pexels-photo-1181467.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
-        },
-        {
-            name: "Korgi",
-            tagline: "AI-built project boards powered by your productivity stack",
-            time: "1mo ago",
-            logo: "https://images.pexels.com/photos/1181243/pexels-photo-1181243.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
-        },
-        {
-            name: "Linear",
-            tagline: "The issue tracking tool you'll enjoy using",
-            time: "2mo ago",
-            logo: "https://images.pexels.com/photos/1181359/pexels-photo-1181359.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
-        },
-        {
-            name: "Height",
-            tagline: "The all-in-one project management tool",
-            time: "1mo ago",
-            logo: "https://images.pexels.com/photos/1181373/pexels-photo-1181373.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
-        },
-        {
-            name: "ClickUp",
-            tagline: "One app to replace them all",
-            time: "4mo ago",
-            logo: "https://images.pexels.com/photos/1181354/pexels-photo-1181354.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
-        }
-    ];
-
     return (
         <div className="min-h-screen bg-[#fffdfb] font-['Poppins']">
             <Header />
             <main className="">
                 <div className="relative overflow-hidden pt-24 sm:pt-28 md:pt-32 pb-12 sm:pb-16 md:pb-20"
-                    style={{
-                        background: 'linear-gradient(to bottom, #1B1B36 45%, #56122D)',
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center'
-                    }}>
+                    style={heroBgStyle}>
 
                     {/* Breadcrumbs */}
                     {/* <nav className="flex items-center gap-2 text-sm text-gray-400 mb-8 overflow-x-auto whitespace-nowrap">
@@ -445,10 +327,9 @@ export default function BestProjectManagementSoftwarePage() {
                     {/* App List Section */}
                     <div className="space-y-4 sm:space-y-6 min-w-0">
                         {apps.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((app, index) => {
-                            // Calculate the actual rank index based on current page
-                            const rank = (currentPage - 1) * itemsPerPage + index + 1;
+                            const rank = app.rank ?? (currentPage - 1) * itemsPerPage + index + 1;
                             return (
-                                <AppCard key={index} app={app} rank={rank} id={`app-${rank}`} />
+                                <AppCard key={app.id ?? rank} app={app} rank={rank} id={`app-${rank}`} />
                             );
                         })}
 
@@ -508,16 +389,16 @@ export default function BestProjectManagementSoftwarePage() {
 
                             {isTOCOpen && (
                                 <div className="max-h-[240px] sm:max-h-[300px] overflow-y-auto pr-2 custom-scrollbar space-y-2 mt-3 sm:mt-4 animate-fadeIn w-full">
-                                    {apps.map((app, index) => (
+                                    {apps.map((app) => (
                                         <button
-                                            key={index}
+                                            key={app.id ?? app.rank}
                                             onClick={() => {
-                                                const page = Math.floor(index / itemsPerPage) + 1;
+                                                const rank = app.rank ?? 1;
+                                                const page = Math.floor((rank - 1) / itemsPerPage) + 1;
                                                 setCurrentPage(page);
 
-                                                // Small timeout to allow React to render the new page
                                                 setTimeout(() => {
-                                                    const element = document.getElementById(`app-${index + 1}`);
+                                                    const element = document.getElementById(`app-${rank}`);
                                                     if (element) {
                                                         element.scrollIntoView({ behavior: 'smooth', block: 'center' });
                                                     }
@@ -525,7 +406,7 @@ export default function BestProjectManagementSoftwarePage() {
                                             }}
                                             className="w-full text-left py-2 px-3 rounded-lg text-[#4A5E65] hover:bg-gray-50 hover:text-[#1A2E35] transition-colors text-xs sm:text-sm font-medium truncate flex items-center gap-2 sm:gap-3 min-w-0"
                                         >
-                                            <span className="text-gray-400 font-mono text-xs w-4 sm:w-5 shrink-0">{index + 1}.</span>
+                                            <span className="text-gray-400 font-mono text-xs w-4 sm:w-5 shrink-0">{app.rank}.</span>
                                             <span className="truncate">{app.name}</span>
                                         </button>
                                     ))}
@@ -537,22 +418,33 @@ export default function BestProjectManagementSoftwarePage() {
                         <div className="bg-gray-100 rounded-xl sm:rounded-2xl p-4 sm:p-6">
                             <div className="flex items-center gap-2 mb-3 sm:mb-4">
                                 <div className="w-2 h-2 rounded-full bg-green-600 shrink-0"></div>
-                                <h3 className="font-bold text-[#1A2E35] text-base sm:text-lg">Recent launches</h3>
+                                <h3 className="font-bold text-[#1A2E35] text-base sm:text-lg">{sidebarHeading}</h3>
                             </div>
 
-                            <p className="text-xs sm:text-sm text-[#4A5E65] leading-relaxed mb-6 sm:mb-8">
-                                <span className="text-[#CA8A04] font-bold">Plane</span> centers sprints and docs with flexible views, automations, and self-hosting for teams replacing fragmented stacks. <span className="text-[#CA8A04] font-bold">Orchestra</span> fuses chat, tasks, and calls so conversations stay attached to work, with AI summaries and unified search. For rapid setup across Google/Microsoft ecosystems, <span className="text-[#CA8A04] font-bold">Korgi</span> auto-builds project boards, links docs/meetings, and exports organized workspaces, ideal for cross-functional launches and client collaborations.
-                            </p>
+                            {sidebarIntro && (
+                                <p
+                                    className="text-xs sm:text-sm text-[#4A5E65] leading-relaxed mb-6 sm:mb-8"
+                                    dangerouslySetInnerHTML={{ __html: sidebarIntro }}
+                                />
+                            )}
 
                             <div className="space-y-4 sm:space-y-6 mb-6 sm:mb-8">
-                                {(showAllLaunches ? recentLaunches : recentLaunches.slice(0, 3)).map((launch, index) => (
-                                    <div key={index} className="flex items-start gap-3 sm:gap-4">
+                                {(showAllLaunches ? recentLaunches : recentLaunches.slice(0, previewCount)).map((launch, index) => (
+                                    <div key={launch.slug ?? index} className="flex items-start gap-3 sm:gap-4">
                                         <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-lg sm:rounded-xl flex items-center justify-center p-1.5 sm:p-2 shadow-sm flex-shrink-0">
-                                            <img src={launch.logo} alt={launch.name} className="w-full h-full object-cover rounded-md sm:rounded-lg" />
+                                            {launch.logo ? (
+                                                <img src={launch.logo} alt={launch.name} className="w-full h-full object-cover rounded-md sm:rounded-lg" />
+                                            ) : (
+                                                <span className="text-xs font-bold text-gray-400">{launch.name.charAt(0)}</span>
+                                            )}
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex justify-between items-baseline gap-2 mb-0.5 sm:mb-1">
-                                                <h4 className="font-bold text-[#1A2E35] text-xs sm:text-sm truncate">{launch.name}</h4>
+                                                {launch.slug ? (
+                                                    <Link to={`/product-review/${launch.slug}`} className="font-bold text-[#1A2E35] text-xs sm:text-sm truncate hover:text-brand-orange transition-colors">{launch.name}</Link>
+                                                ) : (
+                                                    <h4 className="font-bold text-[#1A2E35] text-xs sm:text-sm truncate">{launch.name}</h4>
+                                                )}
                                                 <span className="text-[10px] sm:text-xs text-[#4A5E65] whitespace-nowrap shrink-0">{launch.time}</span>
                                             </div>
                                             <p className="text-[11px] sm:text-xs text-[#4A5E65] sm:truncate">{launch.tagline}</p>
@@ -561,43 +453,53 @@ export default function BestProjectManagementSoftwarePage() {
                                 ))}
                             </div>
 
-                            {!showAllLaunches && (
-                                <button
-                                    onClick={() => setShowAllLaunches(true)}
-                                    className="w-full py-2.5 sm:py-3 bg-brand-orange hover:bg-brand-burgundy text-white font-bold text-xs sm:text-sm rounded-xl transition-colors cursor-pointer"
-                                >
-                                    See all recent launches
-                                </button>
+                            {!showAllLaunches && recentLaunches.length > previewCount && (
+                                seeAllButtonUrl ? (
+                                    <a
+                                        href={seeAllButtonUrl}
+                                        className="block w-full py-2.5 sm:py-3 bg-brand-orange hover:bg-brand-burgundy text-white font-bold text-xs sm:text-sm rounded-xl transition-colors cursor-pointer text-center"
+                                    >
+                                        {seeAllButtonText}
+                                    </a>
+                                ) : (
+                                    <button
+                                        onClick={() => setShowAllLaunches(true)}
+                                        className="w-full py-2.5 sm:py-3 bg-brand-orange hover:bg-brand-burgundy text-white font-bold text-xs sm:text-sm rounded-xl transition-colors cursor-pointer"
+                                    >
+                                        {seeAllButtonText}
+                                    </button>
+                                )
                             )}
                         </div>
 
                         {/* Product of the Month Widget */}
-                        <div className="rounded-xl sm:rounded-2xl overflow-hidden relative group cursor-pointer shadow-lg shadow-blue-900/20 h-[280px] sm:h-[340px] md:h-[450px]">
+                        <a
+                            href={spotlightCtaUrl}
+                            className="block rounded-xl sm:rounded-2xl overflow-hidden relative group cursor-pointer shadow-lg shadow-blue-900/20 h-[280px] sm:h-[340px] md:h-[450px]"
+                        >
                             <img
-                                src="https://images.pexels.com/photos/1092644/pexels-photo-1092644.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
-                                alt="Product of the Month"
+                                src={spotlightImage}
+                                alt={spotlightBadge2}
                                 className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
 
                             <div className="relative p-4 sm:p-6 h-full flex flex-col justify-between">
-                                {/* Header */}
                                 <div className="flex justify-between w-full items-start z-10">
                                     <div className="bg-white/90 backdrop-blur-sm px-2.5 py-1 sm:px-3 rounded-md sm:rounded-lg transform -rotate-3 shadow-sm">
-                                        <div className="text-[8px] sm:text-[10px] font-black uppercase tracking-wider text-[#0072FF]">Product of</div>
-                                        <div className="text-base sm:text-xl font-black uppercase text-[#1A2E35] leading-none">The Month</div>
+                                        <div className="text-[8px] sm:text-[10px] font-black uppercase tracking-wider text-[#0072FF]">{spotlightBadge1}</div>
+                                        <div className="text-base sm:text-xl font-black uppercase text-[#1A2E35] leading-none">{spotlightBadge2}</div>
                                     </div>
                                 </div>
 
-                                {/* Know More Button */}
                                 <div className="z-20">
-                                    <button className="bg-white text-[#1A2E35] px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm shadow-xl flex items-center gap-2 hover:bg-gray-50 transition-colors group/btn w-fit">
-                                        Know More
+                                    <span className="inline-flex bg-white text-[#1A2E35] px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm shadow-xl items-center gap-2 hover:bg-gray-50 transition-colors group/btn w-fit">
+                                        {spotlightCtaText}
                                         <i className="ri-arrow-right-up-line group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform"></i>
-                                    </button>
+                                    </span>
                                 </div>
                             </div>
-                        </div>
+                        </a>
 
                         {/* Feature Your Product Button */}
                         {/* <button className="w-full py-4 bg-[#D30030] hover:bg-[#B30026] text-white font-bold text-base rounded-2xl shadow-lg shadow-red-900/20 transition-all hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 duration-200">

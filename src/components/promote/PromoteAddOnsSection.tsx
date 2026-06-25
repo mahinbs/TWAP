@@ -15,6 +15,7 @@ export type PromoteAddOnsSectionProps = {
   ctaTitle: string;
   ctaDescription: string;
   ctaButtonText: string;
+  ctaButtonUrl?: string;
 };
 
 export default function PromoteAddOnsSection({
@@ -26,6 +27,7 @@ export default function PromoteAddOnsSection({
   ctaTitle,
   ctaDescription,
   ctaButtonText,
+  ctaButtonUrl,
 }: PromoteAddOnsSectionProps) {
   return (
     <section className="bg-white py-16 sm:py-20 px-4 sm:px-6 lg:px-8">
@@ -63,9 +65,12 @@ export default function PromoteAddOnsSection({
             <h3 className="text-2xl font-black text-white leading-tight">{ctaTitle}</h3>
             <p className="mt-2 text-sm text-white/70 max-w-3xl leading-relaxed">{ctaDescription}</p>
           </div>
-          <button className="shrink-0 rounded-full border border-white/20 text-white px-6 py-3 text-sm font-semibold hover:bg-white/10 transition-colors">
+          <a
+            href={ctaButtonUrl ?? '#promote-submit-form'}
+            className="shrink-0 rounded-full border border-white/20 text-white px-6 py-3 text-sm font-semibold hover:bg-white/10 transition-colors inline-block text-center"
+          >
             {ctaButtonText}
-          </button>
+          </a>
         </div>
       </div>
     </section>

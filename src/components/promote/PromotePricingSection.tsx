@@ -4,6 +4,7 @@ type PricingPlan = {
   price: string;
   features: string[];
   ctaText: string;
+  ctaUrl?: string;
   highlighted?: boolean;
   badgeText?: string;
 };
@@ -82,14 +83,15 @@ export default function PromotePricingSection({
                 ))}
               </ul>
 
-              <button
-                className={`mt-6 w-full rounded-xl py-3 text-sm font-semibold transition-colors ${
+              <a
+                href={plan.ctaUrl ?? '#promote-submit-form'}
+                className={`mt-6 w-full rounded-xl py-3 text-sm font-semibold transition-colors block text-center ${
                   plan.highlighted ? 'text-white' : 'text-[#222] border border-[#e2e2e2] bg-white hover:bg-[#f5f5f5]'
                 }`}
                 style={plan.highlighted ? { backgroundColor: accentColor } : undefined}
               >
                 {plan.ctaText}
-              </button>
+              </a>
             </article>
           ))}
         </div>

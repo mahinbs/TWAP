@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Navigation } from 'swiper/modules';
 import { ChevronLeft, ChevronRight, Star } from 'lucide-react';
@@ -57,9 +58,9 @@ export default function ProductReviewsSlider() {
                     <h2 className="text-3xl font-bold text-black font-['Manrope']">
                         {sTitle}
                     </h2>
-                    <a href="#" className="text-[#f25a1a] font-bold hover:underline flex items-center gap-1 text-sm md:text-base">
+                    <Link to="/directory" className="text-[#f25a1a] font-bold hover:underline flex items-center gap-1 text-sm md:text-base">
                         Explore More Products Review <i className="ri-arrow-right-up-line"></i>
-                    </a>
+                    </Link>
                 </div>
 
                 <div className="relative group">

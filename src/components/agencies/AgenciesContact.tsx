@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { siteContentApi } from '../../lib/api';
+import { supabase } from '../../lib/supabase';
 
 const AC_FALLBACK = {
     title: "Let's Connect",
@@ -14,6 +15,27 @@ export default function AgenciesContact() {
     });
     const sTitle = section?.title       ?? AC_FALLBACK.title;
     const sDesc  = section?.description ?? AC_FALLBACK.description;
+
+    const [form, setForm] = useState({ name: '', email: '', phone: '', company: '', message: '' });
+    const [status, setStatus] = useState<'idle' | 'sending' | 'ok' | 'err'>('idle');
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+        setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!form.name || !form.email) { setStatus('err'); return; }
+        setStatus('sending');
+        try {
+            await supabase.from('form_submissions').insert({
+                form_type: 'agency_consultation',
+                source_page: 'agencies',
+                payload: form,
+            });
+            setStatus('ok');
+            setForm({ name: '', email: '', phone: '', company: '', message: '' });
+        } catch { setStatus('err'); }
+    };
     const sideImage = section?.media_url ?? 'https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&auto=format&fit=crop&w=1740&q=80';
     return (
         <section className="bg-white pt-10 pb-24">
@@ -27,35 +49,37 @@ export default function AgenciesContact() {
                         <h2 className="text-4xl font-bold text-[#1A1B20] mb-4">{sTitle}</h2>
                         <p className="text-gray-500 mb-10">{sDesc}</p>
 
-                        <form className="space-y-6">
+                        <form className="space-y-6" onSubmit={handleSubmit}>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Your Name</label>
-                                    <input type="text" placeholder="e.g. John Smith" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-[#f25a1a] transition-colors" />
+                                    <input name="name" type="text" value={form.name} onChange={handleChange} required placeholder="e.g. John Smith" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-[#f25a1a] transition-colors" />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Email Address</label>
-                                    <input type="email" placeholder="e.g. john@email.com" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-[#f25a1a] transition-colors" />
+                                    <input name="email" type="email" value={form.email} onChange={handleChange} required placeholder="e.g. john@email.com" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-[#f25a1a] transition-colors" />
                                 </div>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Phone Number</label>
-                                    <input type="tel" placeholder="e.g. +1 222 444 66" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-[#f25a1a] transition-colors" />
+                                    <input name="phone" type="tel" value={form.phone} onChange={handleChange} placeholder="e.g. +1 222 444 66" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-[#f25a1a] transition-colors" />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Company Name</label>
-                                    <input type="text" placeholder="e.g. Exocor" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-[#f25a1a] transition-colors" />
+                                    <input name="company" type="text" value={form.company} onChange={handleChange} placeholder="e.g. Exocor" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-[#f25a1a] transition-colors" />
                                 </div>
                             </div>
                             <div>
                                 <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Your Message</label>
-                                <textarea rows={4} placeholder="Type here..." className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-[#f25a1a] transition-colors resize-none"></textarea>
+                                <textarea name="message" rows={4} value={form.message} onChange={handleChange} placeholder="Type here..." className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-[#f25a1a] transition-colors resize-none"></textarea>
                             </div>
 
-                            <button type="submit" className="w-full sm:w-auto bg-[#f25a1a] hover:bg-[#d14815] text-white px-8 py-4 rounded-full font-bold transition-all cursor-pointer shadow-lg shadow-[#f25a1a]/20">
-                                Schedule a Free Consultation
+                            <button type="submit" disabled={status === 'sending'} className="w-full sm:w-auto bg-[#f25a1a] hover:bg-[#d14815] text-white px-8 py-4 rounded-full font-bold transition-all cursor-pointer shadow-lg shadow-[#f25a1a]/20 disabled:opacity-60">
+                                {status === 'sending' ? 'Sending…' : 'Schedule a Free Consultation'}
                             </button>
+                            {status === 'ok' && <p className="text-green-600 text-sm">Thanks! We'll reach out soon.</p>}
+                            {status === 'err' && <p className="text-red-600 text-sm">Couldn't send. Please try again.</p>}
                         </form>
                     </div>
 
