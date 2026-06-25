@@ -220,8 +220,9 @@ export const appsApi = {
     category?: string;
     pricing?: string;
     featured?: boolean;
+    editorsChoice?: boolean;
     search?: string;
-    sort?: 'rating' | 'review_count' | 'name' | 'recent';
+    sort?: 'rating' | 'review_count' | 'reviews' | 'name' | 'recent' | 'newest';
     limit?: number;
   }): Promise<App[]> => {
     let q = supabase
@@ -232,11 +233,12 @@ export const appsApi = {
     if (opts?.category) q = q.eq('category', opts.category);
     if (opts?.pricing)  q = q.eq('pricing', opts.pricing);
     if (opts?.featured) q = q.eq('featured', true);
+    if (opts?.editorsChoice) q = q.eq('editors_choice', true);
     if (opts?.search)   q = q.or(`name.ilike.%${opts.search}%,description.ilike.%${opts.search}%,tagline.ilike.%${opts.search}%`);
 
-    if (opts?.sort === 'review_count') q = q.order('review_count', { ascending: false });
+    if (opts?.sort === 'review_count' || opts?.sort === 'reviews') q = q.order('review_count', { ascending: false });
     else if (opts?.sort === 'name')    q = q.order('name');
-    else if (opts?.sort === 'recent')  q = q.order('updated_at', { ascending: false });
+    else if (opts?.sort === 'recent' || opts?.sort === 'newest') q = q.order('created_at', { ascending: false });
     else                               q = q.order('rating', { ascending: false });
 
     if (opts?.limit) q = q.limit(opts.limit);
@@ -882,10 +884,22 @@ export const seoApi = {
 
 export const categoriesApi = {
   list: async (contentType?: string) => {
-    let q = supabase.from('categories').select('id,name,slug,content_type,description').order('name');
+    // Prefer the view (returns app_count); fall back to the table if the view doesn't exist.
+    let q = supabase
+      .from('categories_with_counts')
+      .select('id,name,slug,content_type,description,icon,image_url,accent_color,text_accent,sort_order,app_count')
+      .order('sort_order', { ascending: true })
+      .order('name');
     if (contentType) q = q.or(`content_type.eq.${contentType},content_type.eq.all`);
-    const { data } = await q;
-    return data ?? [];
+    const view = await q;
+    if (view.error) {
+      // Fall back to bare table
+      let q2 = supabase.from('categories').select('id,name,slug,content_type,description').order('name');
+      if (contentType) q2 = q2.or(`content_type.eq.${contentType},content_type.eq.all`);
+      const tbl = await q2;
+      return tbl.data ?? [];
+    }
+    return view.data ?? [];
   },
 
   bySlug: async (slug: string) => {

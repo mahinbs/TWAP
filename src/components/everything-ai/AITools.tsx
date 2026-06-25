@@ -1,6 +1,9 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { siteContentApi } from '../../lib/api';
+import { siteContentApi, appsApi } from '../../lib/api';
+
+const MAX_AI_TOOLS = 12;
 
 const AIT_FALLBACK_TITLE = 'Featured AI Tools';
 
@@ -78,6 +81,24 @@ const AITools = () => {
     });
     const sTitle = section?.title ?? AIT_FALLBACK_TITLE;
 
+    // Pull featured apps from DB (cap 12). Admin checks "Featured" on AppFormPage.
+    const { data: dbTools = [] } = useQuery({
+        queryKey: ['apps', 'ai-tools-featured', MAX_AI_TOOLS],
+        queryFn: () => appsApi.list({ featured: true, sort: 'rating', limit: MAX_AI_TOOLS }),
+    });
+
+    const renderTools = dbTools.length > 0
+        ? dbTools.map((a, i) => ({
+            id: a.id ?? `db-${i}`,
+            name: a.name,
+            category: a.category ?? '',
+            description: a.tagline ?? a.description ?? '',
+            rating: a.rating ?? 0,
+            image: a.logo_url ?? '',
+            slug: a.slug,
+        }))
+        : tools.map((t, i) => ({ ...t, id: `mock-${i}`, slug: '' }));
+
     const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
         const target = e.currentTarget;
         const rect = target.getBoundingClientRect();
@@ -106,11 +127,12 @@ const AITools = () => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {tools.map((tool, index) => (
-                        <div
-                            key={index}
+                    {renderTools.map((tool: any, index) => (
+                        <Link
+                            key={tool.id ?? index}
+                            to={tool.slug ? `/products/${tool.slug}` : '/directory'}
                             onMouseMove={handleMouseMove}
-                            className="group relative bg-white rounded-3xl p-6 transition-all duration-500 hover:-translate-y-1 shadow-sm hover:shadow-xl border border-gray-100 overflow-hidden"
+                            className="group relative bg-white rounded-3xl p-6 transition-all duration-500 hover:-translate-y-1 shadow-sm hover:shadow-xl border border-gray-100 overflow-hidden block"
                         >
                             {/* Spotlight Effect Layer - Subtle for light theme */}
                             <div
@@ -122,8 +144,12 @@ const AITools = () => {
 
                             <div className="relative z-10 flex gap-5">
                                 {/* Logo with sophisticated shadow effect */}
-                                <div className={`w-20 h-20 rounded-2xl flex-shrink-0 overflow-hidden shadow-sm transition-shadow duration-500 ${tool.shadow} ${tool.color} flex items-center justify-center group-hover:scale-105 transform`}>
-                                    <img src={tool.logo} alt={tool.name} className="w-full h-full object-cover p-0" />
+                                <div className={`w-20 h-20 rounded-2xl flex-shrink-0 overflow-hidden shadow-sm transition-shadow duration-500 ${tool.shadow ?? ''} ${tool.color ?? ''} flex items-center justify-center group-hover:scale-105 transform bg-gray-50`}>
+                                    {(tool.image || tool.logo) ? (
+                                      <img src={tool.image ?? tool.logo} alt={tool.name} className="w-full h-full object-cover p-0" />
+                                    ) : (
+                                      <span className="text-2xl font-bold text-brand-dark">{tool.name?.[0] ?? '·'}</span>
+                                    )}
                                 </div>
 
                                 <div className="flex-grow flex flex-col justify-between py-1">
@@ -143,13 +169,13 @@ const AITools = () => {
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center text-xs font-bold text-gray-500 group-hover:text-brand-dark transition-colors cursor-pointer w-max">
+                                    <div className="flex items-center text-xs font-bold text-gray-500 group-hover:text-brand-dark transition-colors w-max">
                                         View Details
                                         <i className="ri-arrow-right-line ml-1 transition-transform group-hover:translate-x-1"></i>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </Link>
                     ))}
                 </div>
             </div>

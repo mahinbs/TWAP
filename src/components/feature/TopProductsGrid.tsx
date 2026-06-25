@@ -1,41 +1,20 @@
 import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from '@tanstack/react-query';
-import { siteContentApi } from '../../lib/api';
+import { siteContentApi, appsApi } from '../../lib/api';
 
 const TPG_FALLBACK_TITLE = 'All Products in Artificial Intelligence (57 results)';
 
-// Mock Data for the Grid (Aligned with reference image style)
-const gridProducts = [
-    {
-        id: 301,
-        name: "UX Pilot Alternative",
-        description: "Advanced conversational AI with enhanced capabilities",
-        image: "https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&w=600&h=400&q=80",
-        buttonText: "Explore"
-    },
-    {
-        id: 302,
-        name: "AI Design Assistant",
-        description: "Generate stunning visuals with artificial intelligence",
-        image: "https://images.unsplash.com/photo-1563986768494-4dee2763ff3f?auto=format&fit=crop&w=600&h=400&q=80",
-        buttonText: "Explore"
-    },
-    {
-        id: 303,
-        name: "AI Code Helper",
-        description: "Boost productivity with intelligent code suggestions",
-        image: "https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?auto=format&fit=crop&w=600&h=400&q=80",
-        buttonText: "Explore"
-    },
-    {
-        id: 304,
-        name: "Smart Analytics",
-        description: "AI-powered insights for better decision making",
-        image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=600&h=400&q=80",
-        buttonText: "Explore"
-    }
+// Mock fallback used only when no apps exist in DB
+const fallbackGridProducts = [
+    { id: '301', slug: '', name: "UX Pilot Alternative", description: "Advanced conversational AI with enhanced capabilities", image: "https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&w=600&h=400&q=80", buttonText: "Explore" },
+    { id: '302', slug: '', name: "AI Design Assistant", description: "Generate stunning visuals with artificial intelligence", image: "https://images.unsplash.com/photo-1563986768494-4dee2763ff3f?auto=format&fit=crop&w=600&h=400&q=80", buttonText: "Explore" },
+    { id: '303', slug: '', name: "AI Code Helper", description: "Boost productivity with intelligent code suggestions", image: "https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?auto=format&fit=crop&w=600&h=400&q=80", buttonText: "Explore" },
+    { id: '304', slug: '', name: "Smart Analytics", description: "AI-powered insights for better decision making", image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=600&h=400&q=80", buttonText: "Explore" }
 ];
+
+const MAX_PER_CATEGORY = 10;
+type Highlight = 'Trending' | "Editor's Choice" | 'New Arrivals';
 
 // Filter Data Structure
 const filters = [
@@ -67,7 +46,38 @@ export default function TopProductsGrid() {
     const [activePlatform, setActivePlatform] = useState("All Platforms");
     const [openFilter, setOpenFilter] = useState<string | null>(null);
     const [activeFilters, setActiveFilters] = useState<Record<string, string>>({});
+    const [activeHighlight, setActiveHighlight] = useState<Highlight>('Trending');
     const filterRef = useRef<HTMLDivElement>(null);
+
+    // Pull apps per highlight category (max 10 each)
+    const { data: trendingApps = [] } = useQuery({
+        queryKey: ['apps', 'top-products', 'trending'],
+        queryFn: () => appsApi.list({ featured: true, sort: 'reviews', limit: MAX_PER_CATEGORY }),
+    });
+    const { data: editorsChoiceApps = [] } = useQuery({
+        queryKey: ['apps', 'top-products', 'editors-choice'],
+        queryFn: () => appsApi.list({ editorsChoice: true, sort: 'rating', limit: MAX_PER_CATEGORY }),
+    });
+    const { data: newArrivalsApps = [] } = useQuery({
+        queryKey: ['apps', 'top-products', 'new-arrivals'],
+        queryFn: () => appsApi.list({ sort: 'newest', limit: MAX_PER_CATEGORY }),
+    });
+
+    const sourceApps =
+        activeHighlight === 'Trending'         ? trendingApps :
+        activeHighlight === "Editor's Choice"  ? editorsChoiceApps :
+                                                  newArrivalsApps;
+
+    const gridProducts = sourceApps.length > 0
+        ? sourceApps.map(a => ({
+            id: a.id,
+            slug: a.slug,
+            name: a.name,
+            description: a.tagline ?? a.description ?? '',
+            image: a.logo_url ?? '',
+            buttonText: 'View Details',
+        }))
+        : fallbackGridProducts;
 
     const { data: section } = useQuery({
         queryKey: ['page-section', 'top-products', 'grid'],
@@ -196,9 +206,32 @@ export default function TopProductsGrid() {
 
             {/* 3. Content Area */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                <h2 className="text-2xl font-medium text-[#1F2853] mb-8">
+                <h2 className="text-2xl font-medium text-[#1F2853] mb-6">
                     {sTitle}
                 </h2>
+
+                {/* Highlight category tabs — admin controls via apps.featured / editors_choice / newest */}
+                <div className="flex flex-wrap gap-2 mb-8">
+                    {(['Trending', "Editor's Choice", 'New Arrivals'] as Highlight[]).map((h) => {
+                        const count = h === 'Trending' ? trendingApps.length
+                                    : h === "Editor's Choice" ? editorsChoiceApps.length
+                                    : newArrivalsApps.length;
+                        return (
+                            <button
+                                key={h}
+                                type="button"
+                                onClick={() => setActiveHighlight(h)}
+                                className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-all ${
+                                    activeHighlight === h
+                                        ? 'bg-[#1F2853] text-white shadow-md'
+                                        : 'bg-white border border-gray-200 text-[#1F2853] hover:border-[#1F2853]'
+                                }`}
+                            >
+                                {h} <span className="opacity-60 ml-1">({Math.min(count, MAX_PER_CATEGORY)})</span>
+                            </button>
+                        );
+                    })}
+                </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Main Product Grid (Left 2 Columns) */}
@@ -214,7 +247,10 @@ export default function TopProductsGrid() {
                                 <h3 className="font-bold text-lg text-[#1F2853] mb-2">{product.name}</h3>
                                 <p className="text-sm text-gray-500 mb-6 min-h-[40px] line-clamp-2">{product.description}</p>
 
-                                <Link to="/top-10-project-management-software-2026" className="block w-full py-3 bg-brand-lime text-brand-dark text-center rounded-lg text-sm font-bold hover:brightness-90 transition-colors shadow-lg hover:shadow-xl translate-y-0 hover:-translate-y-0.5 active:translate-y-0">
+                                <Link
+                                    to={product.slug ? `/products/${product.slug}` : '/directory'}
+                                    className="block w-full py-3 bg-brand-lime text-brand-dark text-center rounded-lg text-sm font-bold hover:brightness-90 transition-colors shadow-lg hover:shadow-xl translate-y-0 hover:-translate-y-0.5 active:translate-y-0"
+                                >
                                     {product.buttonText}
                                 </Link>
                             </div>

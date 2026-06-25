@@ -1,6 +1,7 @@
 // import { useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { siteContentApi } from '../../lib/api';
+import { siteContentApi, categoriesApi } from '../../lib/api';
 
 const AID_FALLBACK = {
     title_line1: 'Verified AI Service',
@@ -55,6 +56,24 @@ const AIDirectories = () => {
     const tLine1 = c.title_line1 ?? AID_FALLBACK.title_line1;
     const tHi    = c.title_highlight ?? AID_FALLBACK.title_highlight;
 
+    // AI service categories — admin manages via Admin → Categories (content_type='apps' or 'all')
+    const { data: dbCategories = [] } = useQuery({
+        queryKey: ['categories', 'apps-for-directories'],
+        queryFn: () => categoriesApi.list('apps'),
+    });
+    const renderCategories = dbCategories.length > 0
+        ? dbCategories.slice(0, 8).map((cat: any, i: number) => ({
+            slug: cat.slug,
+            title: cat.name,
+            description: cat.description ?? '',
+            count: cat.app_count ? `${cat.app_count}+` : '',
+            image: cat.image_url ?? refinedDirectories[i % refinedDirectories.length].image,
+            accent: refinedDirectories[i % refinedDirectories.length].accent,
+            textAccent: refinedDirectories[i % refinedDirectories.length].textAccent,
+            icon: cat.icon ?? refinedDirectories[i % refinedDirectories.length].icon,
+        }))
+        : refinedDirectories.map(d => ({ ...d, slug: '' }));
+
     const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
         const card = e.currentTarget;
         const rect = card.getBoundingClientRect();
@@ -103,12 +122,13 @@ const AIDirectories = () => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 perspective-container" style={{ perspective: '2000px' }}>
-                    {refinedDirectories.map((item, index) => (
-                        <div
-                            key={index}
+                    {renderCategories.map((item: any, index) => (
+                        <Link
+                            key={item.slug ?? index}
+                            to={item.slug ? `/categories/${item.slug}` : '/directory'}
                             onMouseMove={handleMouseMove}
                             onMouseLeave={handleMouseLeave}
-                            className="group relative h-[450px] rounded-[2rem] cursor-pointer shadow-lg hover:shadow-2xl transition-all duration-200 ease-out preserve-3d"
+                            className="group relative h-[450px] rounded-[2rem] cursor-pointer shadow-lg hover:shadow-2xl transition-all duration-200 ease-out preserve-3d block"
                             style={{
                                 perspective: '1000px',
                                 transformStyle: 'preserve-3d',
@@ -166,7 +186,7 @@ const AIDirectories = () => {
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </Link>
                     ))}
                 </div>
             </div>

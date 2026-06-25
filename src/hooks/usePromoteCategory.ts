@@ -38,7 +38,9 @@ export function usePromoteLanding() {
 
   const content = (heroSection?.content ?? {}) as Record<string, string>;
 
-  const cards = categories.map(c => ({
+  // Cap at 6 categories on the landing page
+  const MAX_PROMOTE_CARDS = 6;
+  const cards = categories.slice(0, MAX_PROMOTE_CARDS).map(c => ({
     slug: c.slug,
     icon: c.icon ?? 'ri-star-line',
     accent: c.top_bar_bg ?? c.accent ?? '#ef4d0a',
