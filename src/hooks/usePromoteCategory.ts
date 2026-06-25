@@ -2,8 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { promoteApi, siteContentApi } from '../lib/api';
 import type { PromoteCategoryTheme } from '../components/promote/PromoteCategoryHero';
 
-const SLUGS = ['web-mobile-apps', 'ai-tools', 'agencies-service-providers'] as const;
-export type PromoteCategorySlug = (typeof SLUGS)[number];
+export type PromoteCategorySlug = string;
 
 const DEFAULT_PREVIEW_CARD = {
   icon: 'ri-smartphone-line',
@@ -280,5 +279,5 @@ export function usePromoteCategory(slug: string) {
 }
 
 export function isValidPromoteCategory(slug: string): slug is PromoteCategorySlug {
-  return SLUGS.includes(slug as PromoteCategorySlug);
+  return typeof slug === 'string' && slug.length > 0 && /^[a-z0-9-]+$/.test(slug);
 }
