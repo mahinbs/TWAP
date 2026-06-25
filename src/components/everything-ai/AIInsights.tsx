@@ -1,6 +1,7 @@
 import { useRef, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { siteContentApi } from '../../lib/api';
+import { siteContentApi, blogsApi } from '../../lib/api';
 
 const AII_FALLBACK = {
     title_prefix: 'Catch Up with',
@@ -73,6 +74,34 @@ const AIInsights = () => {
     const c = (section?.content ?? {}) as Record<string, string>;
     const tPre = c.title_prefix    ?? AII_FALLBACK.title_prefix;
     const tHi  = c.title_highlight ?? AII_FALLBACK.title_highlight;
+
+    // Pull latest blog posts so cards open real /blog/:slug pages
+    const { data: posts = [] } = useQuery({
+        queryKey: ['ai-insights-posts'],
+        queryFn: () => blogsApi.recent(6),
+    });
+    const LAYOUTS = [
+        { colSpan: 'md:col-span-2', rowSpan: 'md:row-span-1' },
+        { colSpan: 'md:col-span-1', rowSpan: 'md:row-span-1' },
+        { colSpan: 'md:col-span-1', rowSpan: 'md:row-span-2', large: true },
+        { colSpan: 'md:col-span-1', rowSpan: 'md:row-span-1' },
+        { colSpan: 'md:col-span-1', rowSpan: 'md:row-span-1' },
+        { colSpan: 'md:col-span-1', rowSpan: 'md:row-span-1' },
+    ];
+    const renderInsights = posts.length > 0
+        ? posts.slice(0, 6).map((p: any, i: number) => ({
+            slug: p.slug,
+            title: p.title,
+            excerpt: p.excerpt ?? '',
+            image: p.hero_image_url ?? insights[i % insights.length].image,
+            tag: (p.category ?? p.resource_tab ?? 'INSIGHT').toString().toUpperCase(),
+            readTime: p.read_time_minutes ? `${p.read_time_minutes} min read` : (insights[i % insights.length].readTime),
+            colSpan: LAYOUTS[i % LAYOUTS.length].colSpan,
+            rowSpan: LAYOUTS[i % LAYOUTS.length].rowSpan,
+            large: (LAYOUTS[i % LAYOUTS.length] as any).large ?? false,
+        }))
+        : insights.map(i => ({ ...i, slug: '' }));
+
     const [isVisible, setIsVisible] = useState(false);
     const sectionRef = useRef<HTMLDivElement>(null);
 
@@ -110,19 +139,20 @@ const AIInsights = () => {
                         </p>
                     </div>
 
-                    <button className={`px-8 py-3 rounded-full bg-white border border-gray-200 hover:bg-brand-dark hover:text-white transition-all font-bold text-brand-dark flex items-center gap-2 group shadow-sm transform duration-700 delay-200 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+                    <Link to="/blog" className={`px-8 py-3 rounded-full bg-white border border-gray-200 hover:bg-brand-dark hover:text-white transition-all font-bold text-brand-dark flex items-center gap-2 group shadow-sm transform duration-700 delay-200 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
                         View All Articles
                         <i className="ri-arrow-right-line group-hover:translate-x-1 transition-transform"></i>
-                    </button>
+                    </Link>
                 </div>
 
                 {/* Bento Grid Layout */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[300px]">
 
-                    {insights.map((item, index) => (
-                        <div
-                            key={index}
-                            className={`group relative rounded-[2rem] overflow-hidden bg-gray-100 cursor-pointer shadow-sm hover:shadow-2xl ${item.colSpan} ${item.rowSpan} transform transition-all duration-700 ease-out`}
+                    {renderInsights.map((item: any, index) => (
+                        <Link
+                            key={item.slug || index}
+                            to={item.slug ? `/blog/${item.slug}` : '#'}
+                            className={`group relative rounded-[2rem] overflow-hidden bg-gray-100 cursor-pointer shadow-sm hover:shadow-2xl ${item.colSpan} ${item.rowSpan} transform transition-all duration-700 ease-out block`}
                             style={{
                                 transitionDelay: `${index * 100}ms`,
                                 opacity: isVisible ? 1 : 0,
@@ -165,7 +195,7 @@ const AIInsights = () => {
                             <div className="absolute bottom-6 right-6 w-10 h-10 rounded-full bg-white text-brand-dark flex items-center justify-center translate-y-20 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
                                 <i className="ri-arrow-right-up-line"></i>
                             </div>
-                        </div>
+                        </Link>
                     ))}
 
                 </div>
