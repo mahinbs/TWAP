@@ -9,6 +9,7 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { agenciesApi } from "../../lib/api";
 import { siteContentApi } from "../../lib/api";
+import { sectionBgStyle } from "../../lib/sectionGradient";
 
 interface Agency {
   id: number;
@@ -142,7 +143,7 @@ export default function TopAgency() {
   const activeAgency = agencies[activeIndex] || agencies[0];
 
   return (
-    <section className="bg-[#f7f5ef] py-16">
+    <section className="py-16" style={sectionBgStyle(c, { defaultFrom: '#f7f5ef', defaultTo: '#f7f5ef' })}>
       <style>{`
         .agency-card {
           border: 4px solid transparent;

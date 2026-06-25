@@ -6,6 +6,7 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { siteContentApi } from '../../lib/api';
+import { readSectionGradient } from '../../lib/sectionGradient';
 
 interface Review { id: number; name: string; role: string; topic: string; image: string; text: string }
 
@@ -51,6 +52,7 @@ export default function ExpertVerdict() {
   const title       = section?.title       ?? FALLBACK_TITLE;
   const description = section?.description ?? FALLBACK_DESCRIPTION;
   const badge = (c.badge as string) ?? FALLBACK_BADGE;
+  const { from: cardFrom, to: cardTo } = readSectionGradient(c, { defaultFrom: '#f7f5ef', defaultTo: '#ffffff' });
   const reviews: Review[] = Array.isArray(c.reviews) && (c.reviews as Review[]).length > 0
     ? (c.reviews as Review[])
     : FALLBACK_REVIEWS;
@@ -89,7 +91,7 @@ export default function ExpertVerdict() {
             >
               {reviews.map((review) => (
                 <SwiperSlide key={review.id}>
-                  <div className="bg-[#f7f5ef] p-8 h-full min-h-[320px] flex flex-col justify-center">
+                  <div className="p-8 h-full min-h-[320px] flex flex-col justify-center" style={{ background: `linear-gradient(to bottom right, ${cardFrom}, ${cardTo})` }}>
                     <div className="inline-block bg-[#1F2853] text-white px-4 py-2 rounded-md text-sm font-medium mb-6 w-fit">
                       {badge}
                     </div>

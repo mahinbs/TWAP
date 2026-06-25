@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { appsApi, siteContentApi } from '../../lib/api';
+import { readSectionGradient } from '../../lib/sectionGradient';
+import { Link } from 'react-router-dom';
 
 const RL_FALLBACK_TITLE = 'The Web App Pro Ratings Leaderboard';
 
@@ -306,6 +308,16 @@ export default function RatingsLeaderboard() {
   const sTitle = section?.title ?? RL_FALLBACK_TITLE;
   const viewAllLabel = String(content.button_view_all ?? 'View All App Ratings');
   const showLessLabel = String(content.button_show_less ?? 'Show Less');
+  const sidebarTitle = String(content.sidebar_title ?? 'Promote Your App with Us');
+  const sidebarBody = String(content.sidebar_body ?? 'Get featured on the homepage, in our newsletter, and at the top of your category.');
+  const sidebarCtaText = String(content.sidebar_cta_text ?? 'Promote My App');
+  const sidebarCtaUrl = String(content.sidebar_cta_url ?? '/promote');
+  const { from: sidebarFrom, to: sidebarTo } = readSectionGradient(content, {
+    fromKey: 'sidebar_gradient_from',
+    toKey: 'sidebar_gradient_to',
+    defaultFrom: '#1F2853',
+    defaultTo: '#151d3f',
+  });
 
   const renderStars = (rating: number) => {
     const fullStars = Math.floor(rating);
@@ -379,38 +391,30 @@ export default function RatingsLeaderboard() {
             <div
               className="rounded-xl sm:rounded-2xl border border-white/20 hover:border-white/30 transition-all duration-300 lg:h-full flex flex-col relative p-4 sm:p-5"
               style={{
-                background: 'linear-gradient(135deg, rgba(31, 40, 83, 0.95) 0%, rgba(31, 40, 83, 0.85) 100%)',
+                background: `linear-gradient(135deg, ${sidebarFrom} 0%, ${sidebarTo} 100%)`,
                 backdropFilter: 'blur(20px)',
                 border: '1px solid rgba(255, 255, 255, 0.2)',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
               }}
             >
               <h3 className="text-xl sm:text-2xl font-bold text-white mb-3 sm:mb-4 font-manrope">
-                Promote Your App with Us
+                {sidebarTitle}
               </h3>
-              <p className="text-white/80 text-sm sm:text-base mb-4 sm:mb-6 font-poppins">
-                Get featured on the homepage, in our newsletter, and at the top of your category.
+              <p className="text-white/80 text-sm sm:text-base mb-4 sm:mb-6 font-poppins flex-1">
+                {sidebarBody}
               </p>
 
-              {/* 16:9 Image Placeholder */}
-              <div className="flex-1 min-h-[180px] sm:min-h-[200px] lg:min-h-[250px] mb-4 sm:mb-3">
-                <img
-                  src="https://static.readdy.ai/image/19a52a0e7cd11d182286c46a940c9855/3a498c2854159ba8aef56ee2066bbcd2.jpeg"
-                  alt="Promote your app"
-                  className="w-full h-full object-cover rounded-lg"
-                />
-              </div>
-
               <div className="mt-auto w-full">
-                <button
-                  className="w-full text-[#1F2853] py-3 sm:py-4 px-5 sm:px-6 rounded-full font-semibold transition-all duration-300 whitespace-nowrap font-poppins hover:-translate-y-1 hover:shadow-lg text-sm sm:text-base"
+                <Link
+                  to={sidebarCtaUrl}
+                  className="block w-full text-center text-[#1F2853] py-3 sm:py-4 px-5 sm:px-6 rounded-full font-semibold transition-all duration-300 whitespace-nowrap font-poppins hover:-translate-y-1 hover:shadow-lg text-sm sm:text-base"
                   style={{
                     background: 'linear-gradient(135deg, #b9ed2a 0%, #a5d426 50%, #91bb22 100%)',
-                    boxShadow: '0 4px 15px rgba(185, 237, 42, 0.3)'
+                    boxShadow: '0 4px 15px rgba(185, 237, 42, 0.3)',
                   }}
                 >
-                  Promote My App
-                </button>
+                  {sidebarCtaText}
+                </Link>
               </div>
             </div>
           </div>

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { siteContentApi } from "../../lib/api";
+import { sectionBgStyle } from "../../lib/sectionGradient";
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Autoplay } from 'swiper/modules';
 import 'swiper/css';
@@ -132,7 +133,7 @@ export default function FounderStories() {
   ];
 
   return (
-    <section className="py-16 sm:py-20 lg:py-24 bg-gradient-to-br from-[#f7f5ef] via-white to-[#f7f5ef] relative overflow-hidden">
+    <section className="py-16 sm:py-20 lg:py-24 relative overflow-hidden" style={sectionBgStyle(c, { defaultFrom: '#f7f5ef', defaultTo: '#f7f5ef', direction: 'to bottom right' })}>
       {/* Background decorative elements */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute top-20 left-10 w-72 h-72 bg-[#f25a1a]/20 rounded-full blur-3xl"></div>

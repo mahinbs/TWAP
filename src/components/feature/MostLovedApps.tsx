@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { appsApi, siteContentApi } from "../../lib/api";
+import { sectionBgStyle } from "../../lib/sectionGradient";
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay } from 'swiper/modules';
 import 'swiper/css';
@@ -141,7 +142,10 @@ export default function MostLovedApps() {
           backgroundRepeat: "repeat",
         }}
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-white/90 via-transparent to-white/80 h-full w-full py-6 z-[1]"></div>
+      <div
+        className="absolute inset-0 z-[1]"
+        style={sectionBgStyle(c, { defaultFrom: '#ffffff', defaultTo: '#f7f5ef', direction: 'to bottom' })}
+      />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-[2]">
         {/* Header */}
         <div className="text-center mb-12 reveal-fade-up">

@@ -14,6 +14,7 @@ export default function AgenciesContact() {
     });
     const sTitle = section?.title       ?? AC_FALLBACK.title;
     const sDesc  = section?.description ?? AC_FALLBACK.description;
+    const sideImage = section?.media_url ?? 'https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&auto=format&fit=crop&w=1740&q=80';
     return (
         <section className="bg-white pt-10 pb-24">
             <div className="max-w-7xl mx-auto px-6 lg:px-8">
@@ -61,7 +62,7 @@ export default function AgenciesContact() {
                     {/* Image/Info Section */}
                     <div className="w-full lg:w-1/2 relative bg-[#1B1B36]/50 min-h-[500px]">
                         <img
-                            src="https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&auto=format&fit=crop&w=1740&q=80"
+                            src={sideImage}
                             alt="Meeting"
                             className="absolute inset-0 w-full h-full object-cover opacity-80 mix-blend-overlay"
                         />

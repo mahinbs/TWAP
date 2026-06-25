@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { siteContentApi } from '../../lib/api';
+import { readSectionGradient } from '../../lib/sectionGradient';
 
 const FALLBACK = {
   badge: 'Strategic Partnerships',
@@ -23,10 +24,15 @@ export default function AgenciesHero() {
   const description = section?.description ?? FALLBACK.description;
   const ctaText = section?.cta_text ?? FALLBACK.cta.text;
   const ctaUrl  = section?.cta_url  ?? FALLBACK.cta.url;
+  const { from: gradientFrom, to: gradientTo } = readSectionGradient(c, {
+    defaultFrom: '#1B1B36',
+    defaultTo: '#56122D',
+  });
 
   return (
     <section
-      className="relative py-14 md:py-20 lg:py-32 min-h-screen flex items-center justify-center bg-gradient-to-b from-[#1B1B36_45%] to-[#56122D]"
+      className="relative py-14 md:py-20 lg:py-32 min-h-screen flex items-center justify-center"
+      style={{ background: `linear-gradient(to bottom, ${gradientFrom} 45%, ${gradientTo})` }}
     >
       <div className="absolute inset-0 bg-black/20"></div>
 

@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { siteContentApi, blogsApi } from '../../lib/api';
+import { sectionBgStyle } from '../../lib/sectionGradient';
 
 const FALLBACK_TITLE = 'Latest in AI & App Development';
 
@@ -35,6 +36,7 @@ export default function NewsSection() {
     },
   });
   const sTitle = section?.title ?? FALLBACK_TITLE;
+  const c = (section?.content ?? {}) as Record<string, unknown>;
 
   const [fallbackArticles] = useState<NewsArticle[]>([
     {
@@ -154,7 +156,7 @@ export default function NewsSection() {
   };
 
   return (
-    <section className="py-12 bg-gradient-to-br from-[#f7f5ef] to-white">
+    <section className="py-12" style={sectionBgStyle(c, { defaultFrom: '#f7f5ef', defaultTo: '#ffffff' })}>
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
         <div className="text-center mb-8">
           <h2 className="text-3xl md:text-4xl font-bold text-[#1F2853] mb-4" style={{ fontFamily: 'Manrope, sans-serif' }}>

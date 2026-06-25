@@ -73,7 +73,12 @@ export default function TopProductsGrid() {
         queryKey: ['page-section', 'top-products', 'grid'],
         queryFn: () => siteContentApi.section('top-products', 'grid'),
     });
-    const sTitle = section?.title ?? TPG_FALLBACK_TITLE;
+    const { data: toolsGridSection } = useQuery({
+        queryKey: ['page-section', 'tools', 'grid'],
+        queryFn: () => siteContentApi.section('tools', 'grid'),
+    });
+    const sTitle = section?.title ?? toolsGridSection?.title ?? TPG_FALLBACK_TITLE;
+    const spotlightImage = section?.media_url ?? toolsGridSection?.media_url ?? '/assets/product_spotlight.png';
 
     // Close filters when clicking outside
     useEffect(() => {
@@ -237,7 +242,7 @@ export default function TopProductsGrid() {
                                 {/* Ad Asset */}
                                 <div className="w-full aspect-square rounded-2xl mb-8 overflow-hidden relative group cursor-pointer border border-white/10">
                                     <img
-                                        src="/assets/product_spotlight.png"
+                                        src={spotlightImage}
                                         alt="Promote your product"
                                         className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
                                     />

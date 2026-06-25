@@ -2,6 +2,7 @@
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { siteContentApi } from '../../lib/api';
+import { sectionBgStyle } from '../../lib/sectionGradient';
 import Button from '../base/Button';
 
 const FALLBACK = {
@@ -28,7 +29,7 @@ export default function CTASection() {
   const featuresLine = c.features_line ?? FALLBACK.features_line;
 
   return (
-    <div className="bg-gradient-to-r from-orange-500 to-orange-600 py-16">
+    <div className="py-16" style={sectionBgStyle(c, { defaultFrom: '#f97316', defaultTo: '#ea580c', direction: 'to right' })}>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
           {title}

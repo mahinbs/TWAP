@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { siteContentApi } from '../../lib/api';
+import { readSectionGradient } from '../../lib/sectionGradient';
 
 const FALLBACK = {
   title_line1: 'Discover the Best AI Tools & Apps –',
@@ -35,6 +36,10 @@ export default function HeroSection() {
   const cta2Url  = section?.cta_url_2  ?? FALLBACK.cta2.url;
   const cta3Text = c.cta_3_text ?? FALLBACK.cta3.text;
   const cta3Url  = c.cta_3_url  ?? FALLBACK.cta3.url;
+  const { from: gradientFrom, to: gradientTo } = readSectionGradient(c, {
+    defaultFrom: '#1B1B36',
+    defaultTo: '#56122D',
+  });
 
   const handleSearch = () => {
     if (searchQuery.trim()) navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
@@ -42,11 +47,11 @@ export default function HeroSection() {
 
   return (
     <section
-      className="relative py-14 md:py-20 lg:py-32 min-h-screen flex items-center justify-center bg-gradient-to-b from-[#1B1B36_45%] to-[#56122D]"
+      className="relative py-14 md:py-20 lg:py-32 min-h-screen flex items-center justify-center"
       style={{
-        // backgroundImage: `url('https://static.readdy.ai/image/19a52a0e7cd11d182286c46a940c9855/d888d3e6c6140bd2ef82a28fa63739fe.jpeg')`,
+        background: `linear-gradient(to bottom, ${gradientFrom} 45%, ${gradientTo})`,
         backgroundSize: 'cover',
-        backgroundPosition: 'center'
+        backgroundPosition: 'center',
       }}
     >
       <div className="absolute inset-0 bg-black/20"></div>

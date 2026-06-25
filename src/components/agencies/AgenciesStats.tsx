@@ -100,7 +100,14 @@ export default function AgenciesStats() {
         queryKey: ['page-section', 'agencies', 'stats'],
         queryFn: () => siteContentApi.section('agencies', 'stats'),
     });
+    const { data: bannerSection } = useQuery({
+        queryKey: ['page-section', 'agencies', 'stats_banner'],
+        queryFn: () => siteContentApi.section('agencies', 'stats_banner'),
+    });
     const sTitle = section?.title ?? AS_FALLBACK_TITLE;
+    const bannerImage = bannerSection?.media_url ?? 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?ixlib=rb-4.0.3&auto=format&fit=crop&q=80&w=2070';
+    const bannerHeading = bannerSection?.title ?? 'Helping Fast-moving Innovators Scale With Purpose';
+    const bannerCta = bannerSection?.cta_text ?? 'Set an Appointment';
 
     const toggleAccordion = (index: number) => {
         setOpenIndex(openIndex === index ? null : index);
@@ -137,11 +144,11 @@ export default function AgenciesStats() {
                                 <i className="ri-bar-chart-groupped-fill text-white"></i>
                             </div>
                             <h3 className="text-2xl md:text-4xl font-bold max-w-xl mb-2 drop-shadow-lg">
-                                Helping Fast-moving Innovators Scale With Purpose
+                                {bannerHeading}
                             </h3>
                         </div>
                         <button className="bg-[#f25a1a] hover:bg-[#d14815] text-white px-6 py-3 rounded-full font-semibold transition-all whitespace-nowrap cursor-pointer flex items-center gap-2">
-                            Set an Appointment
+                            {bannerCta}
                             <i className="ri-arrow-right-up-line"></i>
                         </button>
                     </div>

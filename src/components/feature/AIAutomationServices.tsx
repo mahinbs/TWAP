@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { siteContentApi } from "../../lib/api";
+import { readSectionGradient } from "../../lib/sectionGradient";
 import { supabase } from "../../lib/supabase";
 
 const FALLBACK = {
@@ -58,6 +59,12 @@ export default function AIAutomationServices() {
   const titleHighlight = c.title_highlight ?? FALLBACK.title_highlight;
   const titleSuffix    = c.title_suffix    ?? FALLBACK.title_suffix;
   const description    = section?.description ?? FALLBACK.description;
+  const rightTitle     = c.right_title ?? "The Future Forged in Precision.";
+  const rightDescription = c.right_description ?? "By merging AI technology with innovation, businesses are unlocking smarter solutions that reduce costs, enhance performance, and shape the future of automation.";
+  const { from: panelFrom, to: panelTo } = readSectionGradient(c, {
+    defaultFrom: "#1F2853",
+    defaultTo: "#0a0f20",
+  });
 
   return (
     <section className="bg-[#f7f5ef] py-16">
@@ -168,7 +175,10 @@ export default function AIAutomationServices() {
           </div>
 
           {/* Right Column - Dark Background */}
-          <div className="bg-gradient-to-br from-[#1F2853] to-[#0a0f20] rounded-3xl lg:rounded-r-3xl lg:rounded-l-none p-8 lg:p-12 relative overflow-hidden mt-6 lg:mt-0">
+          <div
+            className="rounded-3xl lg:rounded-r-3xl lg:rounded-l-none p-8 lg:p-12 relative overflow-hidden mt-6 lg:mt-0"
+            style={{ background: `linear-gradient(to bottom right, ${panelFrom}, ${panelTo})` }}
+          >
             {/* Abstract geometric pattern */}
             <div
               className="absolute inset-0 opacity-10"
@@ -187,16 +197,14 @@ export default function AIAutomationServices() {
                   className="text-3xl lg:text-4xl font-bold text-white mb-6"
                   style={{ fontFamily: "Manrope, sans-serif" }}
                 >
-                  The Future Forged in Precision.
+                  {rightTitle}
                 </h3>
 
                 <p
                   className="text-lg text-white/80 mb-10 leading-relaxed"
                   style={{ fontFamily: "Poppins, sans-serif" }}
                 >
-                  By merging AI technology with innovation, businesses are
-                  unlocking smarter solutions that reduce costs, enhance
-                  performance, and shape the future of automation.
+                  {rightDescription}
                 </p>
 
                 {/* Circular Concept Elements */}

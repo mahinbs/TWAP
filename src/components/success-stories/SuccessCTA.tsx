@@ -15,6 +15,7 @@ const SuccessCTA = () => {
     const c = (section?.content ?? {}) as Record<string, string>;
     const tPre = c.title_prefix    ?? SCTA_FALLBACK.title_prefix;
     const tHi  = c.title_highlight ?? SCTA_FALLBACK.title_highlight;
+    const ctaImage = section?.media_url ?? 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&q=80&w=600';
     return (
         <section className="py-20 px-6">
             <div className="max-w-7xl mx-auto rounded-[3rem] bg-black relative overflow-hidden text-white p-12 md:p-20 flex flex-col md:flex-row items-center justify-between gap-12">
@@ -55,7 +56,7 @@ const SuccessCTA = () => {
                         {/* Mic Icon/Image Placeholder - Using a high quality image or icon stack */}
                         <div className="relative z-10 transform rotate-12 hover:rotate-6 transition-transform duration-700">
                             <img
-                                src="https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&q=80&w=600"
+                                src={ctaImage}
                                 alt="Microphone"
                                 className="w-full h-full object-cover rounded-3xl shadow-2xl grayscale hover:grayscale-0 transition-all duration-500"
                                 style={{ maskImage: 'linear-gradient(to bottom, black 80%, transparent 100%)' }}

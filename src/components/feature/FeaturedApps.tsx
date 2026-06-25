@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { appsApi, siteContentApi } from '../../lib/api';
+import { sectionBgStyle } from '../../lib/sectionGradient';
 
 const FALLBACK_TITLE = 'Top App Reviews – Handpicked for You';
 const FALLBACK_DESCRIPTION = 'Discover the most popular and highly-rated AI applications';
@@ -343,7 +344,7 @@ export default function FeaturedApps() {
   };
 
   return (
-    <div className="bg-[#f7f5ef] py-16">
+    <div className="py-16" style={sectionBgStyle(c, { defaultFrom: '#f7f5ef', defaultTo: '#f7f5ef', direction: 'to bottom' })}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12 reveal-fade-up">
           <h2 className="text-3xl md:text-4xl font-bold text-[#1F2853] mb-4" style={{ fontFamily: 'Inter, sans-serif' }}>

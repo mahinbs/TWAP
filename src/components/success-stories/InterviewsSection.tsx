@@ -58,6 +58,7 @@ const InterviewsSection = () => {
         : FALLBACK_INTERVIEWS;
 
     const heroInterview = dbInterviews[0];
+    const heroImage = section?.media_url ?? heroInterview?.image_url ?? 'https://images.unsplash.com/photo-1559523161-0fc0d8b38a7a?auto=format&fit=crop&q=80&w=800';
 
     return (
         <section id="interviews" className="py-24 bg-brand-dark text-white relative overflow-hidden">
@@ -70,7 +71,7 @@ const InterviewsSection = () => {
                     <div className="relative group">
                         <div className="relative rounded-[3rem] overflow-hidden aspect-[4/5] shadow-2xl shadow-brand-orange/20">
                             <img
-                                src={heroInterview?.image_url ?? "https://images.unsplash.com/photo-1559523161-0fc0d8b38a7a?auto=format&fit=crop&q=80&w=800"}
+                                src={heroImage}
                                 alt={heroInterview?.title ?? "Founder Interview"}
                                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                             />

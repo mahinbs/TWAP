@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { siteContentApi } from '../../lib/api';
+import { readSectionGradient } from '../../lib/sectionGradient';
 
 const FALLBACK = {
   badge: 'The Future is Now',
@@ -19,6 +20,10 @@ const AIHero = () => {
   const titleLine1  = c.title_line1 ?? FALLBACK.title_line1;
   const titleLine2  = c.title_line2 ?? FALLBACK.title_line2;
   const description = section?.description ?? FALLBACK.description;
+  const { from: heroFrom, to: heroTo } = readSectionGradient(c, {
+    defaultFrom: '#1B1B36',
+    defaultTo: '#2d1f3d',
+  });
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
     // Canvas Particle Animation
@@ -147,7 +152,10 @@ const AIHero = () => {
     }, []);
 
     return (
-        <section className="relative w-full min-h-screen bg-black overflow-hidden flex items-center justify-center">
+        <section
+            className="relative w-full min-h-screen overflow-hidden flex items-center justify-center"
+            style={{ background: `linear-gradient(135deg, ${heroFrom}, ${heroTo})` }}
+        >
             {/* Canvas Background */}
             <canvas
                 ref={canvasRef}

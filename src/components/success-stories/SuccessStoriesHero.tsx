@@ -1,6 +1,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { siteContentApi } from '../../lib/api';
+import { readSectionGradient } from '../../lib/sectionGradient';
 
 const SSH_FALLBACK = {
     title_prefix: 'Unlock the Secrets of',
@@ -15,6 +16,10 @@ const SuccessStoriesHero = () => {
     const c = (section?.content ?? {}) as Record<string, string>;
     const tPre = c.title_prefix    ?? SSH_FALLBACK.title_prefix;
     const tHi  = c.title_highlight ?? SSH_FALLBACK.title_highlight;
+    const { from: heroFrom, to: heroTo } = readSectionGradient(c, {
+        defaultFrom: '#0F0F1A',
+        defaultTo: '#2D0F1E',
+    });
 
     const scrollToSection = (id: string) => {
         const element = document.getElementById(id);
@@ -28,7 +33,10 @@ const SuccessStoriesHero = () => {
 
             {/* Background Gradients using Brand Colors */}
             <div className="absolute inset-0 z-0">
-                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-[#0F0F1A] via-[#1B1B36] to-[#2D0F1E]"></div>
+                <div
+                    className="absolute top-0 left-0 w-full h-full"
+                    style={{ background: `linear-gradient(to bottom right, ${heroFrom}, ${heroTo})` }}
+                />
 
                 {/* Space/Star dust effects */}
                 <div className="absolute top-0 left-0 w-full h-full opacity-30"

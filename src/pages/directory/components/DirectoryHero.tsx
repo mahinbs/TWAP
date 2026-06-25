@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { siteContentApi } from '../../../lib/api';
+import { readSectionGradient } from '../../../lib/sectionGradient';
 
 const FALLBACK_STATS = [
   { icon: "ri-apps-line", label: "500+ Apps Listed", color: "text-brand-orange" },
@@ -25,6 +26,10 @@ export default function DirectoryHero() {
   const titleHighlight = content.title_highlight ?? 'Directory';
   const descriptionLine1 = section?.subtitle ?? 'Discover the best AI-powered tools and applications.';
   const descriptionLine2 = section?.description ?? 'Compare features, read reviews, and find the perfect solution.';
+  const { from: heroFrom, to: heroTo } = readSectionGradient(content, {
+    defaultFrom: '#0f0f1a',
+    defaultTo: '#1a1a2e',
+  });
 
   const heroStats = stats.length > 0
     ? stats.map((s, i) => ({
@@ -132,7 +137,10 @@ export default function DirectoryHero() {
   }, []);
 
   return (
-    <section className="relative w-full min-h-screen bg-black overflow-hidden flex items-center justify-center">
+    <section
+      className="relative w-full min-h-screen overflow-hidden flex items-center justify-center"
+      style={{ background: `linear-gradient(135deg, ${heroFrom}, ${heroTo})` }}
+    >
       {/* Canvas Background */}
       <canvas
         ref={canvasRef}

@@ -2,6 +2,7 @@ import { useRef, useLayoutEffect } from 'react';
 import gsap from 'gsap';
 import { useQuery } from '@tanstack/react-query';
 import { siteContentApi } from '../../lib/api';
+import { readSectionGradient } from '../../lib/sectionGradient';
 
 const MH_FALLBACK = {
     title_line1: 'THE',
@@ -18,6 +19,10 @@ const MethodologyHero = () => {
     const c = (section?.content ?? {}) as Record<string, string>;
     const tLine1 = c.title_line1 ?? MH_FALLBACK.title_line1;
     const tLine2 = c.title_line2 ?? MH_FALLBACK.title_line2;
+    const { from: heroFrom, to: heroTo } = readSectionGradient(c, {
+        defaultFrom: '#0a0a0f',
+        defaultTo: '#1B1B36',
+    });
     const coreRef = useRef<HTMLDivElement>(null);
     const ringsRef = useRef<HTMLDivElement>(null);
 
@@ -98,7 +103,8 @@ const MethodologyHero = () => {
         <section
             ref={containerRef}
             onMouseMove={handleMouseMove}
-            className="relative min-h-screen flex items-center justify-center bg-[#030014] overflow-hidden pt-20 perspective-[1000px]"
+            className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20 perspective-[1000px]"
+            style={{ background: `linear-gradient(135deg, ${heroFrom}, ${heroTo})` }}
         >
             {/* Background Nebula & Grid */}
             <div className="absolute inset-0 bg-[#030014]">

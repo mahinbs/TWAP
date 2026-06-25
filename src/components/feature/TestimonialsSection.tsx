@@ -6,6 +6,7 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { siteContentApi } from '../../lib/api';
+import { readSectionGradient } from '../../lib/sectionGradient';
 
 const FALLBACK_SECTION = {
   title: 'What Our Clients Say About Us',
@@ -80,6 +81,8 @@ export default function TestimonialsSection() {
   });
   const sTitle = section?.title ?? FALLBACK_SECTION.title;
   const sDesc  = section?.description ?? FALLBACK_SECTION.description;
+  const c = (section?.content ?? {}) as Record<string, unknown>;
+  const { from: cardFrom, to: cardTo } = readSectionGradient(c, { defaultFrom: '#f7f5ef', defaultTo: '#ffffff' });
   const swiperRef = useRef<SwiperType | null>(null);
 
   // Color mapping based on service type
@@ -214,7 +217,10 @@ export default function TestimonialsSection() {
               const colors = getServiceColors(testimonial.serviceType);
               return (
                 <SwiperSlide key={testimonial.id} className="pb-2 h-auto">
-                  <div className="bg-gradient-to-br from-[#f7f5ef] to-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group border border-gray-100 h-full flex flex-col min-h-[630px]">
+                  <div
+                    className="rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group border border-gray-100 h-full flex flex-col min-h-[630px]"
+                    style={{ background: `linear-gradient(to bottom right, ${cardFrom}, ${cardTo})` }}
+                  >
                     <div className="p-8 flex flex-col h-full">
                       {/* Service Type Badge */}
                       <div className="flex justify-between items-start mb-6">

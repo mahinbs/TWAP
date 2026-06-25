@@ -42,6 +42,7 @@ const SuccessFeatures = () => {
     const tLine1 = c.title_line1        ?? SF_FALLBACK.title_line1;
     const tPre   = c.title_line2_prefix ?? SF_FALLBACK.title_line2_prefix;
     const tHi    = c.title_highlight    ?? SF_FALLBACK.title_highlight;
+    const featureImage = section?.media_url ?? 'https://images.unsplash.com/photo-1552581234-26160f608093?auto=format&fit=crop&q=80&w=800';
     const [activeIndex, setActiveIndex] = useState(0);
 
     return (
@@ -65,7 +66,7 @@ const SuccessFeatures = () => {
                     <div className="lg:col-span-4 relative">
                         <div className="relative rounded-3xl overflow-hidden shadow-2xl aspect-[3/4]">
                             <img
-                                src="https://images.unsplash.com/photo-1552581234-26160f608093?auto=format&fit=crop&q=80&w=800"
+                                src={featureImage}
                                 alt="Podcast Hosts"
                                 className="w-full h-full object-cover"
                             />
