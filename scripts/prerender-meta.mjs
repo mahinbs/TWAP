@@ -80,7 +80,10 @@ console.log(`prerender-meta: wrote ${count} route HTML files with meta tags`);
 
 // ─── sitemap.xml ───────────────────────────────────────────────────────────
 // Static routes come from page_seo; dynamic detail pages from published content.
-const siteUrl = (process.env.VITE_SITE_URL || 'https://twap-psi.vercel.app').replace(/\/$/, '');
+// Never let a mis-set VITE_SITE_URL (e.g. the Render API host) leak into the sitemap.
+const settingsRes = await fetch(`${url}/rest/v1/global_settings?select=site_url&id=eq.1`, { headers: { apikey: key, Authorization: `Bearer ${key}` } }).then(r => r.json()).catch(() => []);
+const isPublic = (v) => typeof v === 'string' && /^https?:\/\//.test(v) && !/onrender\.com|localhost|127\.0\.0\.1|twap-backend/i.test(v);
+const siteUrl = ([Array.isArray(settingsRes) ? settingsRes[0]?.site_url : null, process.env.VITE_SITE_URL].find(isPublic) || 'https://twap-psi.vercel.app').replace(/\/$/, '');
 async function fetchRows(table, select, filter = '') {
   const r = await fetch(`${url}/rest/v1/${table}?select=${select}${filter}`, {
     headers: { apikey: key, Authorization: `Bearer ${key}` },

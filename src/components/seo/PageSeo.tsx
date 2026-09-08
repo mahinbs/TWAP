@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { seoApi, settingsApi } from '../../lib/api';
+import { seoApi, settingsApi, resolvePublicSiteUrl } from '../../lib/api';
 import { useSeoOverride } from './SeoContext';
 
 function setMeta(name: string, content: string, attr: 'name' | 'property' = 'name') {
@@ -54,7 +54,7 @@ export default function PageSeo() {
     const description = override?.description ?? pageSeo?.meta_description ?? settings?.site_description ?? '';
     const image = override?.image ?? pageSeo?.og_image_url ?? settings?.default_og_image_url ?? '';
     const noindex = override?.noindex ?? pageSeo?.noindex ?? false;
-    const siteUrl = (import.meta.env.VITE_SITE_URL as string) || window.location.origin;
+    const siteUrl = resolvePublicSiteUrl(settings?.site_url, import.meta.env.VITE_SITE_URL as string, window.location.origin);
     const fullTitle = title.includes(siteName) ? title : `${title} | ${siteName}`;
 
     document.title = fullTitle;

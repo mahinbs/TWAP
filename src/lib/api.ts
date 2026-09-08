@@ -176,6 +176,7 @@ export interface Author {
 
 export interface GlobalSettings {
   site_name?: string;
+  site_url?: string;
   logo_url?: string;
   site_description?: string;
   default_og_image_url?: string;
@@ -680,6 +681,20 @@ export const agenciesPageApi = {
   },
 };
 
+// ─── Public site URL ──────────────────────────────────────────────────────────
+// Canonical/OG URLs must point at the public website, never at the API host.
+// VITE_SITE_URL has been mis-set to the Render backend before, so validate it.
+export const DEFAULT_SITE_URL = 'https://twap-psi.vercel.app';
+export function resolvePublicSiteUrl(...candidates: (string | null | undefined)[]): string {
+  for (const c of candidates) {
+    const v = (c ?? '').trim().replace(/\/+$/, '');
+    if (!/^https?:\/\//.test(v)) continue;
+    if (/onrender\.com|localhost|127\.0\.0\.1|twap-backend/i.test(v)) continue;
+    return v;
+  }
+  return DEFAULT_SITE_URL;
+}
+
 // ─── Image URL hygiene ────────────────────────────────────────────────────────
 // readdy.ai's on-demand image generator now returns HTTP 400 for every request,
 // so any CMS row still pointing at it would render as a broken image or an
@@ -919,7 +934,7 @@ export const settingsApi = {
   get: async (): Promise<GlobalSettings | null> => {
     const { data, error } = await supabase
       .from('global_settings')
-      .select('site_name, logo_url, site_description, default_og_image_url, twitter_handle, facebook_url, linkedin_url')
+      .select('site_name, site_url, logo_url, site_description, default_og_image_url, twitter_handle, facebook_url, linkedin_url')
       .eq('id', 1)
       .maybeSingle();
     if (error) return null;
