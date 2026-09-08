@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { siteContentApi } from '../../../lib/api';
 
 const FALLBACK = {
-  bg: 'https://readdy.ai/api/search-image?query=Modern%20digital%20technology%20workspace&width=1920&height=800&seq=services-hero-bg&orientation=landscape',
+  bg: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=1920&auto=format&fit=crop',
   badge: 'Premium Services',
   title: 'Elevate Your Digital Presence',
   description: "Choose from our premium services designed to boost your app's visibility and transform your business with cutting-edge AI automation solutions",

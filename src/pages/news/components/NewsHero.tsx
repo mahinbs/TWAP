@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { siteContentApi } from '../../../lib/api';
 
 const FALLBACK = {
-  bg: 'https://readdy.ai/api/search-image?query=Modern%20technology%20news%20background%20with%20AI%20and%20digital%20innovation%20themes%2C%20futuristic%20tech%20interface%2C%20neural%20networks%2C%20data%20visualization%2C%20professional%20news%20environment%2C%20blue%20and%20orange%20color%20scheme%2C%20minimalist%20design&width=1920&height=800&seq=news-hero&orientation=landscape',
+  bg: 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=1920&auto=format&fit=crop',
   title_line1: 'Latest in ',
   title_highlight: 'AI & Tech',
   title_line2: ' News',

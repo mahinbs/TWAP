@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { siteContentApi } from '../../../lib/api';
 
 const FALLBACK = {
-  bg: 'https://readdy.ai/api/search-image?query=Modern%20business%20conference%20room%20with%20entrepreneurs%20and%20startup%20founders%20discussing%20strategies%2C%20professional%20meeting%20environment%2C%20glass%20walls%2C%20natural%20lighting%2C%20collaborative%20workspace%2C%20innovation%20hub%20atmosphere&width=1920&height=800&seq=insights-hero&orientation=landscape',
+  bg: 'https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=1920&auto=format&fit=crop',
   title: 'Insights from Industry Leaders',
   description: 'Discover the stories behind successful apps and the founders who built them. Learn from real experiences and proven strategies.',
   cta1: { text: 'Watch Founder Interviews', url: '/interviews-success-stories' },

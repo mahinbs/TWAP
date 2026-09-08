@@ -42,7 +42,7 @@ export default function PromoteFaqSection({
             const isOpen = openIndex === index;
 
             return (
-              <div key={item.question} className="border-b border-[#d8d8d8]">
+              <div key={`${item.question}-${index}`} className="border-b border-[#d8d8d8]">
                 <button
                   type="button"
                   onClick={() => setOpenIndex(isOpen ? null : index)}

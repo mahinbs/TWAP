@@ -122,8 +122,16 @@ export default function TestimonialsSection() {
     }
   };
 
-  // Duplicate testimonials to ensure smooth infinite loop
-  const [testimonials] = useState<Testimonial[]>([
+  // Testimonials managed in the admin panel (Testimonials page). The hardcoded
+  // list below is only a fallback for an empty table.
+  const { data: dbTestimonials = [] } = useQuery({
+    queryKey: ['testimonials', 'home'],
+    queryFn: () => siteContentApi.testimonials(),
+  });
+
+  const SERVICE_TYPES: Testimonial['serviceType'][] = ['App Submission', 'Automation Services', 'Reviews'];
+
+  const [fallbackTestimonials] = useState<Testimonial[]>([
     {
       id: 1,
       name: "Alex Thompson",
@@ -161,6 +169,21 @@ export default function TestimonialsSection() {
       serviceType: 'App Submission'
     },
   ]);
+
+  const testimonials: Testimonial[] = dbTestimonials.length > 0
+    ? dbTestimonials.map((t, i) => ({
+        id: i + 1,
+        name: t.name,
+        title: t.role ?? '',
+        company: t.company ?? '',
+        testimonial: t.quote,
+        outcome: '',
+        avatar: t.avatar_url ?? '',
+        companyLogo: '',
+        rating: t.rating ?? 5,
+        serviceType: SERVICE_TYPES[i % SERVICE_TYPES.length],
+      }))
+    : fallbackTestimonials;
 
   const renderStars = (rating: number) => {
     return Array.from({ length: 5 }, (_, index) => (
@@ -213,12 +236,12 @@ export default function TestimonialsSection() {
             }}
             className="pb-12"
           >
-            {testimonials.concat(testimonials).map((testimonial) => {
+            {testimonials.concat(testimonials).map((testimonial, slideIndex) => {
               const colors = getServiceColors(testimonial.serviceType);
               return (
-                <SwiperSlide key={testimonial.id} className="pb-2 h-auto">
+                <SwiperSlide key={`${testimonial.id}-${slideIndex}`} className="pb-2 h-auto">
                   <div
-                    className="rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group border border-gray-100 h-full flex flex-col min-h-[630px]"
+                    className="rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group border border-gray-100 h-full flex flex-col min-h-[420px]"
                     style={{ background: `linear-gradient(to bottom right, ${cardFrom}, ${cardTo})` }}
                   >
                     <div className="p-8 flex flex-col h-full">
@@ -243,14 +266,16 @@ export default function TestimonialsSection() {
                       </div>
 
                       {/* Outcome */}
-                      <div className={`${colors.resultsBg} rounded-lg p-4 mb-6 border ${colors.resultsBorder}`}>
-                        <h4 className="text-sm font-semibold text-[#1F2853] mb-2" style={{ fontFamily: 'Manrope, sans-serif' }}>
-                          Key Results:
-                        </h4>
-                        <p className={`${colors.resultsText} font-medium text-sm`} style={{ fontFamily: 'Poppins, sans-serif' }}>
-                          {testimonial.outcome}
-                        </p>
-                      </div>
+                      {testimonial.outcome && (
+                        <div className={`${colors.resultsBg} rounded-lg p-4 mb-6 border ${colors.resultsBorder}`}>
+                          <h4 className="text-sm font-semibold text-[#1F2853] mb-2" style={{ fontFamily: 'Manrope, sans-serif' }}>
+                            Key Results:
+                          </h4>
+                          <p className={`${colors.resultsText} font-medium text-sm`} style={{ fontFamily: 'Poppins, sans-serif' }}>
+                            {testimonial.outcome}
+                          </p>
+                        </div>
+                      )}
 
                       {/* Client Info */}
                       <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-50">

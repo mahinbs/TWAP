@@ -129,7 +129,7 @@ const AITools = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {renderTools.map((tool: any, index) => (
                         <Link
-                            key={tool.id ?? index}
+                            key={tool.id || index}
                             to={tool.slug ? `/products/${tool.slug}` : '/directory'}
                             onMouseMove={handleMouseMove}
                             className="group relative bg-white rounded-3xl p-6 transition-all duration-500 hover:-translate-y-1 shadow-sm hover:shadow-xl border border-gray-100 overflow-hidden block"

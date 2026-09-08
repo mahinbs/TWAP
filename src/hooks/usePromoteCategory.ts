@@ -194,10 +194,12 @@ export function usePromoteCategory(slug: string) {
     unit: String((i.extras as Record<string, string>)?.unit ?? ''),
   }));
 
-  const faqItems = (faqItemsQ.data ?? []).map(i => ({
-    question: i.title,
-    answer: i.description ?? '',
-  }));
+  const faqItems = (faqItemsQ.data ?? [])
+    .filter(i => (i.title ?? '').trim().length > 0)
+    .map(i => ({
+      question: i.title,
+      answer: i.description ?? '',
+    }));
 
   const formContent = (form?.content ?? {}) as Record<string, unknown>;
   const benefitsContent = (benefits?.content ?? {}) as Record<string, unknown>;

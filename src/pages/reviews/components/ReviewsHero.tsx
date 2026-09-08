@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { siteContentApi } from '../../../lib/api';
 
 const FALLBACK = {
-  bg: 'https://readdy.ai/api/search-image?query=Modern%20technology%20review%20platform%20background&width=1920&height=800&seq=reviews-hero&orientation=landscape',
+  bg: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=1920&auto=format&fit=crop',
   title: 'App Reviews & Rankings',
   description: 'Discover the best apps through comprehensive reviews from both users and our expert team',
   cta1: { text: 'Submit Your Review', url: '/promote' },

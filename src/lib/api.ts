@@ -55,7 +55,13 @@ export interface BlogPost {
   published_date?: string;
   read_time_minutes?: number;
   views?: number;
-  author?: { id: string; name: string; avatar_url?: string; bio?: string };
+  featured?: boolean;
+  author_name?: string;
+  meta_title?: string;
+  meta_description?: string;
+  og_image_url?: string;
+  noindex?: boolean;
+  author?: { id: string; name: string; avatar_url?: string; bio?: string } | null;
 }
 
 export interface Agency {
@@ -255,7 +261,7 @@ export const appsApi = {
       .select('*')
       .eq('slug', slug)
       .eq('status', 'published')
-      .single();
+      .maybeSingle();
     if (error) return null;
     return data as App;
   },
@@ -301,12 +307,16 @@ export const blogsApi = {
     limit?: number;
     offset?: number;
     featured?: boolean;
+    /** Posts for the /blogs page: resource_tab = 'blogs' or unset. */
+    blogOnly?: boolean;
+    /** Exclude a post id (e.g. the one currently open). */
+    excludeId?: string;
   }): Promise<BlogPost[]> => {
     let q = supabase
       .from('blog_posts')
       .select(`
         id, slug, title, excerpt, hero_image_url, category, resource_tab, tags,
-        published_date, read_time_minutes, views,
+        published_date, read_time_minutes, views, featured, author_name,
         authors!author_id(id, name, avatar_url)
       `)
       .eq('status', 'published')
@@ -314,6 +324,8 @@ export const blogsApi = {
 
     if (opts?.category) q = q.eq('category', opts.category);
     if (opts?.resourceTab) q = q.eq('resource_tab', opts.resourceTab);
+    if (opts?.blogOnly) q = q.or('resource_tab.eq.blogs,resource_tab.is.null');
+    if (opts?.excludeId) q = q.neq('id', opts.excludeId);
     if (opts?.tag)      q = q.contains('tags', [opts.tag]);
     if (opts?.search)   q = q.or(`title.ilike.%${opts.search}%,excerpt.ilike.%${opts.search}%`);
     if (opts?.featured) q = q.eq('featured', true);
@@ -325,11 +337,13 @@ export const blogsApi = {
       // Fallback when authors join fails — re-run without embed
       let q2 = supabase
         .from('blog_posts')
-        .select('id, slug, title, excerpt, hero_image_url, category, resource_tab, tags, published_date, read_time_minutes, views, author_id')
+        .select('id, slug, title, excerpt, hero_image_url, category, resource_tab, tags, published_date, read_time_minutes, views, featured, author_name, author_id')
         .eq('status', 'published')
         .order('published_date', { ascending: false });
       if (opts?.category) q2 = q2.eq('category', opts.category);
       if (opts?.resourceTab) q2 = q2.eq('resource_tab', opts.resourceTab);
+      if (opts?.blogOnly) q2 = q2.or('resource_tab.eq.blogs,resource_tab.is.null');
+      if (opts?.excludeId) q2 = q2.neq('id', opts.excludeId);
       if (opts?.featured) q2 = q2.eq('featured', true);
       if (opts?.tag)      q2 = q2.contains('tags', [opts.tag]);
       if (opts?.search)   q2 = q2.or(`title.ilike.%${opts.search}%,excerpt.ilike.%${opts.search}%`);
@@ -348,7 +362,7 @@ export const blogsApi = {
       .select('*, authors!author_id(id, name, avatar_url, bio)')
       .eq('slug', slug)
       .eq('status', 'published')
-      .single();
+      .maybeSingle();
     if (!withJoin.error && withJoin.data) {
       return { ...withJoin.data, author: withJoin.data.authors } as BlogPost;
     }
@@ -358,7 +372,7 @@ export const blogsApi = {
       .select('*')
       .eq('slug', slug)
       .eq('status', 'published')
-      .single();
+      .maybeSingle();
     if (plain.error || !plain.data) return null;
     return { ...plain.data, author: undefined } as BlogPost;
   },
@@ -431,7 +445,7 @@ export const agenciesApi = {
       .select('*')
       .eq('slug', slug)
       .eq('status', 'published')
-      .single();
+      .maybeSingle();
     if (error || !agency) return null;
 
     const [portfolio, reviews, clients] = await Promise.all([
@@ -510,7 +524,7 @@ export const successStoriesApi = {
       .eq('section', 'interviews')
       .eq('slug', slug)
       .eq('active', true)
-      .single();
+      .maybeSingle();
     if (error) return null;
     return data as SuccessStoriesItem;
   },
@@ -524,7 +538,19 @@ export const founderStoriesApi = {
       .eq('active', true)
       .order('sort_order');
     if (error) return [];
-    return (data ?? []) as FounderStory[];
+    // Prefer the row that has a slug (detail page) when the same founder was seeded twice.
+    const byKey = new Map<string, FounderStory>();
+    for (const raw of (data ?? []) as FounderStory[]) {
+      const row: FounderStory = {
+        ...raw,
+        avatar_url: cleanImageUrl(raw.avatar_url) ?? undefined,
+        video_thumbnail_url: cleanImageUrl(raw.video_thumbnail_url) ?? undefined,
+      };
+      const key = `${row.name}|${row.company ?? ''}`.toLowerCase();
+      const prev = byKey.get(key);
+      if (!prev || (!prev.slug && row.slug)) byKey.set(key, row);
+    }
+    return Array.from(byKey.values());
   },
 
   bySlug: async (slug: string): Promise<FounderStory | null> => {
@@ -533,7 +559,7 @@ export const founderStoriesApi = {
       .select('*')
       .eq('slug', slug)
       .eq('active', true)
-      .single();
+      .maybeSingle();
     if (error) return null;
     return data as FounderStory;
   },
@@ -556,7 +582,7 @@ export const expertReviewsApi = {
       .select('*')
       .eq('slug', slug)
       .eq('active', true)
-      .single();
+      .maybeSingle();
     if (error) return null;
     return data as ExpertReview;
   },
@@ -621,7 +647,7 @@ export const promoteApi = {
       .select('*')
       .eq('slug', slug)
       .eq('active', true)
-      .single();
+      .maybeSingle();
     if (error) return null;
     return data as PromoteCategory;
   },
@@ -654,7 +680,26 @@ export const agenciesPageApi = {
   },
 };
 
+// ─── Image URL hygiene ────────────────────────────────────────────────────────
+// readdy.ai's on-demand image generator now returns HTTP 400 for every request,
+// so any CMS row still pointing at it would render as a broken image or an
+// empty CSS background. Treat those URLs as "no image" so components fall back
+// to their own defaults.
+const DEAD_IMAGE_HOSTS = ['readdy.ai/api/search-image'];
+export function cleanImageUrl<T extends string | null | undefined>(url: T): T | undefined {
+  if (!url) return url;
+  return DEAD_IMAGE_HOSTS.some(h => url.includes(h)) ? undefined : url;
+}
+
 // ─── Site Content ─────────────────────────────────────────────────────────────
+
+function cleanSectionImages(section: PageSection): PageSection {
+  return {
+    ...section,
+    media_url: cleanImageUrl(section.media_url) ?? undefined,
+    media_url_2: cleanImageUrl(section.media_url_2) ?? undefined,
+  };
+}
 
 export const siteContentApi = {
   /** Get all active sections for a page */
@@ -666,7 +711,7 @@ export const siteContentApi = {
       .eq('active', true)
       .order('sort_order');
     if (error) return [];
-    return (data ?? []) as PageSection[];
+    return ((data ?? []) as PageSection[]).map(cleanSectionImages);
   },
 
   /** Get a single section by page+section key */
@@ -677,9 +722,9 @@ export const siteContentApi = {
       .eq('page', page)
       .eq('section', section)
       .eq('active', true)
-      .single();
-    if (error) return null;
-    return data as PageSection;
+      .maybeSingle();
+    if (error || !data) return null;
+    return cleanSectionImages(data as PageSection);
   },
 
   testimonials: async (): Promise<Testimonial[]> => {
@@ -700,7 +745,13 @@ export const siteContentApi = {
       .eq('active', true)
       .order('sort_order');
     if (error) return [];
-    return (data ?? []) as SiteStat[];
+    const seen = new Set<string>();
+    return ((data ?? []) as SiteStat[]).filter(stat => {
+      const key = stat.label.trim().toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   },
 
   expertReviews: async () => {
@@ -722,7 +773,15 @@ export const siteContentApi = {
     if (location) q = q.eq('location', location);
     const { data, error } = await q;
     if (error) return [];
-    return (data ?? []) as NavItem[];
+    // The seed data was inserted twice in places; collapse exact duplicates so
+    // menus and footer columns never show the same link twice.
+    const seen = new Set<string>();
+    return ((data ?? []) as NavItem[]).filter(n => {
+      const key = `${n.location}|${n.label}|${n.url}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   },
 
   founderStories: async (): Promise<FounderStory[]> => {
@@ -850,7 +909,7 @@ export const toolsApi = {
       .eq('section', 'grid')
       .eq('slug', slug)
       .eq('active', true)
-      .single();
+      .maybeSingle();
     if (error) return null;
     return data as ToolsItem;
   },
@@ -862,7 +921,7 @@ export const settingsApi = {
       .from('global_settings')
       .select('site_name, logo_url, site_description, default_og_image_url, twitter_handle, facebook_url, linkedin_url')
       .eq('id', 1)
-      .single();
+      .maybeSingle();
     if (error) return null;
     return data as GlobalSettings;
   },
@@ -907,7 +966,7 @@ export const categoriesApi = {
       .from('categories')
       .select('*')
       .eq('slug', slug)
-      .single();
+      .maybeSingle();
     if (error) return null;
     return data;
   },
@@ -919,7 +978,7 @@ export const authorsApi = {
       .from('authors')
       .select('*')
       .eq('slug', slug)
-      .single();
+      .maybeSingle();
     if (error) return null;
     return data as Author;
   },
@@ -948,7 +1007,7 @@ export const searchApi = {
       .from('global_settings')
       .select('search_config')
       .eq('id', 1)
-      .single();
+      .maybeSingle();
     const cfg = (data?.search_config ?? {}) as Record<string, unknown>;
     return {
       minQueryLength: Number(cfg.min_query_length ?? 2),

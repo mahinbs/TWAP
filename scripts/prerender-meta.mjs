@@ -77,3 +77,36 @@ for (const row of rows) {
 }
 
 console.log(`prerender-meta: wrote ${count} route HTML files with meta tags`);
+
+// ─── sitemap.xml ───────────────────────────────────────────────────────────
+// Static routes come from page_seo; dynamic detail pages from published content.
+const siteUrl = (process.env.VITE_SITE_URL || 'https://twap-psi.vercel.app').replace(/\/$/, '');
+async function fetchRows(table, select, filter = '') {
+  const r = await fetch(`${url}/rest/v1/${table}?select=${select}${filter}`, {
+    headers: { apikey: key, Authorization: `Bearer ${key}` },
+  });
+  const j = await r.json();
+  return Array.isArray(j) ? j : [];
+}
+const [apps, blogs, agencies, authors, founders] = await Promise.all([
+  fetchRows('apps', 'slug,updated_at', '&status=eq.published'),
+  fetchRows('blog_posts', 'slug,updated_at', '&status=eq.published&noindex=eq.false'),
+  fetchRows('agencies', 'slug,updated_at', '&status=eq.published'),
+  fetchRows('authors', 'slug'),
+  fetchRows('founder_stories', 'slug', '&active=eq.true'),
+]);
+const entries = [];
+for (const row of rows) if (!row.noindex) entries.push({ loc: row.path, lastmod: null });
+for (const a of apps) if (a.slug) entries.push({ loc: `/products/${a.slug}`, lastmod: a.updated_at });
+for (const b of blogs) if (b.slug) entries.push({ loc: `/blog/${b.slug}`, lastmod: b.updated_at });
+for (const g of agencies) if (g.slug) entries.push({ loc: `/agencies/${g.slug}`, lastmod: g.updated_at });
+for (const a of authors) if (a.slug) entries.push({ loc: `/authors/${a.slug}`, lastmod: null });
+for (const f of founders) if (f.slug) entries.push({ loc: `/founders/${f.slug}`, lastmod: null });
+const seen = new Set();
+const xmlEscape = (v) => v.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const body = entries
+  .filter(e => { if (seen.has(e.loc)) return false; seen.add(e.loc); return true; })
+  .map(e => `  <url>\n    <loc>${xmlEscape(siteUrl + (e.loc === '/' ? '/' : e.loc))}</loc>${e.lastmod ? `\n    <lastmod>${e.lastmod.slice(0, 10)}</lastmod>` : ''}\n  </url>`)
+  .join('\n');
+writeFileSync(resolve(outDir, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`);
+console.log(`prerender-meta: wrote sitemap.xml with ${seen.size} URLs`);

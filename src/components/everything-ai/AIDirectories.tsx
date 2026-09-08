@@ -124,7 +124,7 @@ const AIDirectories = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 perspective-container" style={{ perspective: '2000px' }}>
                     {renderCategories.map((item: any, index) => (
                         <Link
-                            key={item.slug ?? index}
+                            key={item.slug || index}
                             to={item.slug ? `/categories/${item.slug}` : '/directory'}
                             onMouseMove={handleMouseMove}
                             onMouseLeave={handleMouseLeave}
